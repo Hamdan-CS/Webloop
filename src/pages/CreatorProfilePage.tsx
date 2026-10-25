@@ -254,7 +254,7 @@ export function CreatorProfilePage() {
         {/* Profile body */}
         <div className="px-5 sm:px-8 pb-6">
           {/* Avatar + name row */}
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-14">
+          <div className="flex flex-col gap-4 -mt-14">
             <Avatar
               src={profile.avatar_url}
               name={profile.display_name}
