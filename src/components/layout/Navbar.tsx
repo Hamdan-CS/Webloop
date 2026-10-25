@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Boxes, Menu, X, Sparkles, LogOut, User, Plus, LayoutDashboard } from 'lucide-react';
+import { Boxes, Menu, X, Sparkles, LogOut, User, Plus, LayoutDashboard, Inbox, ListChecks } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
@@ -20,7 +20,7 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, unreadMessages, pendingReviews, signOut } = useAuth();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -74,6 +74,22 @@ export function Navbar() {
           {user ? (
             <>
               {profile && (
+                <>
+                  <NavIconButton
+                    icon={<ListChecks size={18} />}
+                    count={pendingReviews}
+                    label="Tasks"
+                    onClick={() => navigate(`/creators/${profile.handle}?tab=tasks`)}
+                  />
+                  <NavIconButton
+                    icon={<Inbox size={18} />}
+                    count={unreadMessages}
+                    label="Messages"
+                    onClick={() => navigate(`/creators/${profile.handle}?tab=messages`)}
+                  />
+                </>
+              )}
+              {profile && (
                 <Button variant="ghost" onClick={() => navigate(getDashboardPath(profile.creator_type))} className="text-sm">
                   <LayoutDashboard size={15} /> {getDashboardLabel(profile.creator_type).replace(' Dashboard', '')}
                 </Button>
@@ -95,6 +111,8 @@ export function Navbar() {
                   <div className="absolute right-0 mt-2 w-52 rounded-xl border border-white/10 bg-ink-900/95 backdrop-blur-md py-1.5 shadow-card animate-fade-in-up">
                     <MenuItem icon={<LayoutDashboard size={15} />} label={profile ? getDashboardLabel(profile.creator_type) : 'Dashboard'} onClick={() => { setMenuOpen(false); navigate(profile ? getDashboardPath(profile.creator_type) : '/'); }} />
                     <MenuItem icon={<User size={15} />} label="My Profile" onClick={() => { setMenuOpen(false); navigate(`/creators/${profile?.handle}`); }} />
+                    <MenuItem icon={<Inbox size={15} />} label="Messages" count={unreadMessages} onClick={() => { setMenuOpen(false); navigate(`/creators/${profile?.handle}?tab=messages`); }} />
+                    <MenuItem icon={<ListChecks size={15} />} label="Tasks" count={pendingReviews} onClick={() => { setMenuOpen(false); navigate(`/creators/${profile?.handle}?tab=tasks`); }} />
                     <MenuItem icon={<Plus size={15} />} label="Publish Project" onClick={() => { setMenuOpen(false); navigate('/publish'); }} />
                     <MenuItem icon={<LayoutDashboard size={15} />} label="My Applications" onClick={() => { setMenuOpen(false); navigate('/my-applications'); }} />
                     <MenuItem icon={<User size={15} />} label="Edit Profile" onClick={() => { setMenuOpen(false); navigate('/settings'); }} />
@@ -159,6 +177,14 @@ export function Navbar() {
                   <Button variant="secondary" onClick={() => { setMobileOpen(false); navigate(`/creators/${profile?.handle}`); }}>
                     <User size={15} /> My Profile
                   </Button>
+                  <Button variant="secondary" onClick={() => { setMobileOpen(false); navigate(`/creators/${profile?.handle}?tab=messages`); }}>
+                    <Inbox size={15} /> Messages
+                    {unreadMessages > 0 && <span className="ml-1 rounded-full bg-accent-500 px-1.5 py-0.5 text-[10px] font-semibold text-ink-950">{unreadMessages}</span>}
+                  </Button>
+                  <Button variant="secondary" onClick={() => { setMobileOpen(false); navigate(`/creators/${profile?.handle}?tab=tasks`); }}>
+                    <ListChecks size={15} /> Tasks
+                    {pendingReviews > 0 && <span className="ml-1 rounded-full bg-accent-500 px-1.5 py-0.5 text-[10px] font-semibold text-ink-950">{pendingReviews}</span>}
+                  </Button>
                   <Button variant="ghost" onClick={handleSignOut}>
                     <LogOut size={15} /> Sign Out
                   </Button>
@@ -181,7 +207,7 @@ export function Navbar() {
   );
 }
 
-function MenuItem({ icon, label, onClick, danger }: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }) {
+function MenuItem({ icon, label, onClick, danger, count }: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean; count?: number }) {
   return (
     <button
       onClick={onClick}
@@ -191,7 +217,28 @@ function MenuItem({ icon, label, onClick, danger }: { icon: React.ReactNode; lab
       )}
     >
       {icon}
-      {label}
+      <span className="flex-1 text-left">{label}</span>
+      {!!count && (
+        <span className="rounded-full bg-accent-500 px-1.5 py-0.5 text-[10px] font-semibold text-ink-950">{count}</span>
+      )}
+    </button>
+  );
+}
+
+function NavIconButton({ icon, label, count, onClick }: { icon: React.ReactNode; label: string; count: number; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/5 hover:text-white transition-colors"
+    >
+      {icon}
+      {count > 0 && (
+        <span className="absolute top-0.5 right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent-500 px-1 text-[10px] font-semibold text-ink-950">
+          {count > 9 ? '9+' : count}
+        </span>
+      )}
     </button>
   );
 }

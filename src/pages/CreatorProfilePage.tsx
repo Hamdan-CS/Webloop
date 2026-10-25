@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   Loader2,
   MapPin,
@@ -60,10 +60,12 @@ import { ConversationModal } from '@/components/projects/ConversationModal';
 const PROJECT_STATUSES: ProjectStatus[] = ['draft', 'published', 'recruiting', 'in_progress', 'completed', 'archived'];
 
 type Tab = 'projects' | 'applications' | 'tasks' | 'messages';
+const VALID_TABS: Tab[] = ['projects', 'applications', 'tasks', 'messages'];
 
 export function CreatorProfilePage() {
   const { handle } = useParams();
-  const { user, profile: myProfile } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { user, profile: myProfile, refreshCounts } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
@@ -71,7 +73,10 @@ export function CreatorProfilePage() {
   const [stats, setStats] = useState({ avg: 0, count: 0 });
   const [contributions, setContributions] = useState({ total: 0, approved: 0 });
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>('projects');
+  const initialTabParam = searchParams.get('tab');
+  const [tab, setTabInternal] = useState<Tab>(
+    VALID_TABS.includes(initialTabParam as Tab) ? (initialTabParam as Tab) : 'projects',
+  );
   const [appCounts, setAppCounts] = useState<Record<string, number>>({});
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
   const [projectApps, setProjectApps] = useState<Application[]>([]);
@@ -86,6 +91,25 @@ export function CreatorProfilePage() {
   const { prompt } = useAuthPrompt();
 
   const isOwner = !!(user && myProfile && profile && myProfile.id === profile.id);
+
+  const setTab = useCallback(
+    (t: Tab) => {
+      setTabInternal(t);
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('tab', t);
+        return next;
+      }, { replace: true });
+    },
+    [setSearchParams],
+  );
+
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t && VALID_TABS.includes(t as Tab) && t !== tab) {
+      setTabInternal(t as Tab);
+    }
+  }, [searchParams, tab]);
 
   const loadData = useCallback(async () => {
     if (!handle) return;
@@ -204,6 +228,7 @@ export function CreatorProfilePage() {
     await markMessageRead(msgId);
     setMessages(messages.map((m) => (m.id === msgId ? { ...m, is_read: true } : m)));
     setUnreadCount(Math.max(0, unreadCount - 1));
+    await refreshCounts();
   };
 
   const handleContact = () => {

@@ -579,6 +579,28 @@ export async function fetchUnreadMessageCount(profileId: string): Promise<number
   return count ?? 0;
 }
 
+export async function fetchPendingReviewCount(profileId: string): Promise<number> {
+  const { data: projects, error: projErr } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('owner_id', profileId);
+  if (projErr || !projects?.length) return 0;
+
+  const { data: tasks, error: taskErr } = await supabase
+    .from('tasks')
+    .select('id')
+    .in('project_id', projects.map((p) => p.id));
+  if (taskErr || !tasks?.length) return 0;
+
+  const { count, error } = await supabase
+    .from('task_submissions')
+    .select('id', { count: 'exact', head: true })
+    .in('task_id', tasks.map((t) => t.id))
+    .eq('status', 'pending');
+  if (error) return 0;
+  return count ?? 0;
+}
+
 export async function markMessageRead(messageId: string): Promise<void> {
   const { error } = await supabase
     .from('messages')

@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { relativeDate } from '@/lib/labels';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/components/auth/AuthContext';
 
 const statusBadge: Record<TaskStatus, { tone: 'default' | 'accent' | 'green' | 'amber' | 'rose'; label: string }> = {
   open: { tone: 'default', label: 'Open' },
@@ -42,6 +43,7 @@ interface Props {
 }
 
 export function TaskManagementPanel({ projectId, profileId }: Props) {
+  const { refreshCounts } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,6 +119,7 @@ export function TaskManagementPanel({ projectId, profileId }: Props) {
         rating: status === 'approved' ? rating : undefined,
       });
       await loadData();
+      await refreshCounts();
     } catch {
       // ignore
     }
