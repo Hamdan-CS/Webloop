@@ -2,7 +2,7 @@
 
 A student project collaboration & talent marketplace: students ship real software, find teammates, build verified portfolios, and get discovered by companies/universities based on reviewed contributions rather than resumes.
 
-Vite + React 18 + TypeScript, Tailwind CSS, React Router, Supabase (Postgres + Auth), three.js/@react-three/fiber for the homepage hero.
+Vite + React 18 + TypeScript, Tailwind CSS, React Router, Supabase (Postgres + Auth). The homepage hero ([HeroShowcase](src/components/home/HeroShowcase.tsx)) is a CSS-only 3D tilt effect driven by live recruiting projects, no WebGL dependency.
 
 ## Running it
 
@@ -26,7 +26,7 @@ VITE_SUPABASE_ANON_KEY=...
 - `src/components/auth/` — `AuthContext` (Supabase session/profile state), `AuthPrompt` (modal that prompts sign-in for gated actions), `RoleRoute` (guards dashboard routes by `creator_type`).
 - `src/components/projects/` — project card/detail/task/application UI shared across pages.
 - `src/components/layout/` — `Navbar`, `Footer`.
-- `src/components/ui/` — small presentational primitives (`Avatar`, `Badge`, `Button`, `Rating`).
+- `src/components/ui/` — small presentational primitives (`Avatar`, `Badge`, `Button`, `Rating`, `Select` — a custom-styled listbox used instead of a native `<select>`, since the native option popup can't be themed to match the dark UI).
 - `src/lib/api.ts` — all Supabase queries (profiles, projects, applications, tasks/submissions, messages, reviews). Pages call these instead of touching `supabase` directly.
 - `src/lib/types.ts` — shared domain types (`Profile`, `Project`, `Task`, `TaskSubmission`, `Message`, `Review`, etc.) mirroring the Postgres schema.
 - `src/lib/supabase.ts` — Supabase client, built from the `VITE_SUPABASE_*` env vars.

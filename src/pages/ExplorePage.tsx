@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, X, ChevronDown, Loader2 } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Loader2 } from 'lucide-react';
 import { fetchProjects, type ProjectQuery } from '@/lib/api';
 import type { Project } from '@/lib/types';
 import { ProjectCover } from '@/components/projects/ProjectCover';
 import { DetailsPanel } from '@/components/projects/DetailsPanel';
 import { ProjectCard } from '@/components/projects/ProjectCard';
+import { Select } from '@/components/ui/Select';
 import { fetchProfileStats } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -149,33 +150,25 @@ export function ExplorePage() {
             </span>
           )}
         </button>
-        <div className="relative">
-          <select
-            value={query.sort ?? 'newest'}
-            onChange={(e) => updateParam('sort', e.target.value)}
-            className="appearance-none rounded-xl border border-white/10 bg-ink-900/60 py-2.5 pl-4 pr-9 text-sm text-slate-200 focus:border-accent-400/40"
-          >
-            {SORTS.map((s) => (
-              <option key={s.value} value={s.value} className="bg-ink-900">
-                Sort: {s.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
-        </div>
+        <Select
+          className="w-44"
+          value={query.sort ?? 'newest'}
+          options={SORTS.map((s) => ({ value: s.value, label: `Sort: ${s.label}` }))}
+          onChange={(v) => updateParam('sort', v)}
+        />
       </div>
 
       {/* Filter panel */}
       {showFilters && (
         <div className="surface mb-6 p-4 animate-fade-in-up">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <FilterSelect
+            <Select
               label="Category"
               value={query.category ?? 'all'}
               options={[{ value: 'all', label: 'All categories' }, ...CATEGORIES.map((c) => ({ value: c, label: c }))]}
               onChange={(v) => updateParam('category', v)}
             />
-            <FilterSelect
+            <Select
               label="Difficulty"
               value={query.difficulty ?? 'all'}
               options={[
@@ -186,7 +179,7 @@ export function ExplorePage() {
               ]}
               onChange={(v) => updateParam('difficulty', v)}
             />
-            <FilterSelect
+            <Select
               label="Status"
               value={query.status ?? 'all'}
               options={[
@@ -197,7 +190,7 @@ export function ExplorePage() {
               ]}
               onChange={(v) => updateParam('status', v)}
             />
-            <FilterSelect
+            <Select
               label="Compensation"
               value={query.compensation ?? 'all'}
               options={[
@@ -299,40 +292,6 @@ export function ExplorePage() {
         </div>
       )}
     </div>
-  );
-}
-
-function FilterSelect({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: { value: string; label: string }[];
-  onChange: (v: string) => void;
-}) {
-  return (
-    <label className="block">
-      <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">
-        {label}
-      </span>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900/60 px-3 py-2.5 text-sm text-slate-200 focus:border-accent-400/40"
-        >
-          {options.map((o) => (
-            <option key={o.value} value={o.value} className="bg-ink-900">
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
-      </div>
-    </label>
   );
 }
 

@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ProjectCard } from '@/components/projects/ProjectCard';
-import { HeroScene } from '@/components/home/HeroScene';
+import { HeroShowcase } from '@/components/home/HeroShowcase';
 import { fetchFeaturedProjects, fetchPortfolioGallery } from '@/lib/api';
 import type { Project, PortfolioItem } from '@/lib/types';
 import { Avatar } from '@/components/ui/Avatar';
@@ -42,14 +42,13 @@ export function HomePage() {
     };
   }, []);
 
+  const recruitingProjects = projects.filter((p) => p.status === 'recruiting');
+
   return (
     <div>
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <HeroScene />
-        </div>
-        <div className="container-page relative pt-20 pb-24 sm:pt-28 sm:pb-32">
+        <div className="container-page relative grid gap-10 pt-20 pb-24 sm:pt-28 sm:pb-32 lg:grid-cols-[1.3fr_1fr] lg:items-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -97,6 +96,9 @@ export function HomePage() {
               </span>
             </div>
           </motion.div>
+          <div className="hidden lg:block">
+            <HeroShowcase projects={recruitingProjects} />
+          </div>
         </div>
       </section>
 
