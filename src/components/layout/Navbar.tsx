@@ -111,8 +111,6 @@ export function Navbar() {
                   <div className="absolute right-0 mt-2 w-52 rounded-xl border border-white/10 bg-ink-900/95 backdrop-blur-md py-1.5 shadow-card animate-fade-in-up">
                     <MenuItem icon={<LayoutDashboard size={15} />} label={profile ? getDashboardLabel(profile.creator_type) : 'Dashboard'} onClick={() => { setMenuOpen(false); navigate(profile ? getDashboardPath(profile.creator_type) : '/'); }} />
                     <MenuItem icon={<User size={15} />} label="My Profile" onClick={() => { setMenuOpen(false); navigate(`/creators/${profile?.handle}`); }} />
-                    <MenuItem icon={<Inbox size={15} />} label="Messages" count={unreadMessages} onClick={() => { setMenuOpen(false); navigate(`/creators/${profile?.handle}?tab=messages`); }} />
-                    <MenuItem icon={<ListChecks size={15} />} label="Tasks" count={pendingReviews} onClick={() => { setMenuOpen(false); navigate(`/creators/${profile?.handle}?tab=tasks`); }} />
                     <MenuItem icon={<Plus size={15} />} label="Publish Project" onClick={() => { setMenuOpen(false); navigate('/publish'); }} />
                     <MenuItem icon={<LayoutDashboard size={15} />} label="My Applications" onClick={() => { setMenuOpen(false); navigate('/my-applications'); }} />
                     <MenuItem icon={<User size={15} />} label="Edit Profile" onClick={() => { setMenuOpen(false); navigate('/settings'); }} />

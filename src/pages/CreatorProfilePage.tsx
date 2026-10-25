@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   Loader2,
@@ -89,6 +89,8 @@ export function CreatorProfilePage() {
   const [messageTarget, setMessageTarget] = useState<{ profile: Profile; projectId?: string; projectTitle?: string } | null>(null);
   const [memberList, setMemberList] = useState<Record<string, { id: string; display_name: string; avatar_url: string | null; role: string | null }[]>>({});
   const { prompt } = useAuthPrompt();
+  const tabSectionRef = useRef<HTMLDivElement>(null);
+  const autoOpenedMessageRef = useRef(false);
 
   const isOwner = !!(user && myProfile && profile && myProfile.id === profile.id);
 
@@ -108,8 +110,24 @@ export function CreatorProfilePage() {
     const t = searchParams.get('tab');
     if (t && VALID_TABS.includes(t as Tab) && t !== tab) {
       setTabInternal(t as Tab);
+      tabSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [searchParams, tab]);
+
+  useEffect(() => {
+    if (tab !== 'messages') {
+      autoOpenedMessageRef.current = false;
+      return;
+    }
+    if (autoOpenedMessageRef.current || messageTarget || !profile || messages.length === 0) return;
+    autoOpenedMessageRef.current = true;
+    const latest = [...messages].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+    const other = latest.recipient_id === profile.id ? latest.sender : latest.recipient;
+    if (other) {
+      setMessageTarget({ profile: other, projectId: latest.project_id ?? undefined, projectTitle: latest.project?.title });
+      if (latest.recipient_id === profile.id && !latest.is_read) handleMessageRead(latest.id);
+    }
+  }, [tab, messages, profile, messageTarget]);
 
   const loadData = useCallback(async () => {
     if (!handle) return;
@@ -291,11 +309,11 @@ export function CreatorProfilePage() {
                 <h1 className="font-display text-xl sm:text-2xl font-bold text-white">{profile.display_name}</h1>
                 {profile.verified && <CheckCircle2 size={18} className="text-accent-400 shrink-0" />}
               </div>
-              {profile.experience_level && (
-                <p className="mt-0.5 text-sm text-slate-300">{profile.experience_level}</p>
-              )}
               <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
                 <Badge tone="accent">{creatorTypeLabel[profile.creator_type]}</Badge>
+                {profile.experience_level && (
+                  <span className="inline-flex items-center gap-1"><Briefcase size={12} /> {profile.experience_level}</span>
+                )}
                 {profile.location && (
                   <span className="inline-flex items-center gap-1"><MapPin size={12} /> {profile.location}</span>
                 )}
@@ -381,7 +399,7 @@ export function CreatorProfilePage() {
 
       {/* ===== Owner management tabs ===== */}
       {isOwner && (
-        <div className="mt-6 flex gap-1 border-b border-white/8">
+        <div ref={tabSectionRef} className="mt-6 flex gap-1 border-b border-white/8">
           <TabButton active={tab === 'projects'} onClick={() => setTab('projects')} icon={<GitBranch size={15} />} label="My Projects" badge={projects.length} />
           <TabButton active={tab === 'applications'} onClick={() => setTab('applications')} icon={<Users size={15} />} label="Join Requests" badge={pendingApps} badgeTone="amber" />
           <TabButton active={tab === 'tasks'} onClick={() => setTab('tasks')} icon={<ListChecks size={15} />} label="Tasks" />
