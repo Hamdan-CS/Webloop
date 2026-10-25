@@ -1,0 +1,279 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   THEME SYSTEM — Dark (default) + Light
+   All colors are CSS variables (in "R G B" channel format so
+   Tailwind's /opacity modifier works) that swap when the
+   .dark / .light class toggles on <html>.
+   ============================================================ */
+
+:root,
+.dark {
+  /* Base surfaces */
+  --ink-950: 7 10 18;
+  --ink-900: 11 15 26;
+  --ink-850: 15 20 36;
+  --ink-800: 20 26 46;
+  --ink-700: 28 36 64;
+  --ink-600: 40 49 86;
+  --ink-500: 58 68 118;
+  --ink-400: 91 104 150;
+
+  /* Text scale (slate) */
+  --slate-50: 248 250 252;
+  --slate-100: 241 245 249;
+  --slate-200: 226 232 240;
+  --slate-300: 203 213 225;
+  --slate-400: 148 163 184;
+  --slate-500: 100 116 139;
+  --slate-600: 71 85 105;
+  --slate-700: 51 65 85;
+  --slate-800: 30 41 59;
+  --slate-900: 15 23 42;
+
+  /* Strong text (maps to Tailwind "white") */
+  --content-strong: 255 255 255;
+
+  /* Accent — cyan */
+  --accent-50: 236 254 255;
+  --accent-100: 207 250 254;
+  --accent-200: 165 243 252;
+  --accent-300: 103 232 249;
+  --accent-400: 34 211 238;
+  --accent-500: 6 182 212;
+  --accent-600: 8 145 178;
+  --accent-700: 14 116 144;
+  --accent-800: 21 94 117;
+  --accent-900: 22 78 99;
+
+  /* Signal colors */
+  --signal-green: 52 211 153;
+  --signal-amber: 251 191 36;
+  --signal-rose: 251 113 133;
+  --signal-violet: 167 139 250;
+
+  /* Background decorations */
+  --body-bg: #070a12;
+  --body-radial: rgba(34, 211, 238, 0.10);
+  --body-radial-fade: rgba(7, 10, 18, 0);
+  --grid-line: rgba(91, 104, 150, 0.04);
+  --radial-glow-color: rgba(34, 211, 238, 0.18);
+  --grid-faint-line: rgba(91, 104, 150, 0.06);
+
+  /* Shadows */
+  --glow-border: rgba(34, 211, 238, 0.18);
+  --glow-spread: rgba(34, 211, 238, 0.35);
+  --card-inner: rgba(255, 255, 255, 0.04);
+  --card-shadow: rgba(0, 0, 0, 0.6);
+
+  /* Borders / overlays used via white/N opacity in components */
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-soft: rgba(255, 255, 255, 0.10);
+  --surface-overlay: rgba(255, 255, 255, 0.05);
+  --surface-overlay-strong: rgba(255, 255, 255, 0.03);
+
+  /* Scrollbar */
+  --scroll-thumb: rgba(91, 104, 150, 0.25);
+  --scroll-thumb-hover: rgba(91, 104, 150, 0.4);
+}
+
+.light {
+  /* Base surfaces — warm off-white with subtle blue */
+  --ink-950: 246 248 252;
+  --ink-900: 255 255 255;
+  --ink-850: 255 255 255;
+  --ink-800: 238 242 249;
+  --ink-700: 226 232 244;
+  --ink-600: 203 213 232;
+  --ink-500: 148 163 192;
+  --ink-400: 100 116 139;
+
+  /* Text scale — inverted for light bg */
+  --slate-50: 15 23 42;
+  --slate-100: 30 41 59;
+  --slate-200: 51 65 85;
+  --slate-300: 71 85 105;
+  --slate-400: 100 116 139;
+  --slate-500: 71 85 105;
+  --slate-600: 51 65 85;
+  --slate-700: 30 41 59;
+  --slate-800: 15 23 42;
+  --slate-900: 2 6 23;
+
+  /* Strong text */
+  --content-strong: 15 23 42;
+
+  /* Accent — deeper teal for readable contrast on light backgrounds */
+  --accent-50: 236 254 255;
+  --accent-100: 204 251 240;
+  --accent-200: 45 156 160;
+  --accent-300: 14 116 144;
+  --accent-400: 8 145 178;
+  --accent-500: 14 116 144;
+  --accent-600: 14 116 144;
+  --accent-700: 13 90 108;
+  --accent-800: 21 94 117;
+  --accent-900: 22 78 99;
+
+  /* Signal colors — slightly deeper for light contrast */
+  --signal-green: 5 150 105;
+  --signal-amber: 217 119 6;
+  --signal-rose: 225 29 72;
+  --signal-violet: 124 58 237;
+
+  /* Background decorations */
+  --body-bg: #f6f8fc;
+  --body-radial: rgba(14, 116, 144, 0.06);
+  --body-radial-fade: rgba(246, 248, 252, 0);
+  --grid-line: rgba(100, 116, 139, 0.06);
+  --radial-glow-color: rgba(14, 116, 144, 0.10);
+  --grid-faint-line: rgba(100, 116, 139, 0.07);
+
+  /* Shadows */
+  --glow-border: rgba(14, 116, 144, 0.20);
+  --glow-spread: rgba(14, 116, 144, 0.25);
+  --card-inner: rgba(255, 255, 255, 0.8);
+  --card-shadow: rgba(15, 23, 42, 0.08);
+
+  /* Borders / overlays — dark on light */
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-soft: rgba(15, 23, 42, 0.12);
+  --surface-overlay: rgba(15, 23, 42, 0.04);
+  --surface-overlay-strong: rgba(15, 23, 42, 0.025);
+
+  /* Scrollbar */
+  --scroll-thumb: rgba(100, 116, 139, 0.25);
+  --scroll-thumb-hover: rgba(100, 116, 139, 0.4);
+}
+
+/* ============================================================
+   Smooth theme transition
+   When .theme-transitioning is on <html>, all color-related
+   properties animate over 0.4s. The class is removed after
+   the transition completes to avoid interfering with other
+   animations.
+   ============================================================ */
+
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+  transition:
+    background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    fill 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    stroke 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    caret-color 0.4s ease !important;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-ink-950 text-slate-200 font-sans antialiased;
+    background-color: var(--body-bg);
+    background-image:
+      radial-gradient(80% 50% at 50% -10%, var(--body-radial) 0%, var(--body-radial-fade) 60%),
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 100% 100%, 44px 44px, 44px 44px;
+    background-attachment: fixed;
+  }
+  ::selection {
+    @apply bg-accent-500/30;
+  }
+  *:focus-visible {
+    @apply outline-none ring-2 ring-accent-400 rounded;
+    --tw-ring-offset-color: var(--body-bg);
+    --tw-ring-offset-width: 2px;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8;
+  }
+  .surface {
+    @apply rounded-2xl border border-white/5 bg-ink-900/60 backdrop-blur-sm;
+  }
+  .surface-raised {
+    @apply rounded-2xl border border-white/10 bg-ink-850/80 backdrop-blur-md shadow-card;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-slate-300;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-accent-500 text-ink-950 hover:bg-accent-400 hover:shadow-glow active:scale-[0.98];
+  }
+  .btn-secondary {
+    @apply btn border border-white/10 bg-white/5 text-slate-100 hover:bg-white/10 hover:border-white/20 active:scale-[0.98];
+  }
+  .btn-ghost {
+    @apply btn text-slate-300 hover:bg-white/5 hover:text-white;
+  }
+  .link-accent {
+    @apply text-accent-300 hover:text-accent-200 underline-offset-4 hover:underline transition-colors;
+  }
+  .label-overline {
+    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-accent-300/80;
+  }
+  .heading {
+    @apply font-display font-semibold tracking-tight text-white;
+  }
+  .skeleton {
+    @apply relative overflow-hidden rounded-md bg-white/5;
+  }
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0 -translate-x-full;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+    animation: shimmer 1.6s infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+}
+
+/* Select dropdowns — ensure themed options */
+.dark select option {
+  background-color: #0b0f1a;
+  color: #e2e8f0;
+}
+.light select option {
+  background-color: #ffffff;
+  color: #1e293b;
+}
