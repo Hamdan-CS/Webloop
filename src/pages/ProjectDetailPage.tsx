@@ -19,8 +19,8 @@ import {
   AlertCircle,
   Send,
 } from 'lucide-react';
-import { fetchProjectBySlug, fetchProfileStats, createApplication, checkExistingApplication, fetchProjectApplicationsDetailed, fetchProjectMembers, sendProjectMessage, fetchProjectMessages, markMessageRead, updateMemberRole } from '@/lib/api';
-import type { Project, Application, ProjectMember, Message } from '@/lib/types';
+import { fetchProjectBySlug, fetchProfileStats, createApplication, checkExistingApplication, fetchProjectApplicationsDetailed, fetchProjectMembers, updateMemberRole } from '@/lib/api';
+import type { Project, Application, ProjectMember } from '@/lib/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -28,7 +28,7 @@ import { Select } from '@/components/ui/Select';
 import { Rating, NoRating } from '@/components/ui/Rating';
 import { useAuthPrompt } from '@/components/auth/AuthPrompt';
 import { useAuth } from '@/components/auth/AuthContext';
-import { ProjectMessageModal } from '@/components/projects/ProjectMessageModal';
+import { ConversationModal } from '@/components/projects/ConversationModal';
 import { EditProjectModal } from '@/components/projects/EditProjectModal';
 import { ProjectProgressDashboard } from '@/components/projects/ProjectProgressDashboard';
 import { Pencil, Save } from 'lucide-react';
@@ -505,13 +505,11 @@ export function ProjectDetailPage() {
 
       {/* Project message modal */}
       {showMessageModal && project && profile && owner && (
-        <ProjectMessageModal
+        <ConversationModal
+          myProfile={profile}
+          otherProfile={owner}
           projectId={project.id}
           projectTitle={project.title}
-          senderId={profile.id}
-          recipientId={owner.id}
-          recipientName={owner.display_name}
-          recipientAvatar={owner.avatar_url}
           onClose={() => setShowMessageModal(false)}
         />
       )}

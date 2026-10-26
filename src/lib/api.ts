@@ -646,42 +646,6 @@ export async function fetchProjectMembers(projectId: string): Promise<ProjectMem
   return (data ?? []) as unknown as ProjectMember[];
 }
 
-export async function sendProjectMessage(
-  senderId: string,
-  recipientId: string,
-  projectId: string,
-  body: string,
-): Promise<Message> {
-  const { data, error } = await supabase
-    .from('messages')
-    .insert({
-      sender_id: senderId,
-      recipient_id: recipientId,
-      project_id: projectId,
-      body,
-    })
-    .select('*')
-    .single();
-  if (error) throw error;
-  return data as unknown as Message;
-}
-
-export async function fetchProjectMessages(profileId: string, projectId: string): Promise<Message[]> {
-  const { data, error } = await supabase
-    .from('messages')
-    .select(`
-      *,
-      sender:profiles!messages_sender_id_fkey(*),
-      recipient:profiles!messages_recipient_id_fkey(*),
-      project:projects!messages_project_id_fkey(title, slug)
-    `)
-    .eq('project_id', projectId)
-    .or(`recipient_id.eq.${profileId},sender_id.eq.${profileId}`)
-    .order('created_at', { ascending: true });
-  if (error) throw error;
-  return (data ?? []) as unknown as Message[];
-}
-
 export async function fetchConversation(
   profileId: string,
   otherProfileId: string,
