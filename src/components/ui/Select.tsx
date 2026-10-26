@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -17,12 +18,23 @@ interface SelectProps {
 
 export function Select({ label, value, options, onChange, className }: SelectProps) {
   const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const current = options.find((o) => o.value === value);
+
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    setPosition({ top: rect.bottom + 6, left: rect.left, width: rect.width });
+  }, [open]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (rootRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -30,11 +42,18 @@ export function Select({ label, value, options, onChange, className }: SelectPro
 
   useEffect(() => {
     if (!open) return;
+    const close = () => setOpen(false);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [open]);
 
   return (
@@ -46,6 +65,7 @@ export function Select({ label, value, options, onChange, className }: SelectPro
       )}
       <div className="relative">
         <button
+          ref={buttonRef}
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-haspopup="listbox"
@@ -61,35 +81,40 @@ export function Select({ label, value, options, onChange, className }: SelectPro
             className={cn('shrink-0 text-slate-500 transition-transform', open && 'rotate-180')}
           />
         </button>
-        {open && (
-          <div
-            role="listbox"
-            className="absolute left-0 right-0 z-20 mt-1.5 max-h-60 overflow-auto rounded-lg border border-white/10 bg-ink-900/95 backdrop-blur-md py-1 shadow-card animate-fade-in-up"
-          >
-            {options.map((o) => {
-              const isSelected = o.value === value;
-              return (
-                <button
-                  key={o.value}
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  onClick={() => {
-                    onChange(o.value);
-                    setOpen(false);
-                  }}
-                  className={cn(
-                    'flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors',
-                    isSelected ? 'bg-accent-500/15 text-accent-200' : 'text-slate-300 hover:bg-white/5 hover:text-white',
-                  )}
-                >
-                  <span className="truncate">{o.label}</span>
-                  {isSelected && <Check size={14} className="shrink-0" />}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {open &&
+          position &&
+          createPortal(
+            <div
+              ref={panelRef}
+              role="listbox"
+              style={{ position: 'fixed', top: position.top, left: position.left, width: position.width }}
+              className="z-[60] max-h-60 overflow-auto rounded-lg border border-white/10 bg-ink-900/95 backdrop-blur-md py-1 shadow-card animate-fade-in-up"
+            >
+              {options.map((o) => {
+                const isSelected = o.value === value;
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => {
+                      onChange(o.value);
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      'flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors',
+                      isSelected ? 'bg-accent-500/15 text-accent-200' : 'text-slate-300 hover:bg-white/5 hover:text-white',
+                    )}
+                  >
+                    <span className="truncate">{o.label}</span>
+                    {isSelected && <Check size={14} className="shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>,
+            document.body,
+          )}
       </div>
     </div>
   );
