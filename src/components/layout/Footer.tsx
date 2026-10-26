@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Boxes, Github, Linkedin } from 'lucide-react';
+import { useAuth } from '@/components/auth/AuthContext';
 
 const columns = [
   {
@@ -30,6 +31,8 @@ const columns = [
 ];
 
 export function Footer() {
+  const { user } = useAuth();
+
   return (
     <footer className="mt-24 border-t border-white/5 bg-ink-950/60">
       <div className="container-page py-14">
@@ -70,7 +73,7 @@ export function Footer() {
             <div key={col.title}>
               <h4 className="label-overline mb-4">{col.title}</h4>
               <ul className="space-y-2.5">
-                {col.links.map((link) => (
+                {col.links.filter((link) => link.to !== '/how-it-works' || !user).map((link) => (
                   <li key={link.label}>
                     <Link to={link.to} className="text-sm text-slate-400 hover:text-white transition-colors">
                       {link.label}

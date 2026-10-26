@@ -18,6 +18,7 @@ import { MyApplicationsPage } from '@/pages/MyApplicationsPage';
 import { EditProfilePage } from '@/pages/EditProfilePage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { RoleRoute } from '@/components/auth/RoleRoute';
+import { GuestOnlyRoute } from '@/components/auth/GuestOnlyRoute';
 import { StudentDashboard } from '@/pages/dashboards/StudentDashboard';
 import { CompanyDashboard } from '@/pages/dashboards/CompanyDashboard';
 import { UniversityDashboard } from '@/pages/dashboards/UniversityDashboard';
@@ -36,7 +37,7 @@ function App() {
                 <Route path="/explore" element={<ExplorePage />} />
                 <Route path="/gallery" element={<GalleryPage />} />
                 <Route path="/companies" element={<CompaniesPage />} />
-                <Route path="/how-it-works" element={<HowItWorksPage />} />
+                <Route path="/how-it-works" element={<GuestOnlyRoute><HowItWorksPage /></GuestOnlyRoute>} />
                 <Route path="/join" element={<JoinPage />} />
                 <Route path="/signin" element={<SignInPage />} />
                 <Route path="/projects/:slug" element={<ProjectDetailPage />} />

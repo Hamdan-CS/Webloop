@@ -21,6 +21,7 @@ export function Navbar() {
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user, profile, unreadMessages, pendingReviews, signOut } = useAuth();
+  const visibleNavItems = navItems.filter((item) => item.to !== '/how-it-works' || !user);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -53,7 +54,7 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -144,7 +145,7 @@ export function Navbar() {
       {mobileOpen && (
         <div className="md:hidden border-t border-white/5 bg-ink-950/95 px-5 py-4">
           <nav className="flex flex-col gap-1">
-            {navItems.map((item) => (
+            {visibleNavItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
