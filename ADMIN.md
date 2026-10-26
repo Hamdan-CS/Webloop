@@ -2,7 +2,7 @@
 
 A student project collaboration & talent marketplace: students ship real software, find teammates, build verified portfolios, and get discovered by companies/universities based on reviewed contributions rather than resumes.
 
-Vite + React 18 + TypeScript, Tailwind CSS, React Router, Supabase (Postgres + Auth). The homepage hero ([HeroShowcase](src/components/home/HeroShowcase.tsx)) is a CSS-only 3D tilt effect driven by live recruiting projects, no WebGL dependency.
+Vite + React 18 + TypeScript, Tailwind CSS, React Router, Supabase (Postgres + Auth), three.js/@react-three/fiber for the homepage hero.
 
 ## Running it
 

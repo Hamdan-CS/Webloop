@@ -17,12 +17,15 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ProjectCard } from '@/components/projects/ProjectCard';
-import { HeroShowcase } from '@/components/home/HeroShowcase';
+import { HeroScene } from '@/components/home/HeroScene';
 import { fetchFeaturedProjects, fetchPortfolioGallery } from '@/lib/api';
 import type { Project, PortfolioItem } from '@/lib/types';
 import { Avatar } from '@/components/ui/Avatar';
+import { useAuth } from '@/components/auth/AuthContext';
+import { getDashboardPath } from '@/lib/roles';
 
 export function HomePage() {
+  const { user, profile } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,13 +45,14 @@ export function HomePage() {
     };
   }, []);
 
-  const recruitingProjects = projects.filter((p) => p.status === 'recruiting');
-
   return (
     <div>
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="container-page relative grid gap-10 pt-20 pb-24 sm:pt-28 sm:pb-32 lg:grid-cols-[1.3fr_1fr] lg:items-center">
+        <div className="absolute inset-0 pointer-events-none">
+          <HeroScene />
+        </div>
+        <div className="container-page relative pt-20 pb-24 sm:pt-28 sm:pb-32">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -74,14 +78,24 @@ export function HomePage() {
                   Explore Projects <ArrowRight size={16} />
                 </Button>
               </Link>
-              <Link to="/join">
-                <Button variant="secondary" className="text-base px-5 py-3">
-                  <Sparkles size={16} /> Join as a Student
-                </Button>
-              </Link>
-              <Link to="/join" className="link-accent text-sm ml-1">
-                Join as a Company →
-              </Link>
+              {user && profile ? (
+                <Link to={getDashboardPath(profile.creator_type)}>
+                  <Button variant="secondary" className="text-base px-5 py-3">
+                    <Sparkles size={16} /> Go to Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link to="/join">
+                    <Button variant="secondary" className="text-base px-5 py-3">
+                      <Sparkles size={16} /> Join as a Student
+                    </Button>
+                  </Link>
+                  <Link to="/join" className="link-accent text-sm ml-1">
+                    Join as a Company →
+                  </Link>
+                </>
+              )}
             </div>
 
             <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-slate-400">
@@ -96,9 +110,6 @@ export function HomePage() {
               </span>
             </div>
           </motion.div>
-          <div className="hidden lg:block">
-            <HeroShowcase projects={recruitingProjects} />
-          </div>
         </div>
       </section>
 
