@@ -160,7 +160,7 @@ export function ExplorePage() {
 
       {/* Filter panel */}
       {showFilters && (
-        <div className="surface mb-6 p-4 animate-fade-in-up">
+        <div className="surface relative z-30 mb-6 p-4 animate-fade-in-up">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Select
               label="Category"
