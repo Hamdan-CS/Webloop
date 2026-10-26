@@ -5,6 +5,7 @@ import { useAuth } from '@/components/auth/AuthContext';
 import { updateProfile } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
+import { Select } from '@/components/ui/Select';
 
 const EXPERIENCE_LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Senior', 'Lead'];
 const AVAILABILITY_OPTIONS = ['Full-time', 'Part-time', 'Weekends only', 'Currently unavailable'];
@@ -149,8 +150,8 @@ export function EditProfilePage() {
 
         {/* Experience */}
         <Section title="Experience & availability">
-          <SelectField label="Experience level" value={form.experience_level} onChange={(v) => set('experience_level', v)} options={[{ value: '', label: 'Not specified' }, ...EXPERIENCE_LEVELS.map((e) => ({ value: e, label: e }))]} />
-          <SelectField label="Availability" value={form.availability} onChange={(v) => set('availability', v)} options={[{ value: '', label: 'Not specified' }, ...AVAILABILITY_OPTIONS.map((a) => ({ value: a, label: a }))]} />
+          <Select label="Experience level" value={form.experience_level} onChange={(v) => set('experience_level', v)} options={[{ value: '', label: 'Not specified' }, ...EXPERIENCE_LEVELS.map((e) => ({ value: e, label: e }))]} />
+          <Select label="Availability" value={form.availability} onChange={(v) => set('availability', v)} options={[{ value: '', label: 'Not specified' }, ...AVAILABILITY_OPTIONS.map((a) => ({ value: a, label: a }))]} />
         </Section>
 
         {/* Interests */}
@@ -259,29 +260,3 @@ function Field({
   );
 }
 
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-}) {
-  return (
-    <label className="block">
-      <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900/60 px-3.5 py-2.5 text-sm text-slate-200 focus:border-accent-400/40 transition-colors"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value} className="bg-ink-900">{o.label}</option>
-        ))}
-      </select>
-    </label>
-  );
-}

@@ -89,7 +89,7 @@ export function HowItWorksPage() {
         <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
           {['Draft', 'Published', 'Recruiting', 'In Progress', 'Completed', 'Archived'].map((s, i, arr) => (
             <span key={s} className="flex items-center gap-2">
-              <span className="rounded-full bg-white/5 border border-white/10 px-3 py-1.5 text-slate-300">{s}</span>
+              <span className="rounded-md bg-white/5 border border-white/10 px-3 py-1.5 text-slate-300">{s}</span>
               {i < arr.length - 1 && <ArrowRight size={14} className="text-slate-600" />}
             </span>
           ))}

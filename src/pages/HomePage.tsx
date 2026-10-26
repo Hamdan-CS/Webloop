@@ -63,9 +63,7 @@ export function HomePage() {
             <h1 className="mt-4 font-display text-4xl sm:text-6xl font-bold tracking-tight text-white leading-[1.05]">
               Build real projects.
               <br />
-              <span className="bg-gradient-to-r from-accent-300 via-accent-400 to-signal-violet bg-clip-text text-transparent">
-                Find your team. Prove your skills.
-              </span>
+              <span className="text-accent-500">Find your team. Prove your skills.</span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-slate-300 leading-relaxed">
               A platform where computer science students ship real software, find teammates, build
@@ -125,7 +123,7 @@ export function HomePage() {
         {loading ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="skeleton aspect-[16/10] rounded-2xl" />
+              <div key={i} className="skeleton aspect-[16/10] rounded-lg" />
             ))}
           </div>
         ) : (
@@ -239,7 +237,7 @@ export function HomePage() {
         {loading ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="skeleton aspect-[4/3] rounded-2xl" />
+              <div key={i} className="skeleton aspect-[4/3] rounded-lg" />
             ))}
           </div>
         ) : (
@@ -284,9 +282,8 @@ export function HomePage() {
 
       {/* University partnerships */}
       <section className="container-page py-14">
-        <div className="surface relative overflow-hidden p-8 sm:p-12">
-          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-signal-violet/10 blur-3xl" />
-          <div className="relative grid lg:grid-cols-[1.5fr_1fr] gap-8 items-center">
+        <div className="surface p-8 sm:p-12">
+          <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-center">
             <div>
               <span className="label-overline">University Partnerships</span>
               <h2 className="mt-3 font-display text-3xl font-bold text-white">
@@ -343,8 +340,7 @@ export function HomePage() {
 
       {/* Final CTA */}
       <section className="container-page py-14">
-        <div className="relative overflow-hidden rounded-3xl border border-accent-400/20 bg-gradient-to-br from-ink-850 to-ink-900 p-10 sm:p-16 text-center">
-          <div className="absolute inset-0 bg-radial-glow opacity-60" />
+        <div className="relative overflow-hidden rounded-xl border border-white/10 bg-ink-900 p-10 sm:p-16 text-center">
           <div className="relative">
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">
               Stop polishing your resume.

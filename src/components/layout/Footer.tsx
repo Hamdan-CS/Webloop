@@ -39,7 +39,7 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div>
             <Link to="/" className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent-400 to-accent-600 text-ink-950">
+              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-accent-500 text-ink-950">
                 <Boxes size={20} strokeWidth={2.4} />
               </div>
               <span className="font-display text-lg font-bold text-white">WebLoop</span>

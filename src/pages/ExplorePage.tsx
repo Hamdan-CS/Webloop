@@ -114,7 +114,7 @@ export function ExplorePage() {
             key={t.value}
             onClick={() => updateParam('type', t.value)}
             className={cn(
-              'rounded-full px-3.5 py-1.5 text-sm font-medium transition-all',
+              'rounded-md px-3.5 py-1.5 text-sm font-medium transition-all',
               (query.type ?? 'all') === t.value
                 ? 'bg-accent-500 text-ink-950'
                 : 'border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10',
@@ -268,7 +268,7 @@ export function ExplorePage() {
                   onClick={() => setSelectedId(p.id)}
                   className={cn(
                     'transition-transform',
-                    selected?.id === p.id && 'lg:ring-2 lg:ring-accent-400/40 rounded-2xl',
+                    selected?.id === p.id && 'lg:ring-2 lg:ring-accent-400/40 rounded-lg',
                   )}
                 >
                   <ProjectCard project={p} selected={selected?.id === p.id} onClick={() => setSelectedId(p.id)} compact />
@@ -308,7 +308,7 @@ function ToggleChip({
     <button
       onClick={onClick}
       className={cn(
-        'rounded-full border px-3 py-1.5 text-xs font-medium transition-all',
+        'rounded-md border px-3 py-1.5 text-xs font-medium transition-all',
         active
           ? 'border-accent-400/40 bg-accent-500/15 text-accent-200'
           : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10',
@@ -322,7 +322,7 @@ function ToggleChip({
 function EmptyState() {
   return (
     <div className="surface p-14 text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 text-slate-500">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-white/5 text-slate-500">
         <Search size={24} />
       </div>
       <h3 className="mt-4 font-display text-lg font-semibold text-white">No projects match your filters</h3>

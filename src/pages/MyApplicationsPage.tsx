@@ -50,7 +50,7 @@ export function MyApplicationsPage() {
         </div>
       ) : apps.length === 0 ? (
         <div className="surface p-14 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 text-slate-500">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-white/5 text-slate-500">
             <Inbox size={24} />
           </div>
           <h3 className="mt-4 font-display text-lg font-semibold text-white">No applications yet</h3>

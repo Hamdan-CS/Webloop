@@ -94,7 +94,7 @@ export function ProjectMessageModal({
               return (
                 <div key={m.id} className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
                   <div className={cn(
-                    'max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm',
+                    'max-w-[75%] rounded-lg px-3.5 py-2.5 text-sm',
                     isMine ? 'bg-accent-500/20 text-slate-100 border border-accent-400/20' : 'bg-white/[0.04] text-slate-300 border border-white/8',
                   )}>
                     <p className="leading-relaxed">{m.body}</p>

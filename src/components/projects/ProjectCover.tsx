@@ -19,24 +19,10 @@ export function ProjectCover({ project, onPrev, onNext, index, total }: ProjectC
 
   return (
     <div
-      className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 bg-ink-900"
+      className="relative h-full w-full overflow-hidden rounded-lg border border-white/10 bg-ink-900"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Layered animated gradient backdrop */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-radial-glow opacity-70" />
-        <motion.div
-          className="absolute -inset-20 opacity-30"
-          style={{
-            background:
-              'conic-gradient(from 0deg at 50% 50%, rgba(34,211,238,0.25), transparent 30%, rgba(167,139,250,0.2), transparent 60%, rgba(34,211,238,0.25))',
-          }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
-        />
-      </div>
-
       {/* Cover image */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -67,16 +53,16 @@ export function ProjectCover({ project, onPrev, onNext, index, total }: ProjectC
       <div className="absolute left-5 top-5 right-5 flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={statusTone[project.status]}>{statusLabel[project.status]}</Badge>
-          <span className="rounded-full bg-ink-950/70 px-3 py-1 text-xs font-medium text-slate-200 backdrop-blur-sm border border-white/10">
+          <span className="rounded-md bg-ink-950/70 px-3 py-1 text-xs font-medium text-slate-200 backdrop-blur-sm border border-white/10">
             {projectTypeLabel[project.project_type]}
           </span>
           {project.category && (
-            <span className="rounded-full bg-ink-950/70 px-3 py-1 text-xs font-medium text-slate-300 backdrop-blur-sm border border-white/10">
+            <span className="rounded-md bg-ink-950/70 px-3 py-1 text-xs font-medium text-slate-300 backdrop-blur-sm border border-white/10">
               {project.category}
             </span>
           )}
         </div>
-        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-ink-950/70 px-3 py-1.5 text-[11px] text-slate-400 backdrop-blur-sm border border-white/10">
+        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-md bg-ink-950/70 px-3 py-1.5 text-[11px] text-slate-400 backdrop-blur-sm border border-white/10">
           <MousePointerClick size={12} /> Interactive preview
         </span>
       </div>

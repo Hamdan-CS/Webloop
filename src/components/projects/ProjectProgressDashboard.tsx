@@ -118,7 +118,7 @@ export function ProjectProgressDashboard({ project, isOwner }: Props) {
           {LIFECYCLE_STEPS.map((s, i) => (
             <span key={s.key} className="flex items-center gap-2">
               <span
-                className={`rounded-full px-2.5 py-1 font-medium transition-colors ${
+                className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
                   i === currentIdx
                     ? 'bg-accent-500 text-ink-950'
                     : i < currentIdx

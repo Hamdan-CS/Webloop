@@ -26,7 +26,7 @@ export function ProjectCard({ project, selected, onClick, compact }: ProjectCard
   const inner = (
     <article
       className={cn(
-        'group relative flex flex-col overflow-hidden rounded-2xl border bg-ink-900/60 transition-all duration-300',
+        'group relative flex flex-col overflow-hidden rounded-lg border bg-ink-900/60 transition-all duration-300',
         selected
           ? 'border-accent-400/50 shadow-glow'
           : 'border-white/8 hover:border-white/15 hover:bg-ink-850/70',
@@ -53,7 +53,7 @@ export function ProjectCard({ project, selected, onClick, compact }: ProjectCard
           {project.is_beginner_friendly && <Badge tone="accent">Beginner-friendly</Badge>}
         </div>
         <div className="absolute right-3 top-3">
-          <span className="rounded-full bg-ink-950/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-300 backdrop-blur-sm">
+          <span className="rounded-md bg-ink-950/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-300 backdrop-blur-sm">
             {projectTypeLabel[project.project_type]}
           </span>
         </div>

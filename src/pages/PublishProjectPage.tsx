@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, AlertCircle, Plus, X, Sparkles } from 'lucide-react
 import { useAuth } from '@/components/auth/AuthContext';
 import { createProject } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 import { cn } from '@/lib/utils';
 
 const CATEGORIES = ['Web App', 'Mobile App', 'Backend / Infra', 'Developer Tool', 'Game / Engine', 'ML', 'CLI'];
@@ -158,11 +159,11 @@ export function PublishProjectPage() {
         {/* Classification */}
         <FormSection title="Classification">
           <div className="grid sm:grid-cols-2 gap-4">
-            <SelectField label="Category" value={form.category} onChange={(v) => set('category', v)} options={CATEGORIES.map((c) => ({ value: c, label: c }))} />
-            <SelectField label="Project type" value={form.project_type} onChange={(v) => set('project_type', v)} options={PROJECT_TYPES} />
-            <SelectField label="Difficulty" value={form.difficulty} onChange={(v) => set('difficulty', v)} options={DIFFICULTIES} />
-            <SelectField label="Compensation" value={form.compensation} onChange={(v) => set('compensation', v)} options={COMPENSATIONS} />
-            <SelectField label="Status" value={form.status} onChange={(v) => set('status', v)} options={STATUSES} />
+            <Select label="Category" value={form.category} onChange={(v) => set('category', v)} options={CATEGORIES.map((c) => ({ value: c, label: c }))} />
+            <Select label="Project type" value={form.project_type} onChange={(v) => set('project_type', v)} options={PROJECT_TYPES} />
+            <Select label="Difficulty" value={form.difficulty} onChange={(v) => set('difficulty', v)} options={DIFFICULTIES} />
+            <Select label="Compensation" value={form.compensation} onChange={(v) => set('compensation', v)} options={COMPENSATIONS} />
+            <Select label="Status" value={form.status} onChange={(v) => set('status', v)} options={STATUSES} />
           </div>
           <div className="flex flex-wrap gap-4 mt-2">
             <Checkbox label="Beginner-friendly" checked={form.is_beginner_friendly} onChange={(v) => set('is_beginner_friendly', v)} />
@@ -315,32 +316,6 @@ function Field({
   );
 }
 
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-}) {
-  return (
-    <label className="block">
-      <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900/60 px-3.5 py-2.5 text-sm text-slate-200 focus:border-accent-400/40 transition-colors"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value} className="bg-ink-900">{o.label}</option>
-        ))}
-      </select>
-    </label>
-  );
-}
 
 function Checkbox({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (

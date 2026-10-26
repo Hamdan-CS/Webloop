@@ -50,6 +50,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Rating, NoRating } from '@/components/ui/Rating';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 import { useAuthPrompt } from '@/components/auth/AuthPrompt';
 import { useAuth } from '@/components/auth/AuthContext';
 import { creatorTypeLabel, relativeDate, statusLabel, statusTone } from '@/lib/labels';
@@ -649,16 +650,14 @@ export function CreatorProfilePage() {
                           <div className="mt-2 rounded-xl border border-white/8 bg-ink-900/60 p-3 space-y-2">
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] uppercase tracking-wider text-slate-500">Status</span>
-                              <select
+                              <Select
+                                className="flex-1"
+                                size="sm"
                                 value={p.status}
                                 disabled={statusUpdating === p.id}
-                                onChange={(e) => handleStatusChange(p.id, e.target.value)}
-                                className="flex-1 appearance-none rounded-md border border-white/10 bg-ink-900 px-2 py-1 text-xs text-slate-200 focus:border-accent-400/40"
-                              >
-                                {PROJECT_STATUSES.map((s) => (
-                                  <option key={s} value={s} className="bg-ink-900">{statusLabel[s]}</option>
-                                ))}
-                              </select>
+                                onChange={(v) => handleStatusChange(p.id, v)}
+                                options={PROJECT_STATUSES.map((s) => ({ value: s, label: statusLabel[s] }))}
+                              />
                               {statusUpdating === p.id && <Loader2 size={12} className="animate-spin text-accent-400" />}
                               {appCounts[p.id] > 0 && (
                                 <Link to="#" onClick={(e) => { e.preventDefault(); setTab('applications'); handleExpandApps(p.id); }} className="inline-flex items-center gap-1 text-[10px] text-signal-amber hover:text-signal-amber/80">
@@ -954,7 +953,7 @@ function ContactModal({
 
         {sent ? (
           <div className="py-6 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-signal-green/15 text-signal-green">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-signal-green/15 text-signal-green">
               <CheckCircle2 size={28} />
             </div>
             <h3 className="mt-4 font-display text-lg font-semibold text-white">Message sent!</h3>

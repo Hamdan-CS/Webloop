@@ -53,17 +53,8 @@ export default {
         display: ['"Space Grotesk"', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
-      backgroundImage: {
-        'grid-faint':
-          'linear-gradient(to right, var(--grid-line) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px)',
-        'radial-glow':
-          'radial-gradient(60% 60% at 50% 0%, var(--radial-glow-color) 0%, transparent 70%)',
-      },
-      backgroundSize: {
-        grid: '40px 40px',
-      },
       boxShadow: {
-        glow: '0 0 0 1px var(--glow-border), 0 8px 40px -8px var(--glow-spread)',
+        glow: '0 0 0 1px var(--glow-border)',
         card: '0 1px 0 0 var(--card-inner) inset, 0 1px 24px -12px var(--card-shadow)',
       },
       keyframes: {

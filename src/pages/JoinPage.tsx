@@ -83,7 +83,7 @@ export function JoinPage() {
             key={r.role}
             onClick={() => setSelected(r.role)}
             className={cn(
-              'text-left rounded-2xl border p-5 transition-all',
+              'text-left rounded-lg border p-5 transition-all',
               selected === r.role
                 ? 'border-accent-400/50 bg-accent-500/5 shadow-glow'
                 : 'border-white/8 bg-ink-900/60 hover:border-white/15',

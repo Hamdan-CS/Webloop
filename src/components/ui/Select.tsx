@@ -14,9 +14,11 @@ interface SelectProps {
   options: SelectOption[];
   onChange: (value: string) => void;
   className?: string;
+  disabled?: boolean;
+  size?: 'sm' | 'md';
 }
 
-export function Select({ label, value, options, onChange, className }: SelectProps) {
+export function Select({ label, value, options, onChange, className, disabled, size = 'md' }: SelectProps) {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -67,17 +69,19 @@ export function Select({ label, value, options, onChange, className }: SelectPro
         <button
           ref={buttonRef}
           type="button"
+          disabled={disabled}
           onClick={() => setOpen((v) => !v)}
           aria-haspopup="listbox"
           aria-expanded={open}
           className={cn(
-            'flex w-full items-center justify-between gap-2 rounded-lg border bg-ink-900/60 px-3 py-2.5 text-left text-sm text-slate-200 transition-colors',
+            'flex w-full items-center justify-between gap-2 rounded-lg border bg-ink-900/60 text-left text-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+            size === 'sm' ? 'px-2 py-1 text-xs' : 'px-3 py-2.5 text-sm',
             open ? 'border-accent-400/40' : 'border-white/10 hover:border-white/20',
           )}
         >
           <span className="truncate">{current?.label ?? 'Select…'}</span>
           <ChevronDown
-            size={14}
+            size={size === 'sm' ? 12 : 14}
             className={cn('shrink-0 text-slate-500 transition-transform', open && 'rotate-180')}
           />
         </button>

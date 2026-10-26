@@ -24,6 +24,7 @@ import type { ProjectMember, Task, TaskStatus, TaskSubmission } from '@/lib/type
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 import { relativeDate } from '@/lib/labels';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/auth/AuthContext';
@@ -410,21 +411,18 @@ function CreateTaskModal({
           </label>
 
           <div className="grid grid-cols-2 gap-4">
-            <label className="block">
-              <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">Assign to</span>
-              <select
-                value={assigneeId}
-                onChange={(e) => setAssigneeId(e.target.value)}
-                className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900/60 px-3.5 py-2.5 text-sm text-slate-200 focus:border-accent-400/40"
-              >
-                <option value="">Unassigned</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.profile_id} className="bg-ink-900">
-                    {m.profile?.display_name} ({m.role ?? 'member'})
-                  </option>
-                ))}
-              </select>
-            </label>
+            <Select
+              label="Assign to"
+              value={assigneeId}
+              onChange={setAssigneeId}
+              options={[
+                { value: '', label: 'Unassigned' },
+                ...members.map((m) => ({
+                  value: m.profile_id,
+                  label: `${m.profile?.display_name} (${m.role ?? 'member'})`,
+                })),
+              ]}
+            />
 
             <label className="block">
               <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">Due Date</span>

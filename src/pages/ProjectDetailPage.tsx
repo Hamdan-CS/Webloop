@@ -24,6 +24,7 @@ import type { Project, Application, ProjectMember, Message } from '@/lib/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 import { Rating, NoRating } from '@/components/ui/Rating';
 import { useAuthPrompt } from '@/components/auth/AuthPrompt';
 import { useAuth } from '@/components/auth/AuthContext';
@@ -171,7 +172,7 @@ export function ProjectDetailPage() {
       </Link>
 
       {/* Hero cover */}
-      <div className="relative h-[36vh] min-h-[280px] overflow-hidden rounded-3xl border border-white/10">
+      <div className="relative h-[36vh] min-h-[280px] overflow-hidden rounded-xl border border-white/10">
         {project.cover_image_url ? (
           <img src={project.cover_image_url} alt={project.title} className="h-full w-full object-cover" />
         ) : (
@@ -181,11 +182,11 @@ export function ProjectDetailPage() {
         <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <Badge tone={statusTone[project.status]}>{statusLabel[project.status]}</Badge>
-            <span className="rounded-full bg-ink-950/70 px-3 py-1 text-xs font-medium text-slate-200 backdrop-blur-sm border border-white/10">
+            <span className="rounded-md bg-ink-950/70 px-3 py-1 text-xs font-medium text-slate-200 backdrop-blur-sm border border-white/10">
               {projectTypeLabel[project.project_type]}
             </span>
             {project.category && (
-              <span className="rounded-full bg-ink-950/70 px-3 py-1 text-xs font-medium text-slate-300 backdrop-blur-sm border border-white/10">
+              <span className="rounded-md bg-ink-950/70 px-3 py-1 text-xs font-medium text-slate-300 backdrop-blur-sm border border-white/10">
                 {project.category}
               </span>
             )}
@@ -432,7 +433,7 @@ export function ProjectDetailPage() {
 
             {applySuccess ? (
               <div className="py-6 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-signal-green/15 text-signal-green">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-signal-green/15 text-signal-green">
                   <CheckCircle2 size={28} />
                 </div>
                 <h3 className="mt-4 font-display text-lg font-semibold text-white">Application sent!</h3>
@@ -449,19 +450,17 @@ export function ProjectDetailPage() {
                 </p>
 
                 {openRoles.length > 0 && (
-                  <label className="block mb-4">
-                    <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">Role you're applying for</span>
-                    <select
+                  <div className="mb-4">
+                    <Select
+                      label="Role you're applying for"
                       value={applyRole}
-                      onChange={(e) => setApplyRole(e.target.value)}
-                      className="w-full appearance-none rounded-lg border border-white/10 bg-ink-900/60 px-3.5 py-2.5 text-sm text-slate-200 focus:border-accent-400/40 transition-colors"
-                    >
-                      <option value="" className="bg-ink-900">General contribution</option>
-                      {openRoles.map((r) => (
-                        <option key={r.id} value={r.title} className="bg-ink-900">{r.title}</option>
-                      ))}
-                    </select>
-                  </label>
+                      onChange={setApplyRole}
+                      options={[
+                        { value: '', label: 'General contribution' },
+                        ...openRoles.map((r) => ({ value: r.title, label: r.title })),
+                      ]}
+                    />
+                  </div>
                 )}
 
                 <label className="block mb-4">

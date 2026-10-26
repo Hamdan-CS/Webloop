@@ -42,7 +42,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b border-white/5 bg-ink-950/80 backdrop-blur-xl">
       <div className="container-page flex h-16 items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent-400 to-accent-600 text-ink-950 shadow-glow">
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-md bg-accent-500 text-ink-950">
             <Boxes size={20} strokeWidth={2.4} />
           </div>
           <div className="flex flex-col leading-none">
