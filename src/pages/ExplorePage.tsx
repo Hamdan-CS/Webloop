@@ -3,11 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, X, Loader2 } from 'lucide-react';
 import { fetchProjects, type ProjectQuery } from '@/lib/api';
 import type { Project } from '@/lib/types';
-import { ProjectCover } from '@/components/projects/ProjectCover';
-import { DetailsPanel } from '@/components/projects/DetailsPanel';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { Select } from '@/components/ui/Select';
-import { fetchProfileStats } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 const CATEGORIES = ['Web App', 'Mobile App', 'Backend / Infra', 'Developer Tool', 'Game / Engine', 'ML', 'CLI'];
@@ -30,7 +27,6 @@ export function ExplorePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [ratingMap, setRatingMap] = useState<Record<string, { avg: number; count: number }>>({});
 
   const query: ProjectQuery = useMemo(
     () => ({
@@ -53,29 +49,10 @@ export function ExplorePage() {
     setLoading(true);
     setError(null);
     fetchProjects(query)
-      .then((data) => {
-        setProjects(data);
-        // load ratings for project owners
-        const ownerIds = Array.from(new Set(data.map((p) => p.owner_id)));
-        Promise.all(
-          ownerIds.map(async (id) => {
-            const stats = await fetchProfileStats(id);
-            return [id, { avg: stats.avg_rating, count: stats.review_count }] as const;
-          }),
-        ).then((entries) => {
-          setRatingMap(Object.fromEntries(entries));
-        });
-      })
+      .then((data) => setProjects(data))
       .catch((e) => setError(e.message ?? 'Failed to load projects'))
       .finally(() => setLoading(false));
   }, [query]);
-
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = useMemo(
-    () => projects.find((p) => p.id === selectedId) ?? projects[0] ?? null,
-    [projects, selectedId],
-  );
-  const selectedIndex = selected ? projects.findIndex((p) => p.id === selected.id) : -1;
 
   const updateParam = (key: string, value: string | null) => {
     const next = new URLSearchParams(searchParams);
@@ -241,54 +218,10 @@ export function ExplorePage() {
       ) : projects.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr] xl:grid-cols-[1.5fr_1fr]">
-          {/* LEFT: interactive preview + card grid */}
-          <div className="group relative flex flex-col gap-5">
-            {selected && (
-              <div className="relative h-[46vh] min-h-[340px] lg:h-[52vh]">
-                <ProjectCover
-                  project={selected}
-                  index={selectedIndex}
-                  total={projects.length}
-                  onPrev={() =>
-                    setSelectedId(
-                      projects[(selectedIndex - 1 + projects.length) % projects.length].id,
-                    )
-                  }
-                  onNext={() =>
-                    setSelectedId(projects[(selectedIndex + 1) % projects.length].id)
-                  }
-                />
-              </div>
-            )}
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {projects.map((p) => (
-                <div
-                  key={p.id}
-                  onClick={() => setSelectedId(p.id)}
-                  className={cn(
-                    'transition-transform',
-                    selected?.id === p.id && 'lg:ring-2 lg:ring-accent-400/40 rounded-lg',
-                  )}
-                >
-                  <ProjectCard project={p} selected={selected?.id === p.id} onClick={() => setSelectedId(p.id)} compact />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* RIGHT: persistent details panel (sticky on desktop) */}
-          <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
-            {selected && (
-              <div className="h-full surface-raised overflow-hidden">
-                <DetailsPanel
-                  project={selected}
-                  avgRating={ratingMap[selected.owner_id]?.avg}
-                  reviewCount={ratingMap[selected.owner_id]?.count}
-                />
-              </div>
-            )}
-          </div>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {projects.map((p) => (
+            <ProjectCard key={p.id} project={p} />
+          ))}
         </div>
       )}
     </div>
