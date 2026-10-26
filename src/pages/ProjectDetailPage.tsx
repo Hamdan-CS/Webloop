@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   ArrowRight,
@@ -85,9 +86,14 @@ export function ProjectDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex h-[60vh] items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+        className="flex h-[60vh] items-center justify-center"
+      >
         <Loader2 size={28} className="animate-spin text-accent-400" />
-      </div>
+      </motion.div>
     );
   }
   if (!project) {
@@ -154,7 +160,12 @@ export function ProjectDetailPage() {
   };
 
   return (
-    <div className="container-page py-8">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="container-page py-8"
+    >
       <Link to="/explore" className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors mb-6">
         <ArrowLeft size={15} /> Back to Explore
       </Link>
@@ -505,7 +516,7 @@ export function ProjectDetailPage() {
           onClose={() => setShowMessageModal(false)}
         />
       )}
-    </div>
+    </motion.div>
   );
 }
 
