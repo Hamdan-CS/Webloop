@@ -205,17 +205,14 @@ export async function fetchProfileStats(profileId: string): Promise<{ review_cou
 }
 
 export async function fetchProfileContributions(profileId: string): Promise<{ total: number; approved: number }> {
-  const { data, error } = await supabase
-    .from('task_submissions')
-    .select('status')
-    .eq('submitted_by', profileId);
-
-  if (error) throw error;
-  const subs = data ?? [];
-  return {
-    total: subs.length,
-    approved: subs.filter((s) => s.status === 'approved').length,
-  };
+  try {
+    const { data, error } = await supabase.rpc('get_profile_contribution_counts', { profile_uid: profileId });
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    return { total: row?.total ?? 0, approved: row?.approved ?? 0 };
+  } catch {
+    return { total: 0, approved: 0 };
+  }
 }
 
 export async function fetchPortfolioGallery(limit = 24): Promise<PortfolioItem[]> {

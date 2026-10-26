@@ -40,7 +40,4 @@ VITE_SUPABASE_ANON_KEY=...
 - Core tables: `profiles`, `projects` (+ `project_skills`, `project_roles`, `project_members`), `applications`, `tasks`, `task_submissions`, `messages`, `reviews`, `portfolio_items`.
 - Access control is enforced with Postgres RLS policies plus table-level `GRANT`/`REVOKE` to the `anon` and `authenticated` roles — both layers matter. Migration 009 revoked `anon` SELECT on `tasks`/`task_submissions` and restricted reads to the project owner/accepted members; anything in app code that queries those tables for a public/anon audience (e.g. aggregate stats on a public profile) will now fail with a Postgres permission error rather than an RLS-empty result.
 - Migration 010 added `profiles.linkedin_url` (nullable), alongside the pre-existing `github_url`/`website_url`.
-
-## Known issue
-
-`fetchProfileContributions` in [src/lib/api.ts](src/lib/api.ts) selects directly from `task_submissions` to compute the "approved contributions" stat shown on every [CreatorProfilePage](src/pages/CreatorProfilePage.tsx). Since migration 009 revoked `anon` SELECT on that table, this call throws for anonymous visitors, and because `loadData` in `CreatorProfilePage` has no try/catch around it, the page gets stuck on its loading spinner. Needs either a `SECURITY DEFINER` RPC that returns just the counts, or a narrower public policy/grant.
+- Migration 011 added the `get_profile_contribution_counts` `SECURITY DEFINER` RPC so `fetchProfileContributions` can get the "approved contributions" aggregate for a profile without needing `SELECT` on `task_submissions` — used by [CreatorProfilePage](src/pages/CreatorProfilePage.tsx) for both guests and signed-in visitors.
