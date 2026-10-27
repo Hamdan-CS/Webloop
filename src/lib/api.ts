@@ -407,6 +407,10 @@ export async function updateProfile(
     avatar_url?: string;
     banner_url?: string;
     location?: string;
+    education_level?: string;
+    university?: string;
+    major?: string;
+    graduation_year?: number | null;
     website_url?: string;
     github_url?: string;
     linkedin_url?: string;

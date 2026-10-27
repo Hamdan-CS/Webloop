@@ -18,6 +18,7 @@ import { uploadProfileImage } from '@/lib/storage';
 import { getDashboardPath } from '@/lib/roles';
 import './BuildProfilePage.css';
 
+const EDUCATION_LEVELS = ['Undergraduate', 'Graduate', 'Postgraduate', 'Other'];
 const EXPERIENCE_LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Senior', 'Lead'];
 const AVAILABILITY_OPTIONS = ['Full-time', 'Part-time', 'Weekends only', 'Currently unavailable'];
 const SKILL_SUGGESTIONS = ['React', 'TypeScript', 'Python', 'SQL', 'Figma', 'Git', 'Machine learning', 'Open source'];
@@ -28,12 +29,13 @@ const BANNER_LIMIT_MB = 5;
 
 const STEPS = ['Basics', 'Photos', 'About you', 'Links', 'Skills'] as const;
 const STEP_NOTES = [
-  'These are the only required fields.',
+  'These four are required.',
   'Skip these if you like. Initials show until you add a photo.',
   "All optional. Add what's useful.",
   'Paste a link, or just the address.',
   'Type and press Enter, or tap a suggestion.',
 ];
+const REQUIRED_FIELDS = ['name', 'edu', 'uni', 'major'] as const;
 
 function cn(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(' ');
@@ -100,16 +102,18 @@ function SegGroup({
   value,
   onChange,
   clearable,
+  invalid,
 }: {
   legend: string;
   options: string[];
   value: string;
   onChange: (v: string) => void;
   clearable?: boolean;
+  invalid?: boolean;
 }) {
   const wasChecked = useRef<Record<string, boolean>>({});
   return (
-    <div className="bp-seg" role="radiogroup" aria-label={legend}>
+    <div className="bp-seg" role="radiogroup" aria-label={legend} aria-invalid={invalid || undefined}>
       {options.map((opt) => {
         const checked = value === opt;
         return (
@@ -118,7 +122,7 @@ function SegGroup({
             type="button"
             role="radio"
             aria-checked={checked}
-            className={cn(checked && 'bp-checked')}
+            className={cn(checked && 'bp-checked', invalid && 'bp-invalid')}
             onPointerDown={() => { wasChecked.current[opt] = checked; }}
             onClick={() => {
               if (clearable && wasChecked.current[opt]) onChange('');
@@ -222,8 +226,11 @@ export function BuildProfilePage() {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const [name, setName] = useState(profile?.display_name ?? '');
+  const [educationLevel, setEducationLevel] = useState(profile?.education_level ?? '');
+  const [university, setUniversity] = useState(profile?.university ?? '');
+  const [major, setMajor] = useState(profile?.major ?? '');
   const [bio, setBio] = useState(profile?.bio ?? '');
-  const [touched, setTouched] = useState<{ name?: boolean; bio?: boolean }>({});
+  const [touched, setTouched] = useState<{ name?: boolean; edu?: boolean; uni?: boolean; major?: boolean }>({});
 
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url ?? '');
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -237,7 +244,15 @@ export function BuildProfilePage() {
   const [bannerUrlInput, setBannerUrlInput] = useState('');
   const bannerBlobRef = useRef<string | null>(null);
 
-  const [location, setLocation] = useState(profile?.location ?? '');
+  const [city, setCity] = useState(() => (profile?.location ?? '').split(',')[0]?.trim() ?? '');
+  const [country, setCountry] = useState(() => (profile?.location ?? '').split(',').slice(1).join(',').trim());
+  const [graduationYear, setGraduationYear] = useState(profile?.graduation_year ? String(profile.graduation_year) : '');
+  const yearOptions = useMemo(() => {
+    const y = new Date().getFullYear();
+    const years: string[] = [];
+    for (let i = y - 6; i <= y + 8; i++) years.push(String(i));
+    return years;
+  }, []);
   const [experience, setExperience] = useState(profile?.experience_level ?? '');
   const [availability, setAvailability] = useState(profile?.availability ?? '');
 
@@ -254,6 +269,37 @@ export function BuildProfilePage() {
   const [languages, setLanguages] = useState<string[]>(profile?.languages ?? []);
 
   const [stats, setStats] = useState<{ projects: number; approved: number; rating: number; reviews: number } | null>(null);
+
+  // `profile` loads asynchronously (and can belong to a different signed-in
+  // user than whichever profile this component first mounted with — e.g. a
+  // fresh sign-up reusing this same mounted route). Re-seed every field from
+  // the server the moment the *identity* of the profile changes, but never
+  // on a same-profile refetch (persist() calls refreshProfile() between
+  // steps, which must not stomp edits already made on later steps).
+  const seededProfileId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!profile || seededProfileId.current === profile.id) return;
+    seededProfileId.current = profile.id;
+    setName(profile.display_name ?? '');
+    setEducationLevel(profile.education_level ?? '');
+    setUniversity(profile.university ?? '');
+    setMajor(profile.major ?? '');
+    setBio(profile.bio ?? '');
+    setAvatarUrl(profile.avatar_url ?? '');
+    setBannerUrl(profile.banner_url ?? '');
+    setCity((profile.location ?? '').split(',')[0]?.trim() ?? '');
+    setCountry((profile.location ?? '').split(',').slice(1).join(',').trim());
+    setGraduationYear(profile.graduation_year ? String(profile.graduation_year) : '');
+    setExperience(profile.experience_level ?? '');
+    setAvailability(profile.availability ?? '');
+    setWebsite(profile.website_url ?? '');
+    setGithub(profile.github_url ?? '');
+    setLinkedin(profile.linkedin_url ?? '');
+    setPortfolioLinks(profile.portfolio_links ?? []);
+    setSkills(profile.interests ?? []);
+    setRoles(profile.preferred_roles ?? []);
+    setLanguages(profile.languages ?? []);
+  }, [profile]);
 
   useEffect(() => {
     if (!profile) return;
@@ -317,18 +363,21 @@ export function BuildProfilePage() {
   };
 
   const nameOk = name.trim().length >= 2;
-  const bioOk = bio.trim().length >= 20;
-  const requiredDone = (nameOk ? 1 : 0) + (bioOk ? 1 : 0);
+  const eduOk = !!educationLevel;
+  const uniOk = university.trim().length >= 2;
+  const majorOk = major.trim().length >= 2;
+  const requiredDone = [nameOk, eduOk, uniOk, majorOk].filter(Boolean).length;
+  const allRequiredOk = nameOk && eduOk && uniOk && majorOk;
 
   const completion = useMemo(() => {
     const optionalFlags = [
-      !!avatarUrl.trim(), !!bannerUrl.trim(), !!location.trim(), !!experience, !!availability,
+      !!bio.trim(), !!avatarUrl.trim(), !!bannerUrl.trim(), !!(city.trim() || country.trim()), !!graduationYear, !!experience, !!availability,
       skills.length > 0, roles.length > 0, languages.length > 0,
       !!(website || github || linkedin), portfolioLinks.length > 0,
     ];
     const optDone = optionalFlags.filter(Boolean).length;
-    return Math.round((requiredDone / 2) * 60 + (optDone / optionalFlags.length) * 40);
-  }, [avatarUrl, bannerUrl, location, experience, availability, skills, roles, languages, website, github, linkedin, portfolioLinks, requiredDone]);
+    return Math.round((requiredDone / REQUIRED_FIELDS.length) * 60 + (optDone / optionalFlags.length) * 40);
+  }, [bio, avatarUrl, bannerUrl, city, country, graduationYear, experience, availability, skills, roles, languages, website, github, linkedin, portfolioLinks, requiredDone]);
 
   if (!user || !profile) {
     return (
@@ -340,13 +389,17 @@ export function BuildProfilePage() {
   }
 
   function gateBasics(): boolean {
-    setTouched({ name: true, bio: true });
-    if (!nameOk || !bioOk) {
+    setTouched({ name: true, edu: true, uni: true, major: true });
+    const ok = { name: nameOk, edu: eduOk, uni: uniOk, major: majorOk };
+    const missing = REQUIRED_FIELDS.filter((k) => !ok[k]);
+    if (missing.length) {
       setStep(1);
       setMobileView('edit');
-      showToast(!nameOk && !bioOk ? '2 required fields left.' : '1 required field left.');
-      const el = document.getElementById(!nameOk ? 'bp-f-name' : 'bp-f-bio');
-      el?.focus();
+      showToast(missing.length === 1 ? '1 required field left.' : `${missing.length} required fields left.`);
+      const first = missing[0];
+      const focusId = first === 'name' ? 'bp-f-name' : first === 'uni' ? 'bp-f-uni' : first === 'major' ? 'bp-f-major' : null;
+      const el = focusId ? document.getElementById(focusId) : document.querySelector('.bp-seg[aria-label="Education level"] button');
+      (el as HTMLElement | null)?.focus();
       el?.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
       return false;
     }
@@ -373,10 +426,14 @@ export function BuildProfilePage() {
     try {
       await updateProfile(profile!.id, {
         display_name: name.trim() || undefined,
+        education_level: educationLevel || undefined,
+        university: university.trim() || undefined,
+        major: major.trim() || undefined,
         bio: bio.trim() || undefined,
         avatar_url: avatarUrl.trim() || undefined,
         banner_url: bannerUrl.trim() || undefined,
-        location: location.trim() || undefined,
+        location: [city.trim(), country.trim()].filter(Boolean).join(', ') || undefined,
+        graduation_year: graduationYear ? Number(graduationYear) : null,
         experience_level: experience || undefined,
         availability: availability || undefined,
         website_url: w.value || undefined,
@@ -444,7 +501,7 @@ export function BuildProfilePage() {
   };
 
   const goStep = (n: number) => {
-    if (n > 1 && (!nameOk || !bioOk)) { gateBasics(); return; }
+    if (n > 1 && !allRequiredOk) { gateBasics(); return; }
     setStep(n);
   };
 
@@ -563,15 +620,43 @@ export function BuildProfilePage() {
                   </div>
 
                   <div className="bp-field">
-                    <label className="bp-lab" htmlFor="bp-f-bio"><span>Short introduction <span className="bp-count">{bio.length}/280</span></span><span className="bp-req">Required</span></label>
+                    <div className="bp-lab"><span>Education level</span><span className="bp-req">Required</span></div>
+                    <SegGroup legend="Education level" options={EDUCATION_LEVELS} value={educationLevel} onChange={(v) => { setEducationLevel(v); setTouched((t) => ({ ...t, edu: true })); }} invalid={touched.edu && !eduOk} />
+                    {touched.edu && !eduOk && <p className="bp-err-text">Choose your education level.</p>}
+                  </div>
+
+                  <div className="bp-field">
+                    <label className="bp-lab" htmlFor="bp-f-uni"><span>University or institution</span><span className="bp-req">Required</span></label>
+                    <input
+                      id="bp-f-uni" type="text" className={cn('bp-in', touched.uni && !uniOk && 'bp-invalid')}
+                      maxLength={100} value={university}
+                      onChange={(e) => setUniversity(e.target.value)}
+                      onBlur={() => setTouched((t) => ({ ...t, uni: true }))}
+                      placeholder="e.g. University of Łódź"
+                    />
+                    {touched.uni && !uniOk && <p className="bp-err-text">Add your university or institution.</p>}
+                  </div>
+
+                  <div className="bp-field">
+                    <label className="bp-lab" htmlFor="bp-f-major"><span>Major / field of study</span><span className="bp-req">Required</span></label>
+                    <input
+                      id="bp-f-major" type="text" className={cn('bp-in', touched.major && !majorOk && 'bp-invalid')}
+                      maxLength={80} value={major}
+                      onChange={(e) => setMajor(e.target.value)}
+                      onBlur={() => setTouched((t) => ({ ...t, major: true }))}
+                      placeholder="e.g. Computer Science"
+                    />
+                    {touched.major && !majorOk && <p className="bp-err-text">Add your major or field of study.</p>}
+                  </div>
+
+                  <div className="bp-field">
+                    <label className="bp-lab" htmlFor="bp-f-bio"><span>Short introduction <span className="bp-count">{bio.length}/280</span></span><span className="bp-opt">Optional</span></label>
                     <textarea
-                      id="bp-f-bio" className={cn('bp-in', touched.bio && !bioOk && 'bp-invalid')}
+                      id="bp-f-bio" className="bp-in"
                       maxLength={280} value={bio}
                       onChange={(e) => setBio(e.target.value)}
-                      onBlur={() => setTouched((t) => ({ ...t, bio: true }))}
                       placeholder="What you study, what you enjoy building, and what you’re looking for."
                     />
-                    {touched.bio && !bioOk && <p className="bp-err-text">Write at least 20 characters so people know who you are.</p>}
                   </div>
                 </section>
 
@@ -642,7 +727,18 @@ export function BuildProfilePage() {
 
                   <div className="bp-field">
                     <div className="bp-lab"><span>Location</span><span className="bp-opt">Optional</span></div>
-                    <input type="text" className="bp-in" maxLength={120} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, Country" />
+                    <div className="bp-row2">
+                      <input type="text" className="bp-in" maxLength={60} value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" aria-label="City" />
+                      <input type="text" className="bp-in" maxLength={60} value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Country" aria-label="Country" />
+                    </div>
+                  </div>
+
+                  <div className="bp-field">
+                    <label className="bp-lab" htmlFor="bp-f-year"><span>Graduation year</span><span className="bp-opt">Optional</span></label>
+                    <select id="bp-f-year" className="bp-in" value={graduationYear} onChange={(e) => setGraduationYear(e.target.value)}>
+                      <option value="">Select year</option>
+                      {yearOptions.map((y) => <option key={y} value={y}>{y}</option>)}
+                    </select>
                   </div>
 
                   <div className="bp-field">
@@ -733,7 +829,7 @@ export function BuildProfilePage() {
             <div className="bp-pvhead">
               <div>
                 <h2>Live preview</h2>
-                <span className="bp-sub-label">{requiredDone === 2 ? 'All required fields done' : `${requiredDone} of 2 required done`}</span>
+                <span className="bp-sub-label">{requiredDone === REQUIRED_FIELDS.length ? 'All required fields done' : `${requiredDone} of ${REQUIRED_FIELDS.length} required done`}</span>
               </div>
               <div className="bp-pcomp">
                 <span><strong>{completion}%</strong> complete</span>
@@ -757,18 +853,25 @@ export function BuildProfilePage() {
 
                     <div className="bp-badges">
                       <span className="bp-pill bp-student"><GraduationCap size={13} /> Student</span>
-                      {experience && <span className="bp-pill">{experience}</span>}
+                      {educationLevel && <span className="bp-pill">{educationLevel} student</span>}
                       {availability && (
                         <span className="bp-pill">
                           <span className="bp-dot" style={{ background: availability === 'Full-time' ? 'var(--bp-ok)' : availability === 'Currently unavailable' ? 'var(--bp-muted)' : 'var(--bp-accent)' }} />
                           {availability}
                         </span>
                       )}
+                      {experience && <span className="bp-pill">{experience}</span>}
                     </div>
 
-                    {location && (
+                    {(major.trim() || university.trim() || graduationYear || city.trim() || country.trim()) && (
                       <div className="bp-meta">
-                        <p className="bp-line"><MapPin size={14} /><span>{location}</span></p>
+                        {major.trim() && <p className="bp-line bp-major">{major.trim()}</p>}
+                        {(university.trim() || graduationYear) && (
+                          <p className="bp-line"><GraduationCap size={14} /><span>{[university.trim(), graduationYear && `class of ${graduationYear}`].filter(Boolean).join(', ')}</span></p>
+                        )}
+                        {(city.trim() || country.trim()) && (
+                          <p className="bp-line"><MapPin size={14} /><span>{[city.trim(), country.trim()].filter(Boolean).join(', ')}</span></p>
+                        )}
                       </div>
                     )}
 

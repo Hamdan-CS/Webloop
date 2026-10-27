@@ -27,6 +27,7 @@ import {
   FolderGit2,
   Languages as LanguagesIcon,
   Link2,
+  GraduationCap,
 } from 'lucide-react';
 import {
   fetchProfileByHandle,
@@ -312,8 +313,17 @@ export function CreatorProfilePage() {
                 <h1 className="font-display text-xl sm:text-2xl font-bold text-white">{profile.display_name}</h1>
                 {profile.verified && <CheckCircle2 size={18} className="text-accent-400 shrink-0" />}
               </div>
+              {profile.major && <p className="mt-0.5 text-sm font-semibold text-slate-200">{profile.major}</p>}
               <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
                 <Badge tone="accent">{creatorTypeLabel[profile.creator_type]}</Badge>
+                {profile.education_level && (
+                  <span className="inline-flex items-center gap-1">{profile.education_level} student</span>
+                )}
+                {(profile.university || profile.graduation_year) && (
+                  <span className="inline-flex items-center gap-1">
+                    <GraduationCap size={12} /> {[profile.university, profile.graduation_year && `class of ${profile.graduation_year}`].filter(Boolean).join(', ')}
+                  </span>
+                )}
                 {profile.experience_level && (
                   <span className="inline-flex items-center gap-1"><Briefcase size={12} /> {profile.experience_level}</span>
                 )}

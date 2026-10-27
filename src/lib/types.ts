@@ -15,6 +15,10 @@ export interface Profile {
   creator_type: CreatorType;
   verified: boolean;
   location: string | null;
+  education_level: string | null;
+  university: string | null;
+  major: string | null;
+  graduation_year: number | null;
   website_url: string | null;
   github_url: string | null;
   linkedin_url: string | null;
