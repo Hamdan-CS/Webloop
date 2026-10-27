@@ -30,6 +30,7 @@ function applyThemeClass(theme: Theme, animate: boolean) {
   }
   root.classList.remove('dark', 'light');
   root.classList.add(theme);
+  window.dispatchEvent(new Event('themechange'));
   if (animate) {
     setTimeout(() => root.classList.remove('theme-transitioning'), 450);
   }

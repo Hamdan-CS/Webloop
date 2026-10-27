@@ -271,3 +271,38 @@
   background-color: #ffffff;
   color: #1e293b;
 }
+
+/* ============================================================
+   HOME — scroll-driven particle stage + WebL∞p wordmark
+   ============================================================ */
+#particles { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100lvh; z-index: 0; pointer-events: none; display: block; }
+.stage-overlay { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
+.bead { position: absolute; left: 0; top: 0; transform: translate(14px, -50%); font: 600 11px Inter, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: rgb(var(--slate-300)); white-space: nowrap; opacity: 0; transition: opacity .3s, color .3s; }
+.stage-core { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); text-align: center; opacity: 0; transition: opacity .3s; }
+.stage-core .who { display: block; font: 600 11px Inter, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: rgb(var(--slate-500)); }
+.stage-core .verb { display: block; margin-top: 4px; font: 700 46px "Space Grotesk", Inter, sans-serif; letter-spacing: -0.03em; line-height: 1; color: rgb(var(--content-strong)); animation: stage-pop .5s ease both; }
+.stage-core .tag { display: block; margin-top: 6px; font: 400 13px Inter, sans-serif; color: rgb(var(--slate-400)); }
+@keyframes stage-pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.stage-fw span { position: absolute; left: 0; top: 0; font-family: "Space Grotesk", Inter, sans-serif; font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: rgb(var(--content-strong)); white-space: nowrap; }
+.ph { transition: opacity .5s, text-shadow .5s; }
+h1.playing .ph { opacity: .35; }
+h1.playing .ph.on { opacity: 1; }
+.vchip { position: absolute; left: 0; top: 0; transform: translate(-50%, -140%); font: 500 10px Inter, sans-serif; padding: 2px 7px; border-radius: 6px; background: rgb(var(--ink-900) / .9); border: 1px solid rgb(var(--signal-green) / .35); color: rgb(var(--signal-green)); white-space: nowrap; opacity: 0; transition: opacity .4s; }
+.hstep .hbar { width: 0; }
+.hstep .htxt { color: rgb(var(--slate-500)); transition: color .3s; }
+.hstep.on .htxt { color: rgb(var(--content-strong)); }
+#caption { position: fixed; z-index: 30; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); transition: opacity .4s; white-space: nowrap; pointer-events: none; }
+
+.logo-wm { display: inline-flex; align-items: center; font: 500 22px Inter, system-ui, sans-serif; letter-spacing: -0.03em; color: rgb(var(--content-strong)); }
+.logo-wm .wm-inf { width: 1.3em; height: .62em; margin: 0 .01em; transform: translateY(.04em); }
+.core-inf { display: block; width: 64px; height: 30px; margin: 0 auto 14px; overflow: visible; }
+.core-inf path { fill: none; stroke-width: 2.8; stroke-linecap: round; }
+.wm-inf { display: inline-block; overflow: visible; }
+.wm-inf path { fill: none; stroke-width: 4.4; stroke-linecap: round; }
+.core-inf .spark, .wm-inf .spark { stroke: #fff; stroke-dasharray: 9 91; animation: wm-spark 3.2s linear infinite; }
+.light .core-inf .spark, .light .wm-inf .spark { stroke: rgb(var(--accent-100)); }
+@keyframes wm-spark { to { stroke-dashoffset: -100; } }
+@media (prefers-reduced-motion: reduce) { .wm-inf .spark, .core-inf .spark { animation: none; opacity: 0; } .stage-core .verb { animation: none; } }
+
+/* Home sections sit above the fixed canvas and stay transparent so particles show through */
+.home-page { position: relative; z-index: 2; }

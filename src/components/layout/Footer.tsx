@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Boxes, Github, Linkedin } from 'lucide-react';
+import { Github, Linkedin } from 'lucide-react';
+import { Wordmark } from '@/components/layout/Wordmark';
 import { useAuth } from '@/components/auth/AuthContext';
 
 const columns = [
@@ -34,15 +35,12 @@ export function Footer() {
   const { user } = useAuth();
 
   return (
-    <footer className="mt-24 border-t border-white/5 bg-ink-950/60">
+    <footer className="relative z-[2] mt-24 border-t border-white/5 bg-ink-950/60 backdrop-blur-md">
       <div className="container-page py-14">
         <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div>
-            <Link to="/" className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-accent-500 text-ink-950">
-                <Boxes size={20} strokeWidth={2.4} />
-              </div>
-              <span className="font-display text-lg font-bold text-white">WebLoop</span>
+            <Link to="/" className="inline-flex items-center" aria-label="WebLoop home">
+              <Wordmark />
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-400">
               Build real projects. Find your team. Prove your skills. Get discovered by companies

@@ -17,7 +17,8 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ProjectCard } from '@/components/projects/ProjectCard';
-import { HeroScene } from '@/components/home/HeroScene';
+import { ParticleStage } from '@/components/home/ParticleStage';
+import { Reveal } from '@/components/ui/Reveal';
 import { fetchFeaturedProjects, fetchPortfolioGallery } from '@/lib/api';
 import type { Project, PortfolioItem } from '@/lib/types';
 import { Avatar } from '@/components/ui/Avatar';
@@ -46,24 +47,35 @@ export function HomePage() {
   }, []);
 
   return (
-    <div>
+    <div className="home-page">
+      <ParticleStage />
+
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <HeroScene />
+      <section id="heroSec" className="relative overflow-hidden lg:min-h-[calc(100vh-4rem)] lg:flex lg:items-center">
+        <div id="anchorHero" className="hidden lg:block absolute right-[2%] top-[6%] bottom-[16%] w-[46%]" />
+        <div id="heroSteps" className="hidden lg:grid absolute bottom-[7%] right-[5%] w-[40%] grid-cols-3 gap-5">
+          {['Build the project', 'Find the team', 'Verify the skills'].map((t, i) => (
+            <div key={t} className="hstep">
+              <div className="h-[2px] rounded bg-white/10 overflow-hidden"><div className="hbar h-full bg-accent-500" /></div>
+              <p className="mt-2.5 text-xs"><span className="font-mono text-slate-500 mr-1.5">0{i + 1}</span><span className="htxt">{t}</span></p>
+            </div>
+          ))}
         </div>
-        <div className="container-page relative pt-20 pb-24 sm:pt-28 sm:pb-32">
+        <div className="container-page relative pt-20 pb-16 sm:pt-28 lg:py-24">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="max-w-3xl"
+            className="max-w-3xl lg:max-w-2xl"
           >
             <span className="label-overline">Student Project Collaboration & Talent Marketplace</span>
             <h1 className="mt-4 font-display text-4xl sm:text-6xl font-bold tracking-tight text-white leading-[1.05]">
-              Build real projects.
+              <span className="ph" data-ph="0">Build real projects.</span>
               <br />
-              <span className="text-accent-500">Find your team. Prove your skills.</span>
+              <span className="text-accent-500">
+                <span className="ph" data-ph="1">Find your team.</span>{' '}
+                <span className="ph" data-ph="2">Prove your skills.</span>
+              </span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-slate-300 leading-relaxed">
               A platform where computer science students ship real software, find teammates, build
@@ -108,11 +120,12 @@ export function HomePage() {
               </span>
             </div>
           </motion.div>
+          <div id="anchorHeroMobile" className="lg:hidden mt-6 h-[360px]" />
         </div>
       </section>
 
       {/* Featured projects */}
-      <section className="container-page py-14">
+      <section className="container-page py-14" id="featured">
         <SectionHeader
           overline="Featured"
           title="Live projects you can join right now"
@@ -128,15 +141,18 @@ export function HomePage() {
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.map((p) => (
-              <ProjectCard key={p.id} project={p} />
+            {projects.map((p, i) => (
+              <Reveal key={p.id} delay={(i % 3) * 0.08}>
+                <ProjectCard project={p} />
+              </Reveal>
             ))}
           </div>
         )}
       </section>
 
       {/* How contributions become career evidence */}
-      <section className="container-page py-14">
+      <section className="container-page py-14" id="whySec">
+        <Reveal>
         <div className="surface-raised overflow-hidden">
           <div className="grid lg:grid-cols-[1.2fr_1fr]">
             <div className="p-8 sm:p-12">
@@ -166,37 +182,43 @@ export function HomePage() {
                 />
               </div>
             </div>
-            <div className="relative border-t border-white/5 lg:border-l lg:border-t-0 bg-ink-850/40 p-8 sm:p-12 flex flex-col justify-center gap-3">
-              <ContributionCard
-                title="Implemented spaced-repetition scheduler"
-                project="Studyflow"
-                status="Accepted"
-                tech={['React', 'TypeScript']}
-                rating={5}
-              />
-              <ContributionCard
-                title="Designed emissions data model"
-                project="Carbon Ledger"
-                status="Accepted"
-                tech={['PostgreSQL', 'TypeScript']}
-                rating={5}
-              />
-              <ContributionCard
-                title="Authored Node scaffolding template"
-                project="Northstack CLI"
-                status="Accepted"
-                tech={['Node.js', 'CLI']}
-                rating={4}
-              />
-            </div>
+            <div id="anchorCV" className="relative border-t border-white/5 lg:border-l lg:border-t-0 min-h-[420px] lg:min-h-[520px]" />
           </div>
+          <div className="grid gap-3 sm:grid-cols-3 border-t border-white/5 p-6 sm:p-8">
+            <ContributionCard title="Implemented spaced-repetition scheduler" project="Studyflow" status="Accepted" tech={['React', 'TypeScript']} rating={5} />
+            <ContributionCard title="Designed emissions data model" project="Carbon Ledger" status="Accepted" tech={['PostgreSQL', 'TypeScript']} rating={5} />
+            <ContributionCard title="Authored Node scaffolding template" project="Northstack CLI" status="Accepted" tech={['Node.js', 'CLI']} rating={4} />
+          </div>
+        </div>
+        </Reveal>
+      </section>
+
+      {/* The loop */}
+      <section className="container-page py-14" id="loop">
+        <div className="grid lg:grid-cols-2 gap-8 items-center">
+          <Reveal>
+            <span className="label-overline">The loop</span>
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl font-bold text-white">
+              Students build. Companies hire. Universities teach.
+            </h2>
+            <p className="mt-4 text-slate-300 leading-relaxed max-w-xl">
+              Everyone on WebLoop moves the same loop forward: students ship work, companies and universities
+              review it, and every review feeds back into someone&apos;s career.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2.5">
+              <Badge tone="accent"><Users size={13} /> Students</Badge>
+              <Badge><Building2 size={13} /> Companies</Badge>
+              <Badge tone="violet"><GraduationCap size={13} /> Universities</Badge>
+            </div>
+          </Reveal>
+          <div id="anchorLoop" className="h-[340px] sm:h-[440px]" />
         </div>
       </section>
 
       {/* How it works — Students */}
       <section className="container-page py-14">
         <div className="grid lg:grid-cols-2 gap-8">
-          <HowItWorksCard
+          <Reveal><HowItWorksCard
             icon={<Users size={20} />}
             overline="For Students"
             title="Build a portfolio that proves what you can do"
@@ -208,8 +230,8 @@ export function HomePage() {
             ]}
             ctaTo="/join"
             ctaLabel="Join as a Student"
-          />
-          <HowItWorksCard
+          /></Reveal>
+          <Reveal delay={0.1}><HowItWorksCard
             icon={<Building2 size={20} />}
             overline="For Companies"
             title="Recruit contributors from real, demonstrated work"
@@ -221,7 +243,7 @@ export function HomePage() {
             ]}
             ctaTo="/join"
             ctaLabel="Join as a Company"
-          />
+          /></Reveal>
         </div>
       </section>
 
@@ -242,9 +264,9 @@ export function HomePage() {
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {portfolio.map((item) => (
+            {portfolio.map((item, i) => (
+              <Reveal key={item.id} delay={i * 0.07}>
               <Link
-                key={item.id}
                 to={`/creators/${item.profile?.handle}`}
                 className="group surface overflow-hidden hover:border-accent-400/30 transition-all"
               >
@@ -275,6 +297,7 @@ export function HomePage() {
                   )}
                 </div>
               </Link>
+              </Reveal>
             ))}
           </div>
         )}
@@ -282,7 +305,8 @@ export function HomePage() {
 
       {/* University partnerships */}
       <section className="container-page py-14">
-        <div className="surface p-8 sm:p-12">
+        <Reveal>
+        <div className="surface p-8 sm:p-12 backdrop-blur-md">
           <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-center">
             <div>
               <span className="label-overline">University Partnerships</span>
@@ -315,6 +339,7 @@ export function HomePage() {
             </div>
           </div>
         </div>
+        </Reveal>
       </section>
 
       {/* Trust & safety */}
@@ -340,7 +365,9 @@ export function HomePage() {
 
       {/* Final CTA */}
       <section className="container-page py-14">
-        <div className="relative overflow-hidden rounded-xl border border-white/10 bg-ink-900 p-10 sm:p-16 text-center">
+        <Reveal>
+        <div className="relative overflow-hidden rounded-xl border border-white/10 p-10 sm:p-16 text-center">
+          <div id="anchorLogo" className="h-32 sm:h-44 mb-6" />
           <div className="relative">
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">
               Stop polishing your resume.
@@ -365,6 +392,7 @@ export function HomePage() {
             </div>
           </div>
         </div>
+        </Reveal>
       </section>
     </div>
   );
@@ -384,7 +412,7 @@ function SectionHeader({
   actionLabel: string;
 }) {
   return (
-    <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
+    <Reveal className="mb-7 flex flex-wrap items-end justify-between gap-4">
       <div>
         <span className="label-overline">{overline}</span>
         <h2 className="mt-2 font-display text-2xl sm:text-3xl font-bold text-white">{title}</h2>
@@ -393,7 +421,7 @@ function SectionHeader({
       <Link to={actionTo} className="link-accent text-sm whitespace-nowrap">
         {actionLabel} →
       </Link>
-    </div>
+    </Reveal>
   );
 }
 
@@ -425,7 +453,7 @@ function ContributionCard({
   rating: number;
 }) {
   return (
-    <div className="rounded-xl border border-white/8 bg-ink-900/70 p-3.5">
+    <div className="rounded-xl border border-white/8 bg-ink-900/80 backdrop-blur-sm p-3.5">
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm font-medium text-white">{title}</p>
         <Badge tone="green">{status}</Badge>
@@ -496,12 +524,14 @@ function HowItWorksCard({
 
 function TrustCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
-    <div className="surface p-6">
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/5 text-accent-300">
-        {icon}
+    <Reveal>
+      <div className="surface h-full p-6 backdrop-blur-md">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/5 text-accent-300">
+          {icon}
+        </div>
+        <h3 className="mt-4 font-semibold text-white">{title}</h3>
+        <p className="mt-2 text-sm text-slate-400 leading-relaxed">{desc}</p>
       </div>
-      <h3 className="mt-4 font-semibold text-white">{title}</h3>
-      <p className="mt-2 text-sm text-slate-400 leading-relaxed">{desc}</p>
-    </div>
+    </Reveal>
   );
 }

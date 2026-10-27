@@ -1,8 +1,9 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Boxes, Menu, X, Sparkles, LogOut, User, Plus, LayoutDashboard, Inbox, ListChecks } from 'lucide-react';
+import { Menu, X, Sparkles, LogOut, User, Plus, LayoutDashboard, Inbox, ListChecks } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import { Wordmark } from '@/components/layout/Wordmark';
 import { Avatar } from '@/components/ui/Avatar';
 import { useAuth } from '@/components/auth/AuthContext';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
@@ -41,16 +42,8 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/5 bg-ink-950/80 backdrop-blur-xl">
       <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-md bg-accent-500 text-ink-950">
-            <Boxes size={20} strokeWidth={2.4} />
-          </div>
-          <div className="flex flex-col leading-none">
-            <span className="font-display text-lg font-bold tracking-tight text-white">WebLoop</span>
-            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-accent-300/70">
-              build · team · prove
-            </span>
-          </div>
+        <Link to="/" className="flex items-center" aria-label="WebLoop home">
+          <Wordmark />
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
