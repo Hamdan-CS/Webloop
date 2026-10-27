@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/components/auth/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { GoogleIcon } from '@/components/ui/GoogleIcon';
 import { cn } from '@/lib/utils';
 import { getDashboardPath } from '@/lib/roles';
 
@@ -42,7 +43,7 @@ const roleCards: { role: Role; icon: React.ReactNode; title: string; desc: strin
 ];
 
 export function JoinPage() {
-  const { signUp } = useAuth();
+  const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<Role>('student');
   const [email, setEmail] = useState('');
@@ -50,6 +51,7 @@ export function JoinPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,9 +62,24 @@ export function JoinPage() {
     if (err) {
       setError(err);
     } else if (profile) {
-      navigate(getDashboardPath(profile.creator_type), { replace: true });
+      if (profile.creator_type === 'student') {
+        sessionStorage.setItem(`wl_build_profile_seen_${profile.user_id}`, '1');
+        navigate('/build-profile', { replace: true });
+      } else {
+        navigate(getDashboardPath(profile.creator_type), { replace: true });
+      }
     } else {
       navigate('/');
+    }
+  };
+
+  const handleGoogle = async () => {
+    setError(null);
+    setGoogleLoading(true);
+    const { error: err } = await signInWithGoogle();
+    if (err) {
+      setError(err);
+      setGoogleLoading(false);
     }
   };
 
@@ -138,6 +155,26 @@ export function JoinPage() {
               {loading ? <Loader2 size={16} className="animate-spin" /> : 'Create account'}
             </Button>
           </form>
+
+          <div className="mt-4 flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-[11px] uppercase tracking-wider text-slate-500">or</span>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+
+          <Button
+            type="button"
+            variant="secondary"
+            className="mt-4 w-full"
+            onClick={handleGoogle}
+            disabled={googleLoading}
+          >
+            {googleLoading ? <Loader2 size={16} className="animate-spin" /> : <GoogleIcon />}
+            Continue with Google
+          </Button>
+          <p className="mt-2 text-center text-[11px] text-slate-500">
+            Creates a student account instantly. Companies and universities should use the form above.
+          </p>
 
           <p className="mt-3 text-center text-xs text-slate-500">
             Already have an account? <Link to="/signin" className="link-accent">Sign in</Link>

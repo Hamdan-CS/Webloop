@@ -9,10 +9,13 @@ interface AuthContextValue {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  /** The most recent Supabase auth event (e.g. 'SIGNED_IN', 'INITIAL_SESSION', 'TOKEN_REFRESHED'). */
+  authEvent: string | null;
   unreadMessages: number;
   pendingReviews: number;
   signUp: (email: string, password: string, displayName: string, creatorType: string) => Promise<{ error: string | null; profile: Profile | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null; profile: Profile | null }>;
+  signInWithGoogle: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   refreshCounts: () => Promise<void>;
@@ -31,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authEvent, setAuthEvent] = useState<string | null>(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [pendingReviews, setPendingReviews] = useState(0);
 
@@ -70,8 +74,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       (async () => {
+        setAuthEvent(event);
         setSession(s);
         setUser(s?.user ?? null);
         if (s?.user) {
@@ -129,6 +134,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null, profile: null };
   }, [loadProfile]);
 
+  const signInWithGoogle = useCallback(async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+    return { error: error?.message ?? null };
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setProfile(null);
@@ -138,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, user, profile, loading, unreadMessages, pendingReviews, signUp, signIn, signOut, refreshProfile, refreshCounts }}
+      value={{ session, user, profile, loading, authEvent, unreadMessages, pendingReviews, signUp, signIn, signInWithGoogle, signOut, refreshProfile, refreshCounts }}
     >
       {children}
     </AuthContext.Provider>

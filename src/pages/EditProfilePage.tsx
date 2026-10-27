@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertCircle, Save, CheckCircle2, X, Plus } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
@@ -10,26 +10,56 @@ import { Select } from '@/components/ui/Select';
 const EXPERIENCE_LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Senior', 'Lead'];
 const AVAILABILITY_OPTIONS = ['Full-time', 'Part-time', 'Weekends only', 'Currently unavailable'];
 
+const emptyForm = {
+  display_name: '',
+  bio: '',
+  avatar_url: '',
+  banner_url: '',
+  location: '',
+  website_url: '',
+  github_url: '',
+  linkedin_url: '',
+  experience_level: '',
+  availability: '',
+};
+
 export function EditProfilePage() {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, loading: authLoading, refreshProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [interestInput, setInterestInput] = useState('');
 
-  const [form, setForm] = useState({
-    display_name: profile?.display_name ?? '',
-    bio: profile?.bio ?? '',
-    avatar_url: profile?.avatar_url ?? '',
-    banner_url: profile?.banner_url ?? '',
-    location: profile?.location ?? '',
-    website_url: profile?.website_url ?? '',
-    github_url: profile?.github_url ?? '',
-    linkedin_url: profile?.linkedin_url ?? '',
-    experience_level: profile?.experience_level ?? '',
-    availability: profile?.availability ?? '',
-  });
-  const [interests, setInterests] = useState<string[]>(profile?.interests ?? []);
+  const [form, setForm] = useState(emptyForm);
+  const [interests, setInterests] = useState<string[]>([]);
+
+  // `profile` loads asynchronously after mount — seed the form once it arrives
+  // (and again if the signed-in profile itself changes) instead of only at
+  // the first render, when it's still null.
+  useEffect(() => {
+    if (!profile) return;
+    setForm({
+      display_name: profile.display_name ?? '',
+      bio: profile.bio ?? '',
+      avatar_url: profile.avatar_url ?? '',
+      banner_url: profile.banner_url ?? '',
+      location: profile.location ?? '',
+      website_url: profile.website_url ?? '',
+      github_url: profile.github_url ?? '',
+      linkedin_url: profile.linkedin_url ?? '',
+      experience_level: profile.experience_level ?? '',
+      availability: profile.availability ?? '',
+    });
+    setInterests(profile.interests ?? []);
+  }, [profile]);
+
+  if (authLoading) {
+    return (
+      <div className="container-page py-20 text-center">
+        <Loader2 size={24} className="mx-auto animate-spin text-accent-400" />
+      </div>
+    );
+  }
 
   if (!user || !profile) {
     return (

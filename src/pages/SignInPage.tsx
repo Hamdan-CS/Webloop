@@ -3,16 +3,18 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Loader2, AlertCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
 import { Button } from '@/components/ui/Button';
+import { GoogleIcon } from '@/components/ui/GoogleIcon';
 import { getDashboardPath } from '@/lib/roles';
 import type { Profile } from '@/lib/types';
 
 export function SignInPage() {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +28,16 @@ export function SignInPage() {
       navigate(getDashboardPath(profile.creator_type), { replace: true });
     } else {
       navigate('/');
+    }
+  };
+
+  const handleGoogle = async () => {
+    setError(null);
+    setGoogleLoading(true);
+    const { error: err } = await signInWithGoogle();
+    if (err) {
+      setError(err);
+      setGoogleLoading(false);
     }
   };
 
@@ -65,6 +77,23 @@ export function SignInPage() {
               {loading ? <Loader2 size={16} className="animate-spin" /> : 'Sign in'}
             </Button>
           </form>
+
+          <div className="mt-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-[11px] uppercase tracking-wider text-slate-500">or</span>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+
+          <Button
+            type="button"
+            variant="secondary"
+            className="mt-4 w-full"
+            onClick={handleGoogle}
+            disabled={googleLoading}
+          >
+            {googleLoading ? <Loader2 size={16} className="animate-spin" /> : <GoogleIcon />}
+            Continue with Google
+          </Button>
 
           <p className="mt-4 text-center text-xs text-slate-500">
             No account? <Link to="/join" className="link-accent">Join the platform</Link>
