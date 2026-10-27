@@ -21,6 +21,9 @@ export interface Profile {
   experience_level: string | null;
   availability: string | null;
   interests: string[] | null;
+  preferred_roles: string[] | null;
+  languages: string[] | null;
+  portfolio_links: string[] | null;
   is_demo: boolean;
   created_at: string;
 }

@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Profile builder page only (src/pages/BuildProfilePage.tsx) — ported 1:1 from the reference design. */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -330,3 +332,59 @@ h1.playing .ph.on { opacity: 1; }
 
 /* Home sections sit above the fixed canvas and stay transparent so particles show through */
 .home-page { position: relative; z-index: 2; }
+
+/* ============================================================
+   HOW IT WORKS — scroll-driven 3D stage (ported from the approved demo)
+   ============================================================ */
+#howgl { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100lvh; display: block; z-index: 0; }
+.how-veil {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(90deg, rgb(var(--ink-950)) 0%, rgb(var(--ink-950)) 24%, transparent 55%);
+}
+.how-tabs { top: calc(5rem + env(safe-area-inset-top, 0px)); }
+.how-tab {
+  display: flex; align-items: center; gap: 8px; border: 0; background: none; cursor: pointer;
+  font: 700 14px Inter, system-ui, sans-serif; color: rgb(var(--slate-400)); padding: 9px 16px; border-radius: 999px;
+  transition: background .2s, color .2s;
+}
+.how-tab[aria-selected="true"] { background: rgb(var(--accent-500)); color: rgb(var(--ink-950)); }
+.how-hud { right: 24px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+.how-page { position: relative; z-index: 2; max-width: 1240px; margin: 0 auto; padding: 0 32px; }
+.how-intro { min-height: 92vh; min-height: 92svh; display: flex; flex-direction: column; justify-content: center; }
+.how-intro h1 {
+  margin: 0; font-family: "Space Grotesk", Inter, sans-serif; font-size: clamp(38px, 5.6vw, 70px); font-weight: 700;
+  letter-spacing: -0.03em; line-height: 1.04; max-width: 12ch; color: rgb(var(--content-strong));
+}
+.how-intro p { margin: 20px 0 0; font-size: 18px; line-height: 1.6; color: rgb(var(--slate-400)); max-width: 40ch; }
+.how-step {
+  min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; justify-content: center;
+  max-width: 440px; opacity: .35; transition: opacity .5s;
+}
+.how-step.on { opacity: 1; }
+.how-n {
+  width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; font-weight: 800;
+  background: rgb(var(--ink-700)); color: rgb(var(--slate-300)); transition: background .4s, color .4s;
+}
+.how-step.on .how-n { background: rgb(var(--accent-500)); color: rgb(var(--ink-950)); }
+.how-step h2 {
+  margin: 18px 0 0; font-family: "Space Grotesk", Inter, sans-serif; font-size: 32px; font-weight: 700;
+  letter-spacing: -0.02em; line-height: 1.14; color: rgb(var(--content-strong));
+}
+.how-step p { margin: 12px 0 0; font-size: 17px; line-height: 1.65; color: rgb(var(--slate-400)); }
+.how-ctas { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 12px; }
+.how-outro { height: 40vh; }
+
+@media (max-width: 860px) {
+  .how-veil { background: linear-gradient(0deg, rgb(var(--ink-950)) 0%, rgb(var(--ink-950)) 36%, transparent 64%); }
+  .how-tabs { top: calc(4.6rem + env(safe-area-inset-top, 0px)); }
+  .how-tab { padding: 8px 12px; font-size: 13px; }
+  .how-hud {
+    right: auto; left: 50%; transform: translateX(-50%); top: calc(8.4rem + env(safe-area-inset-top, 0px));
+    bottom: auto; justify-content: center; width: max-content;
+  }
+  .how-page { padding: 0 20px; }
+  .how-intro { justify-content: flex-end; padding-bottom: 10vh; }
+  .how-step { justify-content: flex-end; padding-bottom: 12vh; min-height: 90vh; min-height: 90svh; }
+  .how-step h2 { font-size: 25px; }
+  .how-step p { font-size: 16px; }
+}

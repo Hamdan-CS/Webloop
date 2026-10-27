@@ -413,6 +413,9 @@ export async function updateProfile(
     experience_level?: string;
     availability?: string;
     interests?: string[];
+    preferred_roles?: string[];
+    languages?: string[];
+    portfolio_links?: string[];
   },
 ): Promise<void> {
   const { error } = await supabase

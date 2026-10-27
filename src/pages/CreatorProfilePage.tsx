@@ -25,6 +25,8 @@ import {
   ListChecks,
   Award,
   FolderGit2,
+  Languages as LanguagesIcon,
+  Link2,
 } from 'lucide-react';
 import {
   fetchProfileByHandle,
@@ -634,6 +636,47 @@ export function CreatorProfilePage() {
                   <div className="flex flex-wrap gap-2">
                     {profile.interests.map((skill) => (
                       <span key={skill} className="chip">{skill}</span>
+                    ))}
+                  </div>
+                </SectionCard>
+              )}
+
+              {/* Preferred roles */}
+              {profile.preferred_roles && profile.preferred_roles.length > 0 && (
+                <SectionCard title="Preferred roles" icon={<Users size={14} />}>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.preferred_roles.map((role) => (
+                      <span key={role} className="chip">{role}</span>
+                    ))}
+                  </div>
+                </SectionCard>
+              )}
+
+              {/* Languages */}
+              {profile.languages && profile.languages.length > 0 && (
+                <SectionCard title="Languages" icon={<LanguagesIcon size={14} />}>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.languages.map((lang) => (
+                      <span key={lang} className="chip">{lang}</span>
+                    ))}
+                  </div>
+                </SectionCard>
+              )}
+
+              {/* Portfolio links */}
+              {profile.portfolio_links && profile.portfolio_links.length > 0 && (
+                <SectionCard title="Portfolio links" icon={<Link2 size={14} />}>
+                  <div className="grid gap-2">
+                    {profile.portfolio_links.map((href) => (
+                      <a
+                        key={href}
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 rounded-lg border border-white/8 px-3 py-2 text-sm text-slate-300 hover:border-accent-400/40 hover:text-accent-200 transition-colors truncate"
+                      >
+                        <Link2 size={13} className="shrink-0" /> <span className="truncate">{href.replace(/^https?:\/\//, '')}</span>
+                      </a>
                     ))}
                   </div>
                 </SectionCard>
