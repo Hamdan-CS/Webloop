@@ -19,7 +19,7 @@ export function startParticleStage(): () => void {
   camera.position.set(0, 0, 10);
   const group = new THREE.Group(); scene.add(group);
 
-  const N = innerWidth < 700 ? 4500 : 8000;
+  const N = innerWidth < 700 ? 5200 : 10000;
   const rnd = new Float32Array(N * 3).map(() => Math.random());
   const golden = Math.PI * (3 - Math.sqrt(5));
 
@@ -106,7 +106,7 @@ export function startParticleStage(): () => void {
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   const vs = 'attribute vec3 color; varying vec3 vC; uniform float uSize; uniform float uPix; void main(){ vC = color; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = uSize * uPix / -mv.z; gl_Position = projectionMatrix * mv; }';
-  const fs = 'varying vec3 vC; uniform float uOpacity; void main(){ float d = length(gl_PointCoord - 0.5); float a = smoothstep(0.5, 0.0, d); gl_FragColor = vec4(vC, a * a * uOpacity); }';
+  const fs = 'varying vec3 vC; uniform float uOpacity; void main(){ float d = length(gl_PointCoord - 0.5); float a = smoothstep(0.52, 0.04, d); vec3 col = vC + vec3(a) * 0.18; gl_FragColor = vec4(col, a * a * uOpacity); }';
   const mat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, vertexShader: vs, fragmentShader: fs, uniforms: { uSize: { value: 26 }, uPix: { value: renderer.getPixelRatio() }, uOpacity: { value: 0.85 } } });
   group.add(new THREE.Points(geo, mat));
   const beadPos = new Float32Array(9), beadCol = new Float32Array(9);
@@ -139,7 +139,7 @@ export function startParticleStage(): () => void {
     const a = new THREE.Color(light ? '#0E7490' : '#00827C'), b = new THREE.Color(light ? '#06B6D4' : '#CBFFFC'), v = new THREE.Color(light ? '#7C3AED' : '#FAD1FF'), c = new THREE.Color();
     for (let i = 0; i < N; i++) {
       const k = (SPH[i * 3 + 1] / 3 + 1) / 2;
-      if (!light && rnd[i * 3 + 2] < 0.05) c.set('#FFFFFF'); else if (k < 0.5) c.copy(a).lerp(b, k * 2); else c.copy(b).lerp(v, (k - 0.5) * 2);
+      if (rnd[i * 3 + 2] < 0.05) c.set(light ? '#0C4A6E' : '#FFFFFF'); else if (k < 0.5) c.copy(a).lerp(b, k * 2); else c.copy(b).lerp(v, (k - 0.5) * 2);
       col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
     }
     baseCol.set(col);
@@ -151,7 +151,7 @@ export function startParticleStage(): () => void {
     mat.blending = light ? THREE.NormalBlending : THREE.AdditiveBlending;
     bmat.blending = mat.blending;
     mat.needsUpdate = true; bmat.needsUpdate = true;
-    mat.uniforms.uSize.value = light ? 30 : 26;
+    mat.uniforms.uSize.value = light ? 34 : 30;
   }
   window.addEventListener('themechange', applyTheme);
   applyTheme();
@@ -161,12 +161,19 @@ export function startParticleStage(): () => void {
     { el: document.getElementById('heroSec'), anchor: ['anchorHero', 'anchorHeroMobile'], size: 6.2, tilt: -0.08, cap: '' },
     { el: document.getElementById('anchorCV'), anchor: ['anchorCV'], size: 6.6, tilt: 0, cap: '' },
     { el: document.getElementById('anchorLoop'), anchor: ['anchorLoop'], size: 8.2, tilt: 0.5, cap: '' },
-    { el: document.getElementById('anchorLogo'), anchor: ['anchorLogo'], inf: true, tilt: 0, cap: '' },
+    { el: document.getElementById('anchorLogo'), anchor: ['anchorLogo'], inf: true, tilt: 0, cap: 'Build. Find. Prove. Repeat.' },
   ];
+  const lastIdx = STAGES.length - 1;
   const clamp = (x) => Math.max(0, Math.min(1, x));
   const ease = (x) => x * x * (3 - 2 * x);
   const lerp = (a, b, t) => a + (b - a) * t;
   let A = 0, B = 0, f = 0, fsm = 0, fraw = 0, lastA = 0, mobile = false, visH = 8.28, visW = 15;
+  // once the finale (last stage) settles, we hold it centred instead of letting it
+  // keep tracking the anchor div as the page scrolls past, then ease it out
+  let settled = false, settleY = 0;
+  const frozen = [0, 0, 1];
+  const HOLD_PX = 260, FADE_PX = 480;
+  const glow = document.getElementById('particleGlow');
   const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
   const onPointerMove = (e) => { pointer.tx = e.clientX / innerWidth - 0.5; pointer.ty = e.clientY / innerHeight - 0.5; };
   addEventListener('pointermove', onPointerMove);
@@ -246,11 +253,27 @@ export function startParticleStage(): () => void {
       const r = el.getBoundingClientRect(), k = visH / innerHeight;
       const x = ((r.left + r.width / 2) / innerWidth - 0.5) * visH * camera.aspect, y = -((r.top + r.height / 2) / innerHeight - 0.5) * visH;
       let sc;
-      if (st.inf) { const em = Math.min(r.width * 0.5 / 4.3, r.height * 0.8, 120); sc = (em * 1.15 / 2 * k) / 3.6; }
+      if (st.inf) { const em = Math.min(r.width * 0.5 / 4.3, r.height * 0.8, 190); sc = (em * 1.15 / 2 * k) / 3.6; }
       else sc = Math.min(r.width * k / st.size, r.height * k / st.size, 1.15);
       return [x, y, sc];
     };
-    const pa = place2(sA), pb = sB === sA ? pa : place2(sB);
+    // once the finale fully settles, stop chasing the anchor div (which keeps scrolling
+    // past underneath) — hold the reveal dead-centre for a beat, then ease it out smoothly
+    // instead of letting it dart off-screen or clip against the navbar. The centred spot is
+    // computed from the viewport, not the div's rect, so a fast jump (or a rect read before
+    // layout has settled) can never freeze it somewhere off-screen.
+    let pa, pb;
+    if (A === B && A === lastIdx) {
+      if (!settled) {
+        settled = true; settleY = scrollY;
+        const em = Math.min(innerWidth * 0.5 / 4.3, innerHeight * 0.6, 190);
+        frozen[0] = 0; frozen[1] = 0; frozen[2] = (em * 1.15 / 2 * (visH / innerHeight)) / 3.6;
+      }
+      pa = pb = frozen;
+    } else {
+      settled = false;
+      pa = place2(sA); pb = sB === sA ? pa : place2(sB);
+    }
     group.position.set(lerp(pa[0], pb[0], fsm), lerp(pa[1], pb[1], fsm), 0);
     group.scale.setScalar(lerp(pa[2], pb[2], fsm));
     const tilt = lerp(sA.tilt, sB.tilt, fsm);
@@ -259,7 +282,9 @@ export function startParticleStage(): () => void {
     group.rotation.set(tilt + pointer.y * 0.12, spin + pointer.x * 0.2 + cardTurn, 0);
     const showing = fsm > 0.5 ? B : A;
     const dim = (A !== B ? 1 - 0.65 * Math.sin(Math.PI * fsm) : 1);   // particles fade while travelling between sections
-    mat.uniforms.uOpacity.value = (light ? 0.9 : 0.85) * dim;
+    const pastHold = settled ? Math.max(0, scrollY - settleY - HOLD_PX) : 0;
+    const settleFade = settled ? clamp(1 - pastHold / FADE_PX) : 1;   // held in view, then eased out — never an abrupt vanish
+    mat.uniforms.uOpacity.value = (light ? 0.97 : 0.94) * dim * settleFade;
 
     // the loop: beads + centre text
     const beadOn = clamp((A === 2 ? 1 - fsm : B === 2 ? fsm : 0) * 5 - 4);   // only once the ring has fully formed
@@ -282,7 +307,7 @@ export function startParticleStage(): () => void {
     ov.core.style.left = cx + 'px'; ov.core.style.top = cy + 'px'; ov.core.style.opacity = mobile ? 0 : beadOn;
 
     // WebL ∞ p
-    const wOn = A === 3 ? 1 : B === 3 ? clamp(fsm * 5 - 4) : 0;
+    const wOn = (A === lastIdx ? 1 : B === lastIdx ? clamp(fsm * 5 - 4) : 0) * settleFade;
     ov.fw.style.opacity = wOn;
     if (wOn > 0) {
       const [xl] = toScreen(-3.6, 0, 0), [xr, yc] = toScreen(3.6, 0, 0);
@@ -294,7 +319,20 @@ export function startParticleStage(): () => void {
 
     const capKey = showing === 0 ? 'h' + ph.idx : showing;
     if (capKey !== lastCap) { lastCap = capKey; ov.cap.textContent = showing === 0 ? PHASE_CAP[ph.idx] : STAGES[showing].cap; }
-    ov.cap.style.opacity = Math.abs(fsm - 0.5) > 0.3 || A === B ? 1 : 0;
+    ov.cap.style.opacity = (Math.abs(fsm - 0.5) > 0.3 || A === B ? 1 : 0) * settleFade;
+
+    // soft bioluminescent halo behind the particle shape — tracks its screen position/size
+    // and theme (dark: additive glow; light: a tinted wash so it still reads against white)
+    if (glow) {
+      const [gx, gy] = toScreen(0, 0, 0);
+      const pxPerUnit = innerHeight / visH;
+      const r = 3.9 * group.scale.x * pxPerUnit;
+      glow.style.left = gx + 'px';
+      glow.style.top = gy + 'px';
+      glow.style.width = (r * 2.3) + 'px';
+      glow.style.height = (r * 2.3) + 'px';
+      glow.style.opacity = String(Math.max(0, mat.uniforms.uOpacity.value) * (light ? 0.95 : 1));
+    }
     renderer.render(scene, camera);
   }
   function resize() {

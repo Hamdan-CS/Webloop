@@ -215,6 +215,12 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* Finale — the WebL∞p reveal. Sits right after the loop so the particle shape
+          morphs straight from the ring into the wordmark, with room to hold centred. */}
+      <section id="finaleSec" className="relative">
+        <div id="anchorLogo" className="h-[58vh] sm:h-[68vh] max-h-[620px] w-full" />
+      </section>
+
       {/* How it works — Students */}
       <section className="container-page py-14">
         <div className="grid lg:grid-cols-2 gap-8">
@@ -367,7 +373,6 @@ export function HomePage() {
       <section className="container-page py-14">
         <Reveal>
         <div className="relative overflow-hidden rounded-xl border border-white/10 p-10 sm:p-16 text-center">
-          <div id="anchorLogo" className="h-32 sm:h-44 mb-6" />
           <div className="relative">
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">
               Stop polishing your resume.

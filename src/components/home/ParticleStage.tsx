@@ -12,6 +12,7 @@ export function ParticleStage() {
 
   return (
     <>
+      <div id="particleGlow" aria-hidden="true" />
       <canvas id="particles" aria-hidden="true" />
       <div className="stage-overlay" aria-hidden="true">
         <div className="stage-core" id="core">
@@ -39,7 +40,7 @@ export function ParticleStage() {
           <span id="fwR">p</span>
         </div>
       </div>
-      <div id="caption" hidden />
+      <div id="caption" />
     </>
   );
 }
