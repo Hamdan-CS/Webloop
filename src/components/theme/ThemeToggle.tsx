@@ -19,19 +19,19 @@ export function ThemeToggle({ className }: { className?: string }) {
         <Sun
           size={16}
           className={cn(
-            'absolute inset-0 transition-all duration-300 ease-out',
+            'absolute inset-0 transition-[transform,opacity] duration-300 ease-out',
             theme === 'dark'
-              ? 'rotate-90 scale-0 opacity-0'
+              ? 'rotate-90 scale-95 opacity-0'
               : 'rotate-0 scale-100 opacity-100',
           )}
         />
         <Moon
           size={16}
           className={cn(
-            'absolute inset-0 transition-all duration-300 ease-out',
+            'absolute inset-0 transition-[transform,opacity] duration-300 ease-out',
             theme === 'dark'
               ? 'rotate-0 scale-100 opacity-100'
-              : '-rotate-90 scale-0 opacity-0',
+              : '-rotate-90 scale-95 opacity-0',
           )}
         />
       </div>

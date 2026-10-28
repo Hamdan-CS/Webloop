@@ -287,7 +287,7 @@ export function ProjectProgressDashboard({ project, isOwner }: Props) {
                   {memberTasks.length > 0 && (
                     <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
                       <div
-                        className="h-full rounded-full bg-signal-green transition-all duration-500"
+                        className="h-full rounded-full bg-signal-green transition-[width] duration-500"
                         style={{ width: `${progress}%` }}
                       />
                     </div>

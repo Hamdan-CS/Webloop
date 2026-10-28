@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { lazy, Suspense, useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   Loader2,
@@ -15,14 +15,12 @@ import {
   Sparkles,
   Trash2,
   MessageSquare,
-  Inbox,
   Users,
   X,
   Send,
   AlertCircle,
   Mail,
   Image as ImageIcon,
-  ListChecks,
   Award,
   FolderGit2,
   Languages as LanguagesIcon,
@@ -43,11 +41,8 @@ import {
   updateApplicationStatus,
   acceptApplicationAndAddMember,
   sendMessage,
-  fetchInboxMessages,
-  markMessageRead,
-  fetchProjectMembers,
 } from '@/lib/api';
-import type { Application, Message, PortfolioItem, Profile, Project, Review, ProjectStatus } from '@/lib/types';
+import type { Application, PortfolioItem, Profile, Project, Review, ProjectStatus } from '@/lib/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Rating, NoRating } from '@/components/ui/Rating';
@@ -58,18 +53,20 @@ import { useAuthPrompt } from '@/components/auth/AuthPrompt';
 import { useAuth } from '@/components/auth/AuthContext';
 import { creatorTypeLabel, relativeDate, statusLabel, statusTone } from '@/lib/labels';
 import { cn } from '@/lib/utils';
-import { TaskManagementPanel } from '@/components/projects/TaskManagementPanel';
-import { ConversationModal } from '@/components/projects/ConversationModal';
+
+const ContributionGrid = lazy(() =>
+  import('@/components/contributions').then((m) => ({ default: m.ContributionGrid })),
+);
 
 const PROJECT_STATUSES: ProjectStatus[] = ['draft', 'published', 'recruiting', 'in_progress', 'completed', 'archived'];
 
-type Tab = 'projects' | 'applications' | 'tasks' | 'messages';
-const VALID_TABS: Tab[] = ['projects', 'applications', 'tasks', 'messages'];
+type Tab = 'projects' | 'applications';
+const VALID_TABS: Tab[] = ['projects', 'applications'];
 
 export function CreatorProfilePage() {
   const { handle } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user, profile: myProfile, refreshCounts } = useAuth();
+  const { user, profile: myProfile } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
@@ -84,17 +81,12 @@ export function CreatorProfilePage() {
   const [appCounts, setAppCounts] = useState<Record<string, number>>({});
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
   const [projectApps, setProjectApps] = useState<Application[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [pendingApps, setPendingApps] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
   const [contactOpen, setContactOpen] = useState(false);
-  const [messageTarget, setMessageTarget] = useState<{ profile: Profile; projectId?: string; projectTitle?: string } | null>(null);
-  const [memberList, setMemberList] = useState<Record<string, { id: string; display_name: string; avatar_url: string | null; role: string | null }[]>>({});
   const { prompt } = useAuthPrompt();
   const tabSectionRef = useRef<HTMLDivElement>(null);
-  const autoOpenedMessageRef = useRef(false);
 
   const isOwner = !!(user && myProfile && profile && myProfile.id === profile.id);
 
@@ -117,21 +109,6 @@ export function CreatorProfilePage() {
       tabSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [searchParams, tab]);
-
-  useEffect(() => {
-    if (tab !== 'messages') {
-      autoOpenedMessageRef.current = false;
-      return;
-    }
-    if (autoOpenedMessageRef.current || messageTarget || !profile || messages.length === 0) return;
-    autoOpenedMessageRef.current = true;
-    const latest = [...messages].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-    const other = latest.recipient_id === profile.id ? latest.sender : latest.recipient;
-    if (other) {
-      setMessageTarget({ profile: other, projectId: latest.project_id ?? undefined, projectTitle: latest.project?.title });
-      if (latest.recipient_id === profile.id && !latest.is_read) handleMessageRead(latest.id);
-    }
-  }, [tab, messages, profile, messageTarget]);
 
   const loadData = useCallback(async () => {
     if (!handle) return;
@@ -164,24 +141,6 @@ export function CreatorProfilePage() {
         );
         setAppCounts(counts);
         setPendingApps(totalPending);
-
-        const msgs = await fetchInboxMessages(p.id);
-        setMessages(msgs);
-        setUnreadCount(msgs.filter((m) => !m.is_read && m.recipient_id === p.id).length);
-
-        const members: Record<string, { id: string; display_name: string; avatar_url: string | null; role: string | null }[]> = {};
-        await Promise.all(
-          prs.map(async (proj) => {
-            const m = await fetchProjectMembers(proj.id);
-            members[proj.id] = m.map((mem) => ({
-              id: mem.profile_id,
-              display_name: mem.profile?.display_name ?? 'Unknown',
-              avatar_url: mem.profile?.avatar_url ?? null,
-              role: mem.role,
-            }));
-          }),
-        );
-        setMemberList(members);
       }
     } else {
       setProjects([]);
@@ -246,13 +205,6 @@ export function CreatorProfilePage() {
     }
   };
 
-  const handleMessageRead = async (msgId: string) => {
-    await markMessageRead(msgId);
-    setMessages(messages.map((m) => (m.id === msgId ? { ...m, is_read: true } : m)));
-    setUnreadCount(Math.max(0, unreadCount - 1));
-    await refreshCounts();
-  };
-
   const handleContact = () => {
     if (!user || !myProfile) {
       prompt({
@@ -293,7 +245,7 @@ export function CreatorProfilePage() {
           {profile.banner_url ? (
             <img src={profile.banner_url} alt="" className="h-full w-full object-cover" />
           ) : (
-            <div className="h-full w-full bg-gradient-to-r from-ink-700 via-ink-800 to-ink-850" />
+            <div className="h-full w-full bg-ink-800" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-ink-900/60 to-transparent" />
         </div>
@@ -410,13 +362,20 @@ export function CreatorProfilePage() {
         </div>
       </div>
 
+      {/* ===== Contribution grid — students & teams only ===== */}
+      {(profile.creator_type === 'student' || profile.creator_type === 'team') && (
+        <div className="mt-6">
+          <Suspense fallback={<div className="skeleton h-[340px] rounded-xl" />}>
+            <ContributionGrid studentId={profile.id} size="full" />
+          </Suspense>
+        </div>
+      )}
+
       {/* ===== Owner management tabs ===== */}
       {isOwner && (
         <div ref={tabSectionRef} className="mt-6 flex gap-1 border-b border-white/8">
           <TabButton active={tab === 'projects'} onClick={() => setTab('projects')} icon={<GitBranch size={15} />} label="My Projects" badge={projects.length} />
           <TabButton active={tab === 'applications'} onClick={() => setTab('applications')} icon={<Users size={15} />} label="Join Requests" badge={pendingApps} badgeTone="amber" />
-          <TabButton active={tab === 'tasks'} onClick={() => setTab('tasks')} icon={<ListChecks size={15} />} label="Tasks" />
-          <TabButton active={tab === 'messages'} onClick={() => setTab('messages')} icon={<Inbox size={15} />} label="Messages" badge={unreadCount} badgeTone="accent" />
         </div>
       )}
 
@@ -488,132 +447,6 @@ export function CreatorProfilePage() {
                     </div>
                   ))}
                 </div>
-              )}
-            </section>
-          )}
-
-          {isOwner && tab === 'tasks' && (
-            <section className="surface p-5">
-              <h2 className="label-overline mb-4">Task Management</h2>
-              {projects.length === 0 ? (
-                <EmptyState label="Publish a project first, then manage tasks here." />
-              ) : (
-                <div className="space-y-6">
-                  {projects.map((p) => (
-                    <div key={p.id}>
-                      <div className="flex items-center gap-2 mb-3">
-                        <Link to={`/projects/${p.slug}`} className="font-display text-sm font-semibold text-white hover:text-accent-300 transition-colors">
-                          {p.title}
-                        </Link>
-                        <Badge tone={statusTone[p.status]}>{statusLabel[p.status]}</Badge>
-                      </div>
-                      <TaskManagementPanel projectId={p.id} profileId={profile.id} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
-
-          {isOwner && tab === 'messages' && (
-            <section className="surface p-5">
-              <h2 className="label-overline mb-4">Messages</h2>
-              <div className="mb-6 rounded-xl border border-white/8 bg-white/[0.02] p-4">
-                <p className="text-xs font-medium text-slate-400 mb-3">Start a conversation with a team member</p>
-                <div className="space-y-2">
-                  {projects.map((p) => {
-                    const members = memberList[p.id] ?? [];
-                    if (members.length === 0) return null;
-                    return (
-                      <div key={p.id}>
-                        <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1.5">{p.title}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {members.map((m) => (
-                            <button
-                              key={m.id}
-                              onClick={() => setMessageTarget({ profile: { id: m.id, display_name: m.display_name, avatar_url: m.avatar_url, handle: '', creator_type: 'student', verified: false, is_demo: false, created_at: '', updated_at: '', interests: [], user_id: null, bio: null, location: null, website_url: null, github_url: null, linkedin_url: null, experience_level: null, availability: null, banner_url: null } as unknown as Profile, projectId: p.id, projectTitle: p.title })}
-                              className="inline-flex items-center gap-2 rounded-lg border border-white/8 bg-white/[0.03] px-3 py-1.5 text-xs text-slate-300 hover:border-accent-400/30 hover:text-white transition-all"
-                            >
-                              <Avatar src={m.avatar_url} name={m.display_name} size="xs" />
-                              {m.display_name}
-                              {m.role && <span className="text-slate-500">· {m.role}</span>}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {Object.values(memberList).every((m) => m.length === 0) && (
-                    <p className="text-xs text-slate-500">No accepted team members yet. Accept join requests first.</p>
-                  )}
-                </div>
-              </div>
-
-              {messages.length === 0 ? (
-                <EmptyState label="No messages yet. Start a conversation with a team member above." />
-              ) : (
-                <div className="space-y-3">
-                  {(() => {
-                    const conversations = new Map<string, { other: Profile; lastMsg: Message; unread: number; projectId?: string; projectTitle?: string }>();
-                    for (const m of messages) {
-                      const received = m.recipient_id === profile.id;
-                      const other = (received ? m.sender : m.recipient)!;
-                      const existing = conversations.get(other.id);
-                      if (!existing || new Date(m.created_at) > new Date(existing.lastMsg.created_at)) {
-                        conversations.set(other.id, {
-                          other,
-                          lastMsg: m,
-                          unread: 0,
-                          projectId: m.project_id ?? undefined,
-                          projectTitle: m.project?.title,
-                        });
-                      }
-                      if (received && !m.is_read) {
-                        const entry = conversations.get(other.id)!;
-                        entry.unread++;
-                      }
-                    }
-                    return Array.from(conversations.values()).sort((a, b) => new Date(b.lastMsg.created_at).getTime() - new Date(a.lastMsg.created_at).getTime()).map((c) => (
-                      <button
-                        key={c.other.id}
-                        onClick={() => {
-                          if (c.lastMsg.recipient_id === profile.id && !c.lastMsg.is_read) {
-                            handleMessageRead(c.lastMsg.id);
-                          }
-                          setMessageTarget({ profile: c.other, projectId: c.projectId, projectTitle: c.projectTitle });
-                        }}
-                        className={cn('w-full text-left rounded-xl border p-4 transition-all', c.unread > 0 ? 'border-accent-400/20 bg-accent-500/5 hover:border-accent-400/40' : 'border-white/5 bg-white/[0.02] hover:border-white/15')}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar src={c.other.avatar_url} name={c.other.display_name} size="sm" />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <Link to={`/creators/${c.other.handle}`} onClick={(e) => e.stopPropagation()} className="text-xs font-medium text-white hover:text-accent-300">
-                                {c.other.display_name}
-                              </Link>
-                              {c.unread > 0 && <span className="h-1.5 w-1.5 rounded-full bg-accent-400" />}
-                            </div>
-                            <p className="text-[10px] text-slate-500">{relativeDate(c.lastMsg.created_at)}</p>
-                          </div>
-                          {c.projectTitle && (
-                            <span className="text-[10px] text-slate-500 truncate max-w-[120px]">re: {c.projectTitle}</span>
-                          )}
-                        </div>
-                        <p className="mt-2 text-xs text-slate-400 leading-relaxed line-clamp-2">{c.lastMsg.body}</p>
-                      </button>
-                    ));
-                  })()}
-                </div>
-              )}
-
-              {messageTarget && myProfile && (
-                <ConversationModal
-                  myProfile={myProfile}
-                  otherProfile={messageTarget.profile}
-                  projectId={messageTarget.projectId}
-                  projectTitle={messageTarget.projectTitle}
-                  onClose={() => { setMessageTarget(null); loadData(); }}
-                />
               )}
             </section>
           )}
@@ -752,7 +585,7 @@ export function CreatorProfilePage() {
                           {item.cover_image_url ? (
                             <img src={item.cover_image_url} alt={item.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                           ) : (
-                            <div className="h-full w-full bg-gradient-to-br from-ink-700 to-ink-850" />
+                            <div className="h-full w-full bg-ink-800" />
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 to-transparent" />
                           <span className="absolute left-2.5 top-2.5"><Badge tone="violet">{item.category}</Badge></span>

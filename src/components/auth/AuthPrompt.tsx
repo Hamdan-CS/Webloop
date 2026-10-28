@@ -49,7 +49,7 @@ export function AuthPromptProvider({ children }: { children: ReactNode }) {
           aria-modal="true"
         >
           <div
-            className="surface-raised w-full max-w-md p-7 animate-fade-in-up"
+            className="surface-raised shadow-card w-full max-w-md p-7 animate-fade-in-up"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">

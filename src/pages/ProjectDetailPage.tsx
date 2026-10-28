@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -19,7 +19,7 @@ import {
   AlertCircle,
   Send,
 } from 'lucide-react';
-import { fetchProjectBySlug, fetchProfileStats, createApplication, checkExistingApplication, fetchProjectApplicationsDetailed, fetchProjectMembers, updateMemberRole } from '@/lib/api';
+import { fetchProjectBySlug, fetchProfileStats, fetchProfileContributions, createApplication, checkExistingApplication, fetchProjectApplicationsDetailed, fetchProjectMembers, updateMemberRole } from '@/lib/api';
 import type { Project, Application, ProjectMember } from '@/lib/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
@@ -42,6 +42,10 @@ import {
   creatorTypeLabel,
   relativeDate,
 } from '@/lib/labels';
+
+const ContributionGrid = lazy(() =>
+  import('@/components/contributions').then((m) => ({ default: m.ContributionGrid })),
+);
 
 export function ProjectDetailPage() {
   const { slug } = useParams();
@@ -176,7 +180,7 @@ export function ProjectDetailPage() {
         {project.cover_image_url ? (
           <img src={project.cover_image_url} alt={project.title} className="h-full w-full object-cover" />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-ink-700 to-ink-850" />
+          <div className="h-full w-full bg-ink-800" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-ink-950 via-ink-950/40 to-ink-950/30" />
         <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
@@ -312,15 +316,20 @@ export function ProjectDetailPage() {
                   <p className="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Pending join requests ({pendingApps.length})</p>
                   <ul className="space-y-2">
                     {pendingApps.map((a) => (
-                      <li key={a.id} className="flex items-center gap-3 rounded-xl border border-signal-amber/20 bg-signal-amber/5 p-3">
-                        <Avatar src={a.applicant?.avatar_url} name={a.applicant?.display_name ?? ''} size="sm" />
-                        <div className="min-w-0 flex-1">
-                          <Link to={`/creators/${a.applicant?.handle}`} className="truncate text-xs font-medium text-white hover:text-accent-300">
-                            {a.applicant?.display_name}
-                          </Link>
-                          <p className="text-[10px] text-slate-500">{a.role_title ?? 'General application'}</p>
+                      <li key={a.id} className="rounded-xl border border-signal-amber/20 bg-signal-amber/5 p-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar src={a.applicant?.avatar_url} name={a.applicant?.display_name ?? ''} size="sm" />
+                          <div className="min-w-0 flex-1">
+                            <Link to={`/creators/${a.applicant?.handle}`} className="truncate text-xs font-medium text-white hover:text-accent-300">
+                              {a.applicant?.display_name}
+                            </Link>
+                            <p className="text-[10px] text-slate-500">{a.role_title ?? 'General application'}</p>
+                          </div>
+                          <Badge tone="amber">Pending</Badge>
                         </div>
-                        <Badge tone="amber">Pending</Badge>
+                        {a.applicant && a.applicant.creator_type !== 'company' && a.applicant.creator_type !== 'university' && (
+                          <ApplicantContributionSummary profileId={a.applicant.id} handle={a.applicant.handle} />
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -389,7 +398,7 @@ export function ProjectDetailPage() {
 
           {/* Creator card */}
           {owner && (
-            <Link to={`/creators/${owner.handle}`} className="surface-raised p-5 block hover:border-accent-400/30 transition-all group">
+            <Link to={`/creators/${owner.handle}`} className="surface-raised p-5 block hover:border-accent-400/30 transition-colors group">
               <div className="flex items-center gap-3">
                 <Avatar src={owner.avatar_url} name={owner.display_name} size="lg" />
                 <div className="min-w-0 flex-1">
@@ -533,6 +542,34 @@ function MetaRow({ icon, label, value }: { icon: React.ReactNode; label: string;
         {icon} {label}
       </span>
       <span className="text-sm font-medium text-slate-200 text-right">{value}</span>
+    </div>
+  );
+}
+
+/** Mini contribution grid + totals for one applicant, shown inside their card in the join-requests list. */
+function ApplicantContributionSummary({ profileId, handle }: { profileId: string; handle?: string }) {
+  const [stats, setStats] = useState<{ avg: number; count: number; approved: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([fetchProfileStats(profileId), fetchProfileContributions(profileId)]).then(([st, ctr]) => {
+      if (!cancelled) setStats({ avg: st.avg_rating, count: st.review_count, approved: ctr.approved });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [profileId]);
+
+  return (
+    <div className="mt-2.5 flex items-center gap-3">
+      <Suspense fallback={<div className="skeleton h-8 w-32 rounded" />}>
+        <ContributionGrid studentId={profileId} size="mini" profileHandle={handle} />
+      </Suspense>
+      {stats && (
+        <span className="text-[11px] text-slate-500">
+          {stats.approved} task{stats.approved === 1 ? '' : 's'} · {stats.count > 0 ? `${stats.avg.toFixed(1)} avg rating` : 'not rated'}
+        </span>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Users,
@@ -13,6 +13,7 @@ import {
   FolderGit2,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
+import { useFloatingPanel } from '@/components/FloatingPanel';
 import {
   fetchProfileProjects,
   fetchProfilePortfolio,
@@ -29,8 +30,13 @@ import { statusLabel, statusTone, relativeDate } from '@/lib/labels';
 import { MyTasksPanel } from '@/components/projects/MyTasksPanel';
 import { ClipboardList } from 'lucide-react';
 
+const ContributionGrid = lazy(() =>
+  import('@/components/contributions').then((m) => ({ default: m.ContributionGrid })),
+);
+
 export function StudentDashboard() {
   const { profile, unreadMessages } = useAuth();
+  const { openPanel } = useFloatingPanel();
   const [projects, setProjects] = useState<Project[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [stats, setStats] = useState({ avg: 0, count: 0 });
@@ -75,6 +81,13 @@ export function StudentDashboard() {
           <Link to="/publish"><Button><Plus size={15} /> New Project</Button></Link>
           <Link to="/explore"><Button variant="secondary"><Sparkles size={15} /> Explore</Button></Link>
         </div>
+      </div>
+
+      {/* Contribution grid */}
+      <div className="mt-6">
+        <Suspense fallback={<div className="skeleton h-[340px] rounded-xl" />}>
+          <ContributionGrid studentId={profile.id} size="full" />
+        </Suspense>
       </div>
 
       {/* Stat cards */}
@@ -140,7 +153,7 @@ export function StudentDashboard() {
           <section className="surface p-5">
             <h2 className="label-overline mb-4">Quick actions</h2>
             <nav className="space-y-1.5">
-              <QuickLink to={`/creators/${profile.handle}?tab=messages`} icon={<Inbox size={15} />} label="Messages" count={unreadMessages} />
+              <QuickLink onClick={() => openPanel('messages')} icon={<Inbox size={15} />} label="Messages" count={unreadMessages} />
               <QuickLink to="/publish" icon={<Plus size={15} />} label="Publish a project" />
               <QuickLink to="/explore" icon={<Sparkles size={15} />} label="Explore projects" />
               <QuickLink to="/my-applications" icon={<Briefcase size={15} />} label="My applications" />
@@ -188,15 +201,20 @@ function StatCard({ icon, label, value, tone }: { icon: React.ReactNode; label: 
   );
 }
 
-function QuickLink({ to, icon, label, count }: { to: string; icon: React.ReactNode; label: string; count?: number }) {
-  return (
-    <Link to={to} className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+function QuickLink({ to, onClick, icon, label, count }: { to?: string; onClick?: () => void; icon: React.ReactNode; label: string; count?: number }) {
+  const className = 'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors';
+  const content = (
+    <>
       <span className="text-slate-500">{icon}</span>
-      <span className="flex-1">{label}</span>
+      <span className="flex-1 text-left">{label}</span>
       {!!count && (
         <span className="rounded-full bg-accent-500 px-1.5 py-0.5 text-[10px] font-semibold text-ink-950">{count}</span>
       )}
       <ArrowRight size={13} className="text-slate-600" />
-    </Link>
+    </>
   );
+  if (to) {
+    return <Link to={to} className={className}>{content}</Link>;
+  }
+  return <button onClick={onClick} className={className}>{content}</button>;
 }

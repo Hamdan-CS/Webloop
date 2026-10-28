@@ -39,9 +39,8 @@ export function MyApplicationsPage() {
   return (
     <div className="container-page py-8 max-w-3xl">
       <div className="mb-8">
-        <span className="label-overline">My Applications</span>
-        <h1 className="mt-2 font-display text-3xl font-bold text-white">Your project applications</h1>
-        <p className="mt-2 text-slate-400">Track the status of projects you've applied to join.</p>
+        <h1 className="font-display text-3xl font-bold text-white">Your project applications</h1>
+        <p className="mt-2 text-slate-300">Track the status of projects you've applied to join.</p>
       </div>
 
       {loading ? (

@@ -26,26 +26,25 @@ export function ProjectCard({ project, selected, onClick, compact }: ProjectCard
   const inner = (
     <article
       className={cn(
-        'group relative flex flex-col overflow-hidden rounded-lg border bg-ink-900/60 transition-all duration-300',
+        'group relative flex flex-col overflow-hidden rounded-lg border border-transparent bg-ink-900/70 transition-colors duration-300',
         selected
           ? 'border-accent-400/50 shadow-glow'
-          : 'border-white/8 hover:border-white/15 hover:bg-ink-850/70',
+          : 'hover:border-white/15 hover:bg-ink-850/80',
         onClick && 'cursor-pointer',
       )}
     >
-      <div className="relative aspect-[16/10] overflow-hidden">
-        {project.cover_image_url ? (
+      <div className="relative aspect-[16/10] overflow-hidden bg-ink-800">
+        {project.cover_image_url && (
           <img
             src={project.cover_image_url}
             alt={project.title}
             className={cn(
-              'h-full w-full object-cover transition-transform duration-500',
+              'absolute inset-0 h-full w-full object-cover transition-transform duration-500',
               'group-hover:scale-[1.04]',
             )}
             loading="lazy"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-ink-700 to-ink-850" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-ink-950/90 via-ink-950/20 to-transparent" />
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">

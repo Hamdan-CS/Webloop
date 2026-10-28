@@ -86,9 +86,8 @@ export function JoinPage() {
   return (
     <div className="container-page py-10">
       <div className="max-w-3xl">
-        <span className="label-overline">Join the Platform</span>
-        <h1 className="mt-2 font-display text-3xl sm:text-4xl font-bold text-white">Choose how you want to participate.</h1>
-        <p className="mt-3 text-slate-400">
+        <h1 className="font-display text-3xl sm:text-4xl font-bold text-white">Choose how you want to participate.</h1>
+        <p className="mt-3 text-slate-300">
           Accounts are free. Guests can browse everything without signing in — you only need an account to contribute, apply, or publish.
         </p>
       </div>
@@ -100,7 +99,7 @@ export function JoinPage() {
             key={r.role}
             onClick={() => setSelected(r.role)}
             className={cn(
-              'text-left rounded-lg border p-5 transition-all',
+              'text-left rounded-lg border p-5 transition-colors',
               selected === r.role
                 ? 'border-accent-400/50 bg-accent-500/5 shadow-glow'
                 : 'border-white/8 bg-ink-900/60 hover:border-white/15',

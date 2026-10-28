@@ -8,10 +8,7 @@ import {
   Building2,
   GraduationCap,
   ShieldCheck,
-  Code2,
   Trophy,
-  Zap,
-  GitPullRequest,
   Star,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -51,16 +48,8 @@ export function HomePage() {
       <ParticleStage />
 
       {/* Hero */}
-      <section id="heroSec" className="relative overflow-hidden lg:min-h-[calc(100vh-4rem)] lg:flex lg:items-center">
+      <section id="heroSec" className="relative overflow-hidden lg:min-h-[calc(100dvh-4rem)] lg:flex lg:items-center">
         <div id="anchorHero" className="hidden lg:block absolute right-[2%] top-[6%] bottom-[16%] w-[46%]" />
-        <div id="heroSteps" className="hidden lg:grid absolute bottom-[7%] right-[5%] w-[40%] grid-cols-3 gap-5">
-          {['Build the project', 'Find the team', 'Verify the skills'].map((t, i) => (
-            <div key={t} className="hstep">
-              <div className="h-[2px] rounded bg-white/10 overflow-hidden"><div className="hbar h-full bg-accent-500" /></div>
-              <p className="mt-2.5 text-xs"><span className="font-mono text-slate-500 mr-1.5">0{i + 1}</span><span className="htxt">{t}</span></p>
-            </div>
-          ))}
-        </div>
         <div className="container-page relative pt-20 pb-16 sm:pt-28 lg:py-24">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -68,16 +57,12 @@ export function HomePage() {
             transition={{ duration: 0.6 }}
             className="max-w-3xl lg:max-w-2xl"
           >
-            <span className="label-overline">Student Project Collaboration & Talent Marketplace</span>
-            <h1 className="mt-4 font-display text-4xl sm:text-6xl font-bold tracking-tight text-white leading-[1.05]">
-              <span className="ph" data-ph="0">Build real projects.</span>
+            <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight text-white leading-[1.05]">
+              Build real projects.
               <br />
-              <span className="text-accent-500">
-                <span className="ph" data-ph="1">Find your team.</span>{' '}
-                <span className="ph" data-ph="2">Prove your skills.</span>
-              </span>
+              <span className="text-accent-500">Prove your skills.</span>
             </h1>
-            <p className="mt-6 max-w-2xl text-lg text-slate-300 leading-relaxed">
+            <p className="mt-6 max-w-2xl text-lg text-slate-200 leading-relaxed">
               A platform where computer science students ship real software, find teammates, build
               verified portfolios, and get discovered by startups hiring from actual contributions —
               not just resumes.
@@ -108,7 +93,7 @@ export function HomePage() {
               )}
             </div>
 
-            <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-slate-400">
+            <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-slate-300">
               <span className="inline-flex items-center gap-2">
                 <ShieldCheck size={15} className="text-signal-green" /> Verified contributions
               </span>
@@ -127,7 +112,6 @@ export function HomePage() {
       {/* Featured projects */}
       <section className="container-page py-14" id="featured">
         <SectionHeader
-          overline="Featured"
           title="Live projects you can join right now"
           subtitle="Student ideas, company opportunities, and university capstones — all recruiting contributors."
           actionTo="/explore"
@@ -156,35 +140,31 @@ export function HomePage() {
         <div className="surface-raised overflow-hidden">
           <div className="grid lg:grid-cols-[1.2fr_1fr]">
             <div className="p-8 sm:p-12">
-              <span className="label-overline">Why WebLoop</span>
-              <h2 className="mt-3 font-display text-3xl font-bold text-white">
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-white">
                 Contributions become career evidence.
               </h2>
-              <p className="mt-4 text-slate-300 leading-relaxed">
+              <p className="mt-4 text-slate-200 leading-relaxed">
                 Every task you complete is reviewed by a project owner and recorded as a verified
                 contribution. Companies hire from demonstrated work, not self-reported skills.
               </p>
-              <div className="mt-8 space-y-4">
+              <ol className="mt-8 space-y-4 list-decimal list-outside pl-5 marker:font-semibold marker:text-accent-400">
                 <StepRow
-                  icon={<Code2 size={18} />}
                   title="Ship real work"
                   desc="Join projects, get assigned tasks with acceptance criteria, and submit evidence."
                 />
                 <StepRow
-                  icon={<GitPullRequest size={18} />}
                   title="Get reviewed"
                   desc="Project owners review your submissions and record verified contributions."
                 />
                 <StepRow
-                  icon={<Trophy size={18} />}
                   title="Get discovered"
                   desc="Companies find you through your verified contribution history and portfolio."
                 />
-              </div>
+              </ol>
             </div>
-            <div id="anchorCV" className="relative border-t border-white/5 lg:border-l lg:border-t-0 min-h-[420px] lg:min-h-[520px]" />
+            <div id="anchorCV" className="relative min-h-[420px] lg:min-h-[520px]" />
           </div>
-          <div className="grid gap-3 sm:grid-cols-3 border-t border-white/5 p-6 sm:p-8">
+          <div className="grid gap-3 sm:grid-cols-3 bg-ink-900/60 p-6 sm:p-8">
             <ContributionCard title="Implemented spaced-repetition scheduler" project="Studyflow" status="Accepted" tech={['React', 'TypeScript']} rating={5} />
             <ContributionCard title="Designed emissions data model" project="Carbon Ledger" status="Accepted" tech={['PostgreSQL', 'TypeScript']} rating={5} />
             <ContributionCard title="Authored Node scaffolding template" project="Northstack CLI" status="Accepted" tech={['Node.js', 'CLI']} rating={4} />
@@ -197,11 +177,10 @@ export function HomePage() {
       <section className="container-page py-14" id="loop">
         <div className="grid lg:grid-cols-2 gap-8 items-center">
           <Reveal>
-            <span className="label-overline">The loop</span>
-            <h2 className="mt-3 font-display text-3xl sm:text-4xl font-bold text-white">
+            <h2 className="font-display text-2xl sm:text-4xl font-bold text-white">
               Students build. Companies hire. Universities teach.
             </h2>
-            <p className="mt-4 text-slate-300 leading-relaxed max-w-xl">
+            <p className="mt-4 text-slate-200 leading-relaxed max-w-xl">
               Everyone on WebLoop moves the same loop forward: students ship work, companies and universities
               review it, and every review feeds back into someone&apos;s career.
             </p>
@@ -221,12 +200,13 @@ export function HomePage() {
         <div id="anchorLogo" className="h-[58vh] sm:h-[68vh] max-h-[620px] w-full" />
       </section>
 
-      {/* How it works — Students */}
+      {/* How it works — Students and Companies */}
       <section className="container-page py-14">
-        <div className="grid lg:grid-cols-2 gap-8">
+        <h2 className="font-display text-2xl sm:text-3xl font-bold text-white max-w-xl">
+          Two sides, one proof of work.
+        </h2>
+        <div className="mt-8 grid lg:grid-cols-2 gap-x-10 gap-y-10">
           <Reveal><HowItWorksCard
-            icon={<Users size={20} />}
-            overline="For Students"
             title="Build a portfolio that proves what you can do"
             steps={[
               'Create a profile with your skills, interests, and goals.',
@@ -238,8 +218,6 @@ export function HomePage() {
             ctaLabel="Join as a Student"
           /></Reveal>
           <Reveal delay={0.1}><HowItWorksCard
-            icon={<Building2 size={20} />}
-            overline="For Companies"
             title="Recruit contributors from real, demonstrated work"
             steps={[
               'Create a company profile and publish a scoped project.',
@@ -256,7 +234,6 @@ export function HomePage() {
       {/* Student work gallery preview */}
       <section className="container-page py-14">
         <SectionHeader
-          overline="Student Work"
           title="What students are shipping"
           subtitle="Public portfolio pieces from student builders."
           actionTo="/gallery"
@@ -274,18 +251,17 @@ export function HomePage() {
               <Reveal key={item.id} delay={i * 0.07}>
               <Link
                 to={`/creators/${item.profile?.handle}`}
-                className="group surface overflow-hidden hover:border-accent-400/30 transition-all"
+                className="group surface overflow-hidden hover:border-accent-400/30 transition-colors"
               >
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  {item.cover_image_url ? (
+                <div className="relative aspect-[4/3] overflow-hidden bg-ink-800">
+                  {item.cover_image_url && (
                     <img
                       src={item.cover_image_url}
                       alt={item.title}
-                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
-                  ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-ink-700 to-ink-850" />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 to-transparent" />
                   <span className="absolute left-2.5 top-2.5">
@@ -312,14 +288,13 @@ export function HomePage() {
       {/* University partnerships */}
       <section className="container-page py-14">
         <Reveal>
-        <div className="surface p-8 sm:p-12 backdrop-blur-md">
+        <div className="surface p-8 sm:p-12">
           <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-center">
             <div>
-              <span className="label-overline">University Partnerships</span>
-              <h2 className="mt-3 font-display text-3xl font-bold text-white">
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-white">
                 Connect coursework with real projects.
               </h2>
-              <p className="mt-4 text-slate-300 leading-relaxed max-w-xl">
+              <p className="mt-4 text-slate-200 leading-relaxed max-w-xl">
                 Universities can run capstone programs, form student teams, mentor projects, and track
                 participation. Students gain real experience; faculty get visibility into outcomes.
               </p>
@@ -329,7 +304,7 @@ export function HomePage() {
                 <Badge><Trophy size={13} /> Completion records</Badge>
               </div>
             </div>
-            <div className="rounded-xl border border-white/8 bg-ink-900/60 p-5">
+            <div className="rounded-xl bg-ink-900/70 p-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-signal-violet/15 text-signal-violet">
                   <GraduationCap size={20} />
@@ -350,19 +325,21 @@ export function HomePage() {
 
       {/* Trust & safety */}
       <section className="container-page py-14">
-        <div className="grid sm:grid-cols-3 gap-4">
-          <TrustCard
-            icon={<ShieldCheck size={20} />}
+        <Reveal className="max-w-xl">
+          <h2 className="font-display text-2xl sm:text-3xl font-bold text-white">
+            Built so the record stays honest.
+          </h2>
+        </Reveal>
+        <div className="mt-9 grid gap-8 sm:grid-cols-3">
+          <TrustItem
             title="Verified contributions only"
             desc="Reviews require verified project participation. Self-reported skills are clearly labeled."
           />
-          <TrustCard
-            icon={<Zap size={20} />}
+          <TrustItem
             title="Fair, transparent reputation"
             desc="Review counts always show next to ratings. New members aren't penalized for starting out."
           />
-          <TrustCard
-            icon={<Building2 size={20} />}
+          <TrustItem
             title="Responsible opportunities"
             desc="Paid, unpaid educational, and open-source work is clearly classified — no disguised labor."
           />
@@ -372,14 +349,14 @@ export function HomePage() {
       {/* Final CTA */}
       <section className="container-page py-14">
         <Reveal>
-        <div className="relative overflow-hidden rounded-xl border border-white/10 p-10 sm:p-16 text-center">
+        <div className="relative overflow-hidden rounded-xl bg-ink-900/70 p-8 sm:p-16 text-center">
           <div className="relative">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">
+            <h2 className="font-display text-2xl sm:text-4xl font-bold text-white">
               Stop polishing your resume.
               <br />
               Start shipping proof.
             </h2>
-            <p className="mt-4 max-w-xl mx-auto text-slate-300">
+            <p className="mt-4 max-w-xl mx-auto text-slate-200">
               Join WebLoop, find a project that excites you, and build a portfolio backed by verified
               contributions.
             </p>
@@ -404,13 +381,11 @@ export function HomePage() {
 }
 
 function SectionHeader({
-  overline,
   title,
   subtitle,
   actionTo,
   actionLabel,
 }: {
-  overline: string;
   title: string;
   subtitle?: string;
   actionTo: string;
@@ -419,9 +394,8 @@ function SectionHeader({
   return (
     <Reveal className="mb-7 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <span className="label-overline">{overline}</span>
-        <h2 className="mt-2 font-display text-2xl sm:text-3xl font-bold text-white">{title}</h2>
-        {subtitle && <p className="mt-2 text-slate-400 max-w-xl">{subtitle}</p>}
+        <h2 className="font-display text-2xl sm:text-3xl font-bold text-white">{title}</h2>
+        {subtitle && <p className="mt-2 text-slate-300 max-w-xl">{subtitle}</p>}
       </div>
       <Link to={actionTo} className="link-accent text-sm whitespace-nowrap">
         {actionLabel} →
@@ -430,17 +404,12 @@ function SectionHeader({
   );
 }
 
-function StepRow({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+function StepRow({ title, desc }: { title: string; desc: string }) {
   return (
-    <div className="flex items-start gap-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-500/15 text-accent-300">
-        {icon}
-      </div>
-      <div>
-        <p className="font-semibold text-white">{title}</p>
-        <p className="mt-0.5 text-sm text-slate-400">{desc}</p>
-      </div>
-    </div>
+    <li className="pl-1">
+      <p className="font-semibold text-white">{title}</p>
+      <p className="mt-0.5 text-sm text-slate-300">{desc}</p>
+    </li>
   );
 }
 
@@ -458,7 +427,7 @@ function ContributionCard({
   rating: number;
 }) {
   return (
-    <div className="rounded-xl border border-white/8 bg-ink-900/80 backdrop-blur-sm p-3.5">
+    <div className="rounded-xl bg-ink-900/90 p-3.5">
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm font-medium text-white">{title}</p>
         <Badge tone="green">{status}</Badge>
@@ -487,15 +456,11 @@ function ContributionCard({
 }
 
 function HowItWorksCard({
-  icon,
-  overline,
   title,
   steps,
   ctaTo,
   ctaLabel,
 }: {
-  icon: React.ReactNode;
-  overline: string;
   title: string;
   steps: string[];
   ctaTo: string;
@@ -503,21 +468,10 @@ function HowItWorksCard({
 }) {
   return (
     <div className="surface-raised p-8">
-      <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-500/15 text-accent-300">
-          {icon}
-        </div>
-        <span className="label-overline">{overline}</span>
-      </div>
-      <h3 className="mt-4 font-display text-2xl font-bold text-white">{title}</h3>
-      <ol className="mt-5 space-y-3">
+      <h3 className="font-display text-xl sm:text-2xl font-bold text-white">{title}</h3>
+      <ol className="mt-5 space-y-3 list-decimal list-outside pl-5 marker:font-semibold marker:text-accent-400">
         {steps.map((s, i) => (
-          <li key={i} className="flex items-start gap-3">
-            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-accent-300">
-              {i + 1}
-            </span>
-            <span className="text-sm text-slate-300">{s}</span>
-          </li>
+          <li key={i} className="pl-1 text-[15px] text-slate-200 leading-relaxed">{s}</li>
         ))}
       </ol>
       <Link to={ctaTo} className="mt-6 block">
@@ -527,16 +481,11 @@ function HowItWorksCard({
   );
 }
 
-function TrustCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+function TrustItem({ title, desc }: { title: string; desc: string }) {
   return (
     <Reveal>
-      <div className="surface h-full p-6 backdrop-blur-md">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/5 text-accent-300">
-          {icon}
-        </div>
-        <h3 className="mt-4 font-semibold text-white">{title}</h3>
-        <p className="mt-2 text-sm text-slate-400 leading-relaxed">{desc}</p>
-      </div>
+      <h3 className="font-display text-lg font-semibold text-white">{title}</h3>
+      <p className="mt-2 text-[15px] text-slate-200 leading-relaxed">{desc}</p>
     </Reveal>
   );
 }

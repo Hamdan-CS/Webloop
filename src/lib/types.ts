@@ -144,6 +144,7 @@ export interface Application {
 
 export type TaskStatus = 'open' | 'in_progress' | 'submitted' | 'approved' | 'changes_requested' | 'rejected';
 export type SubmissionStatus = 'pending' | 'approved' | 'changes_requested' | 'not_completed' | 'rejected';
+export type TaskSize = 'small' | 'medium' | 'large';
 
 export interface Task {
   id: string;
@@ -153,6 +154,7 @@ export interface Task {
   description: string | null;
   acceptance_criteria: string | null;
   status: TaskStatus;
+  size: TaskSize;
   created_by: string;
   due_date: string | null;
   created_at: string;

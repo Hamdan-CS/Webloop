@@ -127,7 +127,7 @@ export function startParticleStage(): () => void {
     const w = [c[1] * u[2] - c[2] * u[1], c[2] * u[0] - c[0] * u[2], c[0] * u[1] - c[1] * u[0]];
     return Array.from({ length: LINK_PER }, (_, k) => { const a = k / LINK_PER * 6.283 + 0.4; return [Math.cos(a), Math.sin(a), u, w]; });
   });
-  const chips = TEAMS.map(() => { const d = document.createElement('span'); d.className = 'vchip'; d.textContent = '✓ Team verified'; document.getElementById('vchips').appendChild(d); return d; });
+  const chips = TEAMS.map(() => { const d = document.createElement('span'); d.className = 'vchip'; d.textContent = 'Team verified'; document.getElementById('vchips').appendChild(d); return d; });
   const baseCol = new Float32Array(N * 3), proveCol = new THREE.Color(), teamCol = new THREE.Color();
   const steps = Array.from(document.querySelectorAll('.hstep'));
   const phrases = Array.from(document.querySelectorAll('.ph')), h1 = document.querySelector('h1');
@@ -136,17 +136,19 @@ export function startParticleStage(): () => void {
   let light = true;
   function applyTheme() {
     light = document.documentElement.classList.contains('light');
-    const a = new THREE.Color(light ? '#0E7490' : '#00827C'), b = new THREE.Color(light ? '#06B6D4' : '#CBFFFC'), v = new THREE.Color(light ? '#7C3AED' : '#FAD1FF'), c = new THREE.Color();
+    // one accent family only (teal → cyan) — no second decorative hue
+    const a = new THREE.Color(light ? '#0E7490' : '#00827C'), b = new THREE.Color(light ? '#06B6D4' : '#CBFFFC'), c = new THREE.Color();
     for (let i = 0; i < N; i++) {
       const k = (SPH[i * 3 + 1] / 3 + 1) / 2;
-      if (rnd[i * 3 + 2] < 0.05) c.set(light ? '#0C4A6E' : '#FFFFFF'); else if (k < 0.5) c.copy(a).lerp(b, k * 2); else c.copy(b).lerp(v, (k - 0.5) * 2);
+      if (rnd[i * 3 + 2] < 0.05) c.set(light ? '#0C4A6E' : '#FFFFFF'); else c.copy(a).lerp(b, k);
       col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
     }
     baseCol.set(col);
-    teamCol.set(light ? '#7C3AED' : '#F0ABFC'); proveCol.set(light ? '#059669' : '#6EE7B7');
+    teamCol.set(light ? '#0891B2' : '#67E8F9'); proveCol.set(light ? '#059669' : '#6EE7B7');
     lmat.color.set(light ? '#0E7490' : '#CBFFFC');
     geo.attributes.color.needsUpdate = true;
-    [v, b, a].forEach((cc, q) => { beadCol[q * 3] = cc.r; beadCol[q * 3 + 1] = cc.g; beadCol[q * 3 + 2] = cc.b; });
+    const mid = a.clone().lerp(b, 0.55);
+    [mid, b, a].forEach((cc, q) => { beadCol[q * 3] = cc.r; beadCol[q * 3 + 1] = cc.g; beadCol[q * 3 + 2] = cc.b; });
     bgeo.attributes.color.needsUpdate = true;
     mat.blending = light ? THREE.NormalBlending : THREE.AdditiveBlending;
     bmat.blending = mat.blending;
@@ -172,7 +174,7 @@ export function startParticleStage(): () => void {
   // keep tracking the anchor div as the page scrolls past, then ease it out
   let settled = false, settleY = 0;
   const frozen = [0, 0, 1];
-  const HOLD_PX = 260, FADE_PX = 480;
+  const HOLD_PX = 60, FADE_PX = 160;
   const glow = document.getElementById('particleGlow');
   const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
   const onPointerMove = (e) => { pointer.tx = e.clientX / innerWidth - 0.5; pointer.ty = e.clientY / innerHeight - 0.5; };

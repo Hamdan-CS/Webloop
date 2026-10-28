@@ -59,7 +59,7 @@ export function ConversationModal({ myProfile, otherProfile, projectId, projectT
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/80 backdrop-blur-sm animate-fade-in-up">
-      <div className="surface-raised w-full max-w-lg p-0 flex flex-col max-h-[80vh]">
+      <div className="surface-raised shadow-card w-full max-w-lg p-0 flex flex-col max-h-[80vh]">
         <div className="flex items-center justify-between p-5 border-b border-white/8">
           <div className="flex items-center gap-3">
             <Avatar src={otherProfile.avatar_url} name={otherProfile.display_name} size="md" />

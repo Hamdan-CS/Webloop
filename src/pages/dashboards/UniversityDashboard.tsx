@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
+import { useFloatingPanel } from '@/components/FloatingPanel';
 import {
   fetchProfileProjects,
   fetchProfileStats,
@@ -29,6 +30,7 @@ import { statusLabel, statusTone } from '@/lib/labels';
 
 export function UniversityDashboard() {
   const { profile, unreadMessages, pendingReviews } = useAuth();
+  const { openPanel } = useFloatingPanel();
   const [projects, setProjects] = useState<Project[]>([]);
   const [stats, setStats] = useState({ avg: 0, count: 0 });
   const [appCounts, setAppCounts] = useState<Record<string, number>>({});
@@ -123,8 +125,8 @@ export function UniversityDashboard() {
           <section className="surface p-5">
             <h2 className="label-overline mb-4">University actions</h2>
             <nav className="space-y-1.5">
-              <QuickLink to={`/creators/${profile.handle}?tab=messages`} icon={<Inbox size={15} />} label="Messages" count={unreadMessages} />
-              <QuickLink to={`/creators/${profile.handle}?tab=tasks`} icon={<ListChecks size={15} />} label="Tasks" count={pendingReviews} />
+              <QuickLink onClick={() => openPanel('messages')} icon={<Inbox size={15} />} label="Messages" count={unreadMessages} />
+              <QuickLink onClick={() => openPanel('tasks')} icon={<ListChecks size={15} />} label="Tasks" count={pendingReviews} />
               <QuickLink to="/publish" icon={<Plus size={15} />} label="Create a capstone program" />
               <QuickLink to={`/creators/${profile.handle}?tab=applications`} icon={<Users size={15} />} label="Review student requests" count={Object.values(appCounts).reduce((a, b) => a + b, 0)} />
               <QuickLink to="/explore" icon={<Sparkles size={15} />} label="Browse industry projects" />
@@ -166,15 +168,20 @@ function StatCard({ icon, label, value, tone }: { icon: React.ReactNode; label: 
   );
 }
 
-function QuickLink({ to, icon, label, count }: { to: string; icon: React.ReactNode; label: string; count?: number }) {
-  return (
-    <Link to={to} className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
+function QuickLink({ to, onClick, icon, label, count }: { to?: string; onClick?: () => void; icon: React.ReactNode; label: string; count?: number }) {
+  const className = 'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors';
+  const content = (
+    <>
       <span className="text-slate-500">{icon}</span>
-      <span className="flex-1">{label}</span>
+      <span className="flex-1 text-left">{label}</span>
       {!!count && (
         <span className="rounded-full bg-accent-500 px-1.5 py-0.5 text-[10px] font-semibold text-ink-950">{count}</span>
       )}
       <ArrowRight size={13} className="text-slate-600" />
-    </Link>
+    </>
   );
+  if (to) {
+    return <Link to={to} className={className}>{content}</Link>;
+  }
+  return <button onClick={onClick} className={className}>{content}</button>;
 }

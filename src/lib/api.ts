@@ -10,6 +10,7 @@ import type {
   ProjectSkill,
   Review,
   Task,
+  TaskSize,
   TaskStatus,
   TaskSubmission,
 } from '@/lib/types';
@@ -701,6 +702,7 @@ export async function createTask(
     acceptance_criteria?: string;
     assignee_id?: string | null;
     due_date?: string | null;
+    size?: TaskSize;
   },
 ): Promise<Task> {
   const { data, error } = await supabase
@@ -713,6 +715,7 @@ export async function createTask(
       acceptance_criteria: input.acceptance_criteria ?? null,
       assignee_id: input.assignee_id ?? null,
       due_date: input.due_date ?? null,
+      size: input.size ?? 'medium',
       status: input.assignee_id ? 'in_progress' : 'open',
     })
     .select('*')
@@ -764,6 +767,7 @@ export async function updateTask(
     assignee_id?: string | null;
     status?: TaskStatus;
     due_date?: string | null;
+    size?: TaskSize;
   },
 ): Promise<void> {
   const { error } = await supabase

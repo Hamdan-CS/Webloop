@@ -102,7 +102,7 @@ export function EditProjectModal({ project, onClose, onSaved }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/80 backdrop-blur-sm animate-fade-in-up overflow-y-auto">
-      <div className="surface-raised w-full max-w-2xl p-6 my-8 max-h-[90vh] overflow-y-auto">
+      <div className="surface-raised shadow-card w-full max-w-2xl p-6 my-8 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5 sticky top-0 bg-inherit z-10">
           <h2 className="font-display text-xl font-bold text-white">Edit Project</h2>
           <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:text-white hover:bg-white/5 transition-colors">

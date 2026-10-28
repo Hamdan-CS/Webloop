@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { AuthPromptProvider } from '@/components/auth/AuthPrompt';
 import { AuthProvider, useAuth } from '@/components/auth/AuthContext';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
+import { FloatingPanelProvider, FloatingButtons, FloatingPanel } from '@/components/FloatingPanel';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { HomePage } from '@/pages/HomePage';
@@ -66,8 +67,9 @@ function App() {
       <ThemeProvider>
         <AuthProvider>
           <AuthPromptProvider>
+          <FloatingPanelProvider>
           <NewStudentOnboardingRedirect />
-          <div className="flex min-h-screen flex-col">
+          <div className="flex min-h-dvh flex-col">
             <Navbar />
             <main className="flex-1">
               <Routes>
@@ -91,7 +93,10 @@ function App() {
               </Routes>
             </main>
             <Footer />
+            <FloatingButtons />
+            <FloatingPanel />
           </div>
+          </FloatingPanelProvider>
           </AuthPromptProvider>
         </AuthProvider>
       </ThemeProvider>

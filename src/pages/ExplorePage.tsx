@@ -91,7 +91,7 @@ export function ExplorePage() {
             key={t.value}
             onClick={() => updateParam('type', t.value)}
             className={cn(
-              'rounded-md px-3.5 py-1.5 text-sm font-medium transition-all',
+              'rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors',
               (query.type ?? 'all') === t.value
                 ? 'bg-accent-500 text-ink-950'
                 : 'border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10',
@@ -241,7 +241,7 @@ function ToggleChip({
     <button
       onClick={onClick}
       className={cn(
-        'rounded-md border px-3 py-1.5 text-xs font-medium transition-all',
+        'rounded-md border px-3 py-1.5 text-xs font-medium transition-colors',
         active
           ? 'border-accent-400/40 bg-accent-500/15 text-accent-200'
           : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10',

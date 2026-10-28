@@ -20,6 +20,7 @@ import {
   deleteTask,
   reviewSubmission,
 } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import type { ProjectMember, Task, TaskStatus, TaskSubmission } from '@/lib/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
@@ -71,6 +72,17 @@ export function TaskManagementPanel({ projectId, profileId }: Props) {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`project-tasks-${projectId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `project_id=eq.${projectId}` }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'task_submissions' }, () => loadData())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [projectId, loadData]);
 
   const handleCreate = async (input: {
     title: string;
@@ -369,7 +381,7 @@ function CreateTaskModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/80 backdrop-blur-sm animate-fade-in-up">
-      <div className="surface-raised w-full max-w-lg p-6">
+      <div className="surface-raised shadow-card w-full max-w-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-xl font-bold text-white">Create Task</h2>
           <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:text-white hover:bg-white/5 transition-colors">

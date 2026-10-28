@@ -922,7 +922,7 @@ export function BuildProfilePage() {
                       <div className="bp-trio">
                         <div className="bp-mini"><h4>Projects</h4><p>{stats ? (stats.projects || 'No projects yet') : '—'}</p></div>
                         <div className="bp-mini"><h4>Approved contributions</h4><p>{stats ? (stats.approved || 'None yet') : '—'}</p></div>
-                        <div className="bp-mini"><h4>Rating</h4><p>{stats && stats.reviews > 0 ? `${stats.rating.toFixed(1)} ★ (${stats.reviews})` : 'Not rated yet'}</p></div>
+                        <div className="bp-mini"><h4>Rating</h4><p>{stats && stats.reviews > 0 ? `${stats.rating.toFixed(1)} (${stats.reviews})` : 'Not rated yet'}</p></div>
                       </div>
                       {portfolioLinks.length > 0 && (
                         <div className="bp-plinks">

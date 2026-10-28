@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Images, ArrowUpRight } from 'lucide-react';
 import { fetchPortfolioGallery } from '@/lib/api';
 import type { PortfolioItem } from '@/lib/types';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
+
+const ContributionGrid = lazy(() =>
+  import('@/components/contributions').then((m) => ({ default: m.ContributionGrid })),
+);
 
 export function GalleryPage() {
   const [items, setItems] = useState<PortfolioItem[]>([]);
@@ -21,9 +25,8 @@ export function GalleryPage() {
   return (
     <div className="container-page py-8">
       <div className="mb-8">
-        <span className="label-overline">Student Work</span>
-        <h1 className="mt-2 font-display text-3xl sm:text-4xl font-bold text-white">Student work gallery</h1>
-        <p className="mt-2 text-slate-400 max-w-2xl">
+        <h1 className="font-display text-3xl sm:text-4xl font-bold text-white">Student work gallery</h1>
+        <p className="mt-2 text-slate-300 max-w-2xl">
           Public portfolio pieces from student builders — shipped projects, experiments, and coursework.
         </p>
       </div>
@@ -43,32 +46,37 @@ export function GalleryPage() {
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActive(item)}
-              className="group surface overflow-hidden text-left hover:border-accent-400/30 transition-all"
-            >
-              <div className="relative aspect-[16/10] overflow-hidden">
-                {item.cover_image_url ? (
-                  <img src={item.cover_image_url} alt={item.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                ) : (
-                  <div className="h-full w-full bg-gradient-to-br from-ink-700 to-ink-850" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 to-transparent" />
-                <span className="absolute left-2.5 top-2.5"><Badge tone="violet">{item.category}</Badge></span>
-              </div>
-              <div className="p-4">
-                <p className="font-display text-base font-semibold text-white line-clamp-1">{item.title}</p>
-                <p className="mt-1 text-sm text-slate-400 line-clamp-2">{item.description}</p>
-                {item.profile && (
-                  <div className="mt-3 flex items-center gap-2 border-t border-white/5 pt-3">
+            <div key={item.id} className="group surface overflow-hidden transition-colors hover:border-accent-400/30">
+              <button type="button" onClick={() => setActive(item)} className="block w-full text-left">
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  {item.cover_image_url ? (
+                    <img src={item.cover_image_url} alt={item.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                  ) : (
+                    <div className="h-full w-full bg-ink-800" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 to-transparent" />
+                  <span className="absolute left-2.5 top-2.5"><Badge tone="violet">{item.category}</Badge></span>
+                </div>
+                <div className="p-4 pb-0">
+                  <p className="font-display text-base font-semibold text-white line-clamp-1">{item.title}</p>
+                  <p className="mt-1 text-sm text-slate-400 line-clamp-2">{item.description}</p>
+                </div>
+              </button>
+              {item.profile && (
+                <div className="flex items-center gap-2 border-t border-white/5 p-4">
+                  <Link to={`/creators/${item.profile.handle}`} className="flex min-w-0 flex-1 items-center gap-2 hover:text-accent-300">
                     <Avatar src={item.profile.avatar_url} name={item.profile.display_name} size="sm" />
-                    <span className="text-xs text-slate-400 truncate">{item.profile.display_name}</span>
-                    <ArrowUpRight size={14} className="ml-auto text-slate-500 group-hover:text-accent-300 transition-colors" />
-                  </div>
-                )}
-              </div>
-            </button>
+                    <span className="truncate text-xs text-slate-400">{item.profile.display_name}</span>
+                    <ArrowUpRight size={14} className="shrink-0 text-slate-500 transition-colors group-hover:text-accent-300" />
+                  </Link>
+                  {item.profile.creator_type !== 'company' && item.profile.creator_type !== 'university' && (
+                    <Suspense fallback={null}>
+                      <ContributionGrid studentId={item.profile.id} size="mini" profileHandle={item.profile.handle} />
+                    </Suspense>
+                  )}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -81,7 +89,7 @@ export function GalleryPage() {
               {active.cover_image_url ? (
                 <img src={active.cover_image_url} alt={active.title} className="h-full w-full object-cover" />
               ) : (
-                <div className="h-full w-full bg-gradient-to-br from-ink-700 to-ink-850" />
+                <div className="h-full w-full bg-ink-800" />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-ink-950/70 to-transparent" />
               <span className="absolute left-4 top-4"><Badge tone="violet">{active.category}</Badge></span>

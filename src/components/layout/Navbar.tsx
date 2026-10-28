@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, Sparkles, LogOut, User, Plus, LayoutDashboard, Inbox, ListChecks } from 'lucide-react';
+import { Menu, X, Sparkles, LogOut, User, Plus, LayoutDashboard } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
@@ -21,7 +21,7 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { user, profile, unreadMessages, pendingReviews, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const visibleNavItems = navItems.filter((item) => item.to !== '/how-it-works' || !user);
 
   useEffect(() => {
@@ -67,22 +67,6 @@ export function Navbar() {
           <ThemeToggle />
           {user ? (
             <>
-              {profile && (
-                <>
-                  <NavIconButton
-                    icon={<ListChecks size={18} />}
-                    count={pendingReviews}
-                    label="Tasks"
-                    onClick={() => navigate(`/creators/${profile.handle}?tab=tasks`)}
-                  />
-                  <NavIconButton
-                    icon={<Inbox size={18} />}
-                    count={unreadMessages}
-                    label="Messages"
-                    onClick={() => navigate(`/creators/${profile.handle}?tab=messages`)}
-                  />
-                </>
-              )}
               {profile && (
                 <Button variant="ghost" onClick={() => navigate(getDashboardPath(profile.creator_type))} className="text-sm">
                   <LayoutDashboard size={15} /> {getDashboardLabel(profile.creator_type).replace(' Dashboard', '')}
@@ -168,14 +152,6 @@ export function Navbar() {
                   <Button variant="secondary" onClick={() => { setMobileOpen(false); navigate(`/creators/${profile?.handle}`); }}>
                     <User size={15} /> My Profile
                   </Button>
-                  <Button variant="secondary" onClick={() => { setMobileOpen(false); navigate(`/creators/${profile?.handle}?tab=messages`); }}>
-                    <Inbox size={15} /> Messages
-                    {unreadMessages > 0 && <span className="ml-1 rounded-full bg-accent-500 px-1.5 py-0.5 text-[10px] font-semibold text-ink-950">{unreadMessages}</span>}
-                  </Button>
-                  <Button variant="secondary" onClick={() => { setMobileOpen(false); navigate(`/creators/${profile?.handle}?tab=tasks`); }}>
-                    <ListChecks size={15} /> Tasks
-                    {pendingReviews > 0 && <span className="ml-1 rounded-full bg-accent-500 px-1.5 py-0.5 text-[10px] font-semibold text-ink-950">{pendingReviews}</span>}
-                  </Button>
                   <Button variant="ghost" onClick={handleSignOut}>
                     <LogOut size={15} /> Sign Out
                   </Button>
@@ -216,20 +192,3 @@ function MenuItem({ icon, label, onClick, danger, count }: { icon: React.ReactNo
   );
 }
 
-function NavIconButton({ icon, label, count, onClick }: { icon: React.ReactNode; label: string; count: number; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/5 hover:text-white transition-colors"
-    >
-      {icon}
-      {count > 0 && (
-        <span className="absolute top-0.5 right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent-500 px-1 text-[10px] font-semibold text-ink-950">
-          {count > 9 ? '9+' : count}
-        </span>
-      )}
-    </button>
-  );
-}

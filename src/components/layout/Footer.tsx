@@ -82,7 +82,7 @@ export function Footer() {
             </div>
           ))}
         </div>
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-6 text-xs text-slate-500 sm:flex-row">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 pt-6 text-xs text-slate-500 sm:flex-row">
           <p>© {new Date().getFullYear()} WebLoop. Demo platform — sample content is clearly labeled.</p>
           <div className="flex items-center gap-4">
             <a href="#" className="hover:text-slate-300">Terms</a>

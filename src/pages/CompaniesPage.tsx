@@ -29,9 +29,8 @@ export function CompaniesPage() {
   return (
     <div className="container-page py-8">
       <div className="mb-8">
-        <span className="label-overline">Companies</span>
-        <h1 className="mt-2 font-display text-3xl sm:text-4xl font-bold text-white">Discover companies</h1>
-        <p className="mt-2 text-slate-400 max-w-2xl">
+        <h1 className="font-display text-3xl sm:text-4xl font-bold text-white">Discover companies</h1>
+        <p className="mt-2 text-slate-300 max-w-2xl">
           Startups and studios publishing real projects, recruiting student contributors, and hiring from verified work.
         </p>
       </div>
@@ -43,7 +42,7 @@ export function CompaniesPage() {
       ) : (
         <div className="grid gap-5 sm:grid-cols-2">
           {companies.map((c) => (
-            <Link key={c.id} to={`/creators/${c.handle}`} className="surface-raised p-6 hover:border-accent-400/30 transition-all group">
+            <Link key={c.id} to={`/creators/${c.handle}`} className="surface-raised p-6 hover:border-accent-400/30 transition-colors group">
               <div className="flex items-start gap-4">
                 <Avatar src={c.avatar_url} name={c.display_name} size="xl" />
                 <div className="min-w-0 flex-1">

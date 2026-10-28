@@ -149,7 +149,7 @@ export function EditProfilePage() {
             {form.banner_url ? (
               <img src={form.banner_url} alt="" className="h-full w-full object-cover" />
             ) : (
-              <div className="h-full w-full bg-gradient-to-r from-ink-700 via-ink-800 to-ink-850" />
+              <div className="h-full w-full bg-ink-800" />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-ink-900/80 to-transparent" />
           </div>
