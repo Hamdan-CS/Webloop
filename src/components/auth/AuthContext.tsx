@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.user) {
         (async () => {
           const p = await loadProfile(s.user.id);
-          if (p) await loadCounts(p.id);
+          if (p?.id) await loadCounts(p.id);
           setLoading(false);
         })();
       } else {
@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(s?.user ?? null);
         if (s?.user) {
           const p = await loadProfile(s.user.id);
-          if (p) await loadCounts(p.id);
+          if (p?.id) await loadCounts(p.id);
         } else {
           setProfile(null);
           setUnreadMessages(0);
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, loadProfile]);
 
   const refreshCounts = useCallback(async () => {
-    if (profile) await loadCounts(profile.id);
+    if (profile?.id) await loadCounts(profile.id);
   }, [profile, loadCounts]);
 
   const signUp = useCallback(

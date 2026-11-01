@@ -71,7 +71,8 @@ function App() {
           <NewStudentOnboardingRedirect />
           <div className="flex min-h-dvh flex-col">
             <Navbar />
-            <main className="flex-1">
+            {/* the header is now position:fixed (so it can hide on scroll), so push content below it */}
+            <main className="flex-1 pt-16">
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/explore" element={<ExplorePage />} />

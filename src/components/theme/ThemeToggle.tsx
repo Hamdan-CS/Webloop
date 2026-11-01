@@ -9,11 +9,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     <button
       onClick={toggleTheme}
       aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-      className={cn(
-        'relative flex h-9 w-9 items-center justify-center rounded-lg border transition-colors duration-200',
-        'border-white/10 bg-white/5 text-slate-300 hover:text-white hover:bg-white/10',
-        className,
-      )}
+      className={cn('hdr-theme relative', className)}
     >
       <div className="relative h-4 w-4">
         <Sun

@@ -11,9 +11,8 @@ export function Wordmark({ className = '' }: { className?: string }) {
       <svg className="wm-inf" viewBox="0 0 64 30" aria-hidden="true">
         <defs>
           <linearGradient id={id} x1="0" x2="1">
-            <stop offset="0" stopColor="#00827C" />
-            <stop offset=".45" stopColor="#CBFFFC" />
-            <stop offset="1" stopColor="#FAD1FF" />
+            <stop offset="0" stopColor="#22d3ee" />
+            <stop offset="1" stopColor="#2563eb" />
           </linearGradient>
         </defs>
         <path stroke={`url(#${id})`} pathLength={100} d={INF_PATH} />

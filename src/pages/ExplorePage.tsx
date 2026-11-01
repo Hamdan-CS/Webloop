@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, X, Loader2 } from 'lucide-react';
 import { fetchProjects, type ProjectQuery } from '@/lib/api';
 import type { Project } from '@/lib/types';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { Select } from '@/components/ui/Select';
 import { cn } from '@/lib/utils';
+import { statusLabel, statusTone } from '@/lib/labels';
+import { Badge } from '@/components/ui/Badge';
 
 const CATEGORIES = ['Web App', 'Mobile App', 'Backend / Infra', 'Developer Tool', 'Game / Engine', 'ML', 'CLI'];
 const TYPES = [
@@ -22,6 +24,7 @@ const SORTS = [
 ];
 
 export function ExplorePage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,139 +77,148 @@ export function ExplorePage() {
     ([k, v]) => !['sort'].includes(k) && v !== 'all' && v !== '',
   ).length;
 
+  const fan = projects.slice(0, 3);
+
   return (
     <div className="container-page py-8">
-      {/* Page header */}
-      <div className="mb-6">
-        <h1 className="font-display text-3xl sm:text-4xl font-bold text-white">Explore Projects</h1>
-        <p className="mt-2 text-slate-400">
-          Discover student ideas, company opportunities, and university programs — all open to browse.
-        </p>
-      </div>
-
-      {/* Type tabs */}
-      <div className="mb-5 flex flex-wrap items-center gap-2">
-        {TYPES.map((t) => (
-          <button
-            key={t.value}
-            onClick={() => updateParam('type', t.value)}
-            className={cn(
-              'rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors',
-              (query.type ?? 'all') === t.value
-                ? 'bg-accent-500 text-ink-950'
-                : 'border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10',
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Search + filter bar */}
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[240px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input
-            value={query.search ?? ''}
-            onChange={(e) => updateParam('q', e.target.value || null)}
-            placeholder="Search projects by title or summary..."
-            className="w-full rounded-xl border border-white/10 bg-ink-900/60 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-accent-400/40 focus:bg-ink-900"
-          />
-        </div>
-        <button
-          onClick={() => setShowFilters((v) => !v)}
-          className={cn(
-            'btn-secondary',
-            showFilters && 'border-accent-400/40 text-accent-200',
-          )}
-        >
-          <SlidersHorizontal size={15} /> Filters
-          {activeFilterCount > 0 && (
-            <span className="ml-1 rounded-full bg-accent-500 text-ink-950 text-[10px] font-bold px-1.5">
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
-        <Select
-          className="w-44"
-          value={query.sort ?? 'newest'}
-          options={SORTS.map((s) => ({ value: s.value, label: `Sort: ${s.label}` }))}
-          onChange={(v) => updateParam('sort', v)}
-        />
-      </div>
-
-      {/* Filter panel */}
-      {showFilters && (
-        <div className="surface mb-6 p-4 animate-fade-in-up">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Select
-              label="Category"
-              value={query.category ?? 'all'}
-              options={[{ value: 'all', label: 'All categories' }, ...CATEGORIES.map((c) => ({ value: c, label: c }))]}
-              onChange={(v) => updateParam('category', v)}
-            />
-            <Select
-              label="Difficulty"
-              value={query.difficulty ?? 'all'}
-              options={[
-                { value: 'all', label: 'Any level' },
-                { value: 'beginner', label: 'Beginner' },
-                { value: 'intermediate', label: 'Intermediate' },
-                { value: 'advanced', label: 'Advanced' },
-              ]}
-              onChange={(v) => updateParam('difficulty', v)}
-            />
-            <Select
-              label="Status"
-              value={query.status ?? 'all'}
-              options={[
-                { value: 'all', label: 'Any status' },
-                { value: 'recruiting', label: 'Recruiting' },
-                { value: 'in_progress', label: 'In progress' },
-                { value: 'completed', label: 'Completed' },
-              ]}
-              onChange={(v) => updateParam('status', v)}
-            />
-            <Select
-              label="Compensation"
-              value={query.compensation ?? 'all'}
-              options={[
-                { value: 'all', label: 'Any' },
-                { value: 'paid', label: 'Paid' },
-                { value: 'unpaid_educational', label: 'Unpaid · Educational' },
-                { value: 'open_source', label: 'Open source' },
-              ]}
-              onChange={(v) => updateParam('compensation', v)}
-            />
+      {/* Fan hero — 3 angled project cards, matches the reference's ex-hero */}
+      {!loading && fan.length >= 3 && (
+        <div className="ex-hero">
+          <div className="sec-hd">
+            <h1 className="font-display text-3xl sm:text-4xl font-bold text-white">Explore Projects</h1>
+            <p className="lead mt-2.5">
+              Discover student ideas, company opportunities, and university programs — all open to browse.
+            </p>
           </div>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <ToggleChip active={!!query.beginner} onClick={() => toggleParam('beginner')}>
-              Beginner-friendly
-            </ToggleChip>
-            <ToggleChip active={!!query.remote} onClick={() => toggleParam('remote')}>
-              Remote
-            </ToggleChip>
-            <ToggleChip active={!!query.recruiting} onClick={() => toggleParam('recruiting')}>
-              Actively recruiting
-            </ToggleChip>
-            {query.technology && (
-              <span className="chip border-accent-400/40 text-accent-200">
-                Tech: {query.technology}
-                <button onClick={() => updateParam('technology', null)} aria-label="Clear technology">
-                  <X size={12} />
-                </button>
-              </span>
-            )}
-            {activeFilterCount > 0 && (
-              <button onClick={clearFilters} className="ml-auto text-xs text-slate-400 hover:text-white">
-                Clear all
-              </button>
-            )}
+          <div className="fan" aria-hidden="true">
+            <div className="fp f0" style={fan[0].cover_image_url ? { backgroundImage: `url(${fan[0].cover_image_url})` } : { background: 'linear-gradient(135deg, var(--cyan), var(--blue))' }} />
+            <div className="fp f1" onClick={() => navigate(`/projects/${fan[1].slug}`)}>
+              <div style={fan[1].cover_image_url ? { backgroundImage: `url(${fan[1].cover_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center', width: '100%', height: '100%' } : { background: 'linear-gradient(135deg, var(--blue), var(--violet))', width: '100%', height: '100%' }} />
+              <div className="corner"><Badge tone={statusTone[fan[1].status]}>{statusLabel[fan[1].status]}</Badge></div>
+              <div className="ov-txt"><h3>{fan[1].title}</h3><p>{fan[1].category ?? 'Project'}</p></div>
+            </div>
+            <div className="fp f2" style={fan[2].cover_image_url ? { backgroundImage: `url(${fan[2].cover_image_url})` } : { background: 'linear-gradient(135deg, var(--violet), var(--cyan))' }} />
           </div>
         </div>
       )}
 
-      {/* Main two-panel layout */}
+      {/* Toolbar */}
+      <div className="toolbar">
+        <div className="pills">
+          {TYPES.map((t) => (
+            <button
+              key={t.value}
+              onClick={() => updateParam('type', t.value)}
+              className={cn('pill', (query.type ?? 'all') === t.value && 'on')}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="tool-row">
+          <div className="search">
+            <Search />
+            <input
+              value={query.search ?? ''}
+              onChange={(e) => updateParam('q', e.target.value || null)}
+              placeholder="Search projects by title or summary..."
+            />
+          </div>
+          <Select
+            className="w-44"
+            value={query.sort ?? 'newest'}
+            options={SORTS.map((s) => ({ value: s.value, label: `Sort: ${s.label}` }))}
+            onChange={(v) => updateParam('sort', v)}
+          />
+          <div className="fbtn">
+            <button
+              onClick={() => setShowFilters((v) => !v)}
+              className={cn('btn-secondary', showFilters && 'border-accent-400/40 text-accent-200')}
+            >
+              <SlidersHorizontal size={15} /> Filters
+              {activeFilterCount > 0 && (
+                <span className="ml-1 rounded-full bg-accent-500 text-ink-950 text-[10px] font-bold px-1.5">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+            {showFilters && (
+              <div className="fpanel open card-g">
+                <div className="grp">
+                  <h5>Category</h5>
+                  <Select
+                    value={query.category ?? 'all'}
+                    options={[{ value: 'all', label: 'All categories' }, ...CATEGORIES.map((c) => ({ value: c, label: c }))]}
+                    onChange={(v) => updateParam('category', v)}
+                  />
+                </div>
+                <div className="grp">
+                  <h5>Difficulty</h5>
+                  <Select
+                    value={query.difficulty ?? 'all'}
+                    options={[
+                      { value: 'all', label: 'Any level' },
+                      { value: 'beginner', label: 'Beginner' },
+                      { value: 'intermediate', label: 'Intermediate' },
+                      { value: 'advanced', label: 'Advanced' },
+                    ]}
+                    onChange={(v) => updateParam('difficulty', v)}
+                  />
+                </div>
+                <div className="grp">
+                  <h5>Status</h5>
+                  <Select
+                    value={query.status ?? 'all'}
+                    options={[
+                      { value: 'all', label: 'Any status' },
+                      { value: 'recruiting', label: 'Recruiting' },
+                      { value: 'in_progress', label: 'In progress' },
+                      { value: 'completed', label: 'Completed' },
+                    ]}
+                    onChange={(v) => updateParam('status', v)}
+                  />
+                </div>
+                <div className="grp">
+                  <h5>Compensation</h5>
+                  <Select
+                    value={query.compensation ?? 'all'}
+                    options={[
+                      { value: 'all', label: 'Any' },
+                      { value: 'paid', label: 'Paid' },
+                      { value: 'unpaid_educational', label: 'Unpaid · Educational' },
+                      { value: 'open_source', label: 'Open source' },
+                    ]}
+                    onChange={(v) => updateParam('compensation', v)}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <ToggleChip active={!!query.beginner} onClick={() => toggleParam('beginner')}>Beginner-friendly</ToggleChip>
+                  <ToggleChip active={!!query.remote} onClick={() => toggleParam('remote')}>Remote</ToggleChip>
+                  <ToggleChip active={!!query.recruiting} onClick={() => toggleParam('recruiting')}>Actively recruiting</ToggleChip>
+                </div>
+                {query.technology && (
+                  <span className="chip border-accent-400/40 text-accent-200 mt-2">
+                    Tech: {query.technology}
+                    <button onClick={() => updateParam('technology', null)} aria-label="Clear technology"><X size={12} /></button>
+                  </span>
+                )}
+                {activeFilterCount > 0 && (
+                  <button onClick={clearFilters} className="mt-3 text-xs text-slate-400 hover:text-white">Clear all filters</button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {!loading && !error && (
+        <div className="result-line">
+          <span>{projects.length} project{projects.length === 1 ? '' : 's'}</span>
+        </div>
+      )}
+
+      {/* Main grid */}
       {loading ? (
         <div className="flex h-[70vh] items-center justify-center">
           <Loader2 size={28} className="animate-spin text-accent-400" />

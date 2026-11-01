@@ -22,3 +22,13 @@ dist-ssr
 *.sw?
 .env
 .taste-skill
+
+.vercel
+.env*
+
+# AI coding tool scaffolding (local dev tooling, not app code)
+.agents/
+.claude/agents/
+.claude/skills/
+.codex/
+skills-lock.json

@@ -19,6 +19,7 @@ const navItems = [
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
@@ -32,6 +33,19 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // hide on scroll down, show on scroll up or near the top
+  useEffect(() => {
+    let lastY = scrollY;
+    const onScroll = () => {
+      const y = scrollY, d = y - lastY;
+      if (y < 80 || d < -6) setHidden(false);
+      else if (d > 6) setHidden(true);
+      lastY = y;
+    };
+    addEventListener('scroll', onScroll, { passive: true });
+    return () => removeEventListener('scroll', onScroll);
+  }, []);
+
   const handleSignOut = async () => {
     await signOut();
     setMenuOpen(false);
@@ -40,30 +54,25 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/5 bg-ink-950/80 backdrop-blur-xl">
+    <header className={cn('site-header', hidden && 'hdr-hide')}>
       <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Link to="/" className="flex items-center" aria-label="WebLoop home">
+        <Link to="/" className="hdr-logo flex items-center" aria-label="WebLoop home">
           <Wordmark />
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-[clamp(14px,2.2vw,30px)]">
           {visibleNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) =>
-                cn(
-                  'rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  isActive ? 'text-white bg-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5',
-                )
-              }
+              className={({ isActive }) => cn('hdr-link', isActive && 'active')}
             >
               {item.label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
           {user ? (
             <>
@@ -99,19 +108,19 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Button variant="ghost" onClick={() => navigate('/signin')}>
+              <button className="hdr-link" onClick={() => navigate('/signin')}>
                 Sign In
-              </Button>
-              <Button onClick={() => navigate('/join')}>
+              </button>
+              <button className="hdr-primary flex items-center gap-2" onClick={() => navigate('/join')}>
                 <Sparkles size={15} />
                 Join the Platform
-              </Button>
+              </button>
             </>
           )}
         </div>
 
         <button
-          className="md:hidden rounded-lg p-2 text-slate-300 hover:bg-white/5"
+          className="hdr-theme md:hidden"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
         >
@@ -120,19 +129,14 @@ export function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-white/5 bg-ink-950/95 px-5 py-4">
+        <div className="md:hidden px-5 py-4" style={{ borderTop: '1px solid var(--hdr-line)', background: 'var(--hdr-bg)' }}>
           <nav className="flex flex-col gap-1">
             {visibleNavItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 onClick={() => setMobileOpen(false)}
-                className={({ isActive }) =>
-                  cn(
-                    'rounded-lg px-3 py-2.5 text-sm font-medium',
-                    isActive ? 'text-white bg-white/5' : 'text-slate-300 hover:bg-white/5',
-                  )
-                }
+                className={({ isActive }) => cn('hdr-link block rounded-lg px-3 py-2.5 text-sm font-medium', isActive && 'active')}
               >
                 {item.label}
               </NavLink>
@@ -158,12 +162,12 @@ export function Navbar() {
                 </>
               ) : (
                 <>
-                  <Button variant="secondary" onClick={() => { setMobileOpen(false); navigate('/signin'); }}>
+                  <button className="hdr-link text-left" onClick={() => { setMobileOpen(false); navigate('/signin'); }}>
                     Sign In
-                  </Button>
-                  <Button onClick={() => { setMobileOpen(false); navigate('/join'); }}>
+                  </button>
+                  <button className="hdr-primary flex items-center justify-center gap-2" onClick={() => { setMobileOpen(false); navigate('/join'); }}>
                     <Sparkles size={15} /> Join the Platform
-                  </Button>
+                  </button>
                 </>
               )}
             </div>

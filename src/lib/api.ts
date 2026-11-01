@@ -90,6 +90,27 @@ export async function fetchProjects(query: ProjectQuery = {}): Promise<Project[]
   return projects;
 }
 
+export interface EcosystemStats {
+  projects: number;
+  students: number;
+  companies: number;
+}
+
+/** Sitewide headline counts for the home page's infinity scene. Best-effort —
+ * any failed count comes back 0 so the caller can fall back to sample figures. */
+export async function fetchEcosystemStats(): Promise<EcosystemStats> {
+  const [projects, students, companies] = await Promise.all([
+    supabase.from('projects').select('*', { count: 'exact', head: true }).in('status', VISIBLE_STATUSES),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).in('creator_type', ['student', 'team']),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('creator_type', 'company'),
+  ]);
+  return {
+    projects: projects.count ?? 0,
+    students: students.count ?? 0,
+    companies: companies.count ?? 0,
+  };
+}
+
 export async function fetchFeaturedProjects(limit = 6): Promise<Project[]> {
   const { data, error } = await supabase
     .from('projects')

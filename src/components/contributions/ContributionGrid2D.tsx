@@ -41,7 +41,6 @@ export function ContributionGrid2D({ cells, mini = false, onSelectDay, selectedD
               cell.avgRating != null ? `, ${cell.avgRating.toFixed(1)} avg rating` : ''
             }`;
             const common = {
-              key: ri,
               title,
               style: {
                 width: tileSize,
@@ -52,10 +51,11 @@ export function ContributionGrid2D({ cells, mini = false, onSelectDay, selectedD
               },
             };
             if (mini) {
-              return <span {...common} className="rounded-[2px]" aria-hidden="true" />;
+              return <span key={ri} {...common} className="rounded-[2px]" aria-hidden="true" />;
             }
             return (
               <button
+                key={ri}
                 {...common}
                 type="button"
                 role="gridcell"

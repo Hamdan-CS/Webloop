@@ -1,10 +1,19 @@
 // @ts-nocheck
-/* Scroll-driven particle stage (ported from the approved WebLoop home demo).
-   One persistent WebGL canvas morphs between shapes as each home section scrolls into view.
-   Reads anchor elements by id (anchorHero, anchorCV, anchorLoop, anchorLogo). */
+/* Scroll-driven particle stage — faithful port of the approved WebLoop home
+   demo (webloop-home-demo.html) onto a persistent three.js canvas.
+   Shapes per section: hero -> rotating loop (3 role labels ride it),
+   build -> sphere, verify -> a 4x4 grid of particle blocks whose heights
+   keep rising and falling (solid translucent faces fade in once the
+   particles have converged, then dissolve back when scrolling on),
+   found -> the dense ring with 3 orbiting beads + centre text, finale ->
+   particles gather into the WebL[loop]p wordmark; the W/e/b/L/p letters
+   (sampled from Geist Bold on an offscreen canvas, same as the demo's
+   buildWordmark) then turn solid on the SAME canvas — there is only ever
+   one wordmark, never a second DOM copy.
+   Reads anchor elements by id (anchorHero, anchorBuild, anchorVerify,
+   anchorFound, anchorLogo) that the home page provides. */
 import * as THREE from 'three';
 
-// the demo was tuned on three r128 (no colour management) — keep hex colours as authored
 THREE.ColorManagement.enabled = false;
 
 export function startParticleStage(): () => void {
@@ -19,86 +28,111 @@ export function startParticleStage(): () => void {
   camera.position.set(0, 0, 10);
   const group = new THREE.Group(); scene.add(group);
 
-  const N = innerWidth < 700 ? 5200 : 10000;
-  const rnd = new Float32Array(N * 3).map(() => Math.random());
-  const golden = Math.PI * (3 - Math.sqrt(5));
+  // fewer particles on mobile — matches the demo's own budget
+  const N = innerWidth < 700 ? 4600 : 7600;
 
-  // 1. sphere: the community
+  function mulberry(a: number) { return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const rng = mulberry(20261028);
+  const g = () => (rng() + rng() + rng() - 1.5) * 0.8;
+  const loopPt = (t: number) => { const d = 1 + Math.sin(t) ** 2; return [Math.cos(t) / d, (Math.sin(t) * Math.cos(t)) / d, Math.sin(t) * 0.22]; };
+
+  // 0: loop (hero)
+  const LOOP = new Float32Array(N * 3);
+  // 1: sphere (build) — the community — demo's exact radius, not an inflated "world scale"
   const SPH = new Float32Array(N * 3);
   for (let i = 0; i < N; i++) {
-    const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(1 - y * y), th = golden * i, R = 3 * (0.96 + rnd[i * 3] * 0.08);
-    SPH[i * 3] = Math.cos(th) * r * R; SPH[i * 3 + 1] = y * R; SPH[i * 3 + 2] = Math.sin(th) * r * R;
-  }
-  // 3. CV card: your verified profile
-  const CARD = new Float32Array(N * 3);
-  (function () {
-    const W = 4.6, H = 6, pts = [], add = (x, y) => pts.push([x, y]);
-    const line = (x1, y1, x2, y2, n) => { for (let q = 0; q < n; q++) { const t = q / (n - 1); add(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t); } };
-    const circle = (cx, cy, r, n) => { for (let q = 0; q < n; q++) { const a = q / n * Math.PI * 2; add(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } };
-    const star = (cx, cy, r, n) => { const v = []; for (let q = 0; q < 10; q++) { const a = Math.PI / 2 + q * Math.PI / 5, rr = q % 2 ? r * 0.45 : r; v.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]); } for (let q = 0; q < 10; q++) line(...v[q], ...v[(q + 1) % 10], n); };
-    const hw = W / 2, hh = H / 2, cr = 0.35;
-    line(-hw + cr, hh, hw - cr, hh, 120); line(-hw + cr, -hh, hw - cr, -hh, 120); line(-hw, hh - cr, -hw, -hh + cr, 150); line(hw, hh - cr, hw, -hh + cr, 150);
-    [[hw - cr, hh - cr, 0], [-hw + cr, hh - cr, 1], [-hw + cr, -hh + cr, 2], [hw - cr, -hh + cr, 3]].forEach(([cx, cy, q]) => { for (let z = 0; z <= 12; z++) { const a = (q + z / 12) * Math.PI / 2; add(cx + Math.cos(a) * cr, cy + Math.sin(a) * cr); } });
-    circle(-1.3, 1.9, 0.62, 140); circle(-1.3, 2.02, 0.22, 50);
-    line(-0.45, 2.15, 1.7, 2.15, 90); line(-0.45, 1.7, 1.0, 1.7, 60);
-    for (let row = 0; row < 3; row++) { const y = 0.6 - row * 1.15; line(-1.9, y, 0.9, y, 100); line(-1.9, y - 0.38, 0.2, y - 0.38, 70); circle(1.65, y - 0.18, 0.3, 60); line(1.5, y - 0.2, 1.62, y - 0.33, 8); line(1.62, y - 0.33, 1.84, y - 0.02, 12); }
-    for (let q = 0; q < 5; q++) star(-1.6 + q * 0.62, -2.55, 0.24, 14);
-    const M = pts.length;
-    for (let i = 0; i < N; i++) { const p = pts[i % M], sp = i < M ? 0.015 : 0.06; CARD[i * 3] = p[0] + (rnd[i * 3] - 0.5) * sp * 2; CARD[i * 3 + 1] = p[1] + (rnd[i * 3 + 1] - 0.5) * sp * 2; CARD[i * 3 + 2] = (rnd[i * 3 + 2] - 0.5) * 0.12; }
-  })();
-  // 2. the loop and 4. the infinity (both flow)
-  const LR = 3.3, Lr = 0.5;
-  function torusAt(i, t, out) {
-    const u = rnd[i * 3] * 6.283 + (reduce ? 0 : t * 0.25 * (0.6 + rnd[i * 3 + 2] * 0.4)), v = rnd[i * 3 + 1] * 6.283 + (reduce ? 0 : t * 0.3), rr = Lr * (0.4 + rnd[i * 3 + 2] * 0.6);
-    out[0] = (LR + rr * Math.cos(v)) * Math.cos(u); out[1] = (LR + rr * Math.cos(v)) * Math.sin(u); out[2] = rr * Math.sin(v);
-  }
-  function infAt(i, t, out) {
-    const a = 3.6, sp = rnd[i * 3] * 6.283 + (reduce ? 0 : t * 0.35), d = 1 + Math.sin(sp) ** 2, v = rnd[i * 3 + 1] * 6.283, rr = 0.32 * (0.3 + rnd[i * 3 + 2] * 0.7);
-    out[0] = a * Math.cos(sp) / d + Math.cos(v) * rr * 0.6; out[1] = a * Math.sin(sp) * Math.cos(sp) / d + Math.sin(v) * rr; out[2] = Math.cos(v) * rr;
-  }
-  // ---------- Hero: the headline acted out (Build → Find your team → Prove your skills) ----------
-  const CYCLE = 12;
-  const SCAT = new Float32Array(N * 3);
-  for (let i = 0; i < N; i++) { const r = 3.4 + rnd[i * 3] * 2.2, a = rnd[i * 3 + 1] * 6.283, b = Math.acos(2 * rnd[i * 3 + 2] - 1); SCAT[i * 3] = r * Math.sin(b) * Math.cos(a); SCAT[i * 3 + 1] = r * Math.cos(b) * 0.75; SCAT[i * 3 + 2] = r * Math.sin(b) * Math.sin(a) * 0.6; }
-  const TEAMS = [[0.55, 0.62, 0.56], [-0.2, 0.35, 0.92], [0.85, -0.2, 0.49], [0.15, -0.6, 0.79], [-0.75, -0.25, 0.61], [0.6, 0.1, -0.79], [-0.5, 0.75, -0.43]].map((v) => { const l = Math.hypot(...v); return v.map((x) => x / l); });
-  const CAP = Math.cos(0.32);
-  const teamOf = new Int8Array(N).fill(-1);
-  for (let i = 0; i < N; i++) {
-    const x = SPH[i * 3] / 3, y = SPH[i * 3 + 1] / 3, z = SPH[i * 3 + 2] / 3;
-    TEAMS.forEach((c, k) => { if (x * c[0] + y * c[1] + z * c[2] > CAP) teamOf[i] = k; });
-  }
-  const ph = { build: 1, team: 0, prove: 0, out: 0, idx: 0, pt: 0 };
-  function updatePhase(t) {
-    if (reduce) { Object.assign(ph, { build: 1, team: 1, prove: 1, out: 0, idx: 2, pt: 11 }); return; }
-    const pt = t % CYCLE; ph.pt = pt;
-    ph.build = pt < 0.2 ? 0 : clamp((pt - 0.2) / 2.6);
-    ph.team = ease(clamp((pt - 4) / 1.2)) * (1 - ease(clamp((pt - 11) / 0.5)));
-    ph.prove = ease(clamp((pt - 8) / 0.8)) * (1 - ease(clamp((pt - 11) / 0.5)));
-    ph.out = ease(clamp((pt - 11.3) / 0.7));
-    ph.idx = pt < 4 ? 0 : pt < 8 ? 1 : 2;
-  }
-  function heroAt(i, t, o) {
-    const q = i * 3;
-    let x = SPH[q], y = SPH[q + 1], z = SPH[q + 2];
-    const tm = teamOf[i];
-    if (tm >= 0 && ph.team > 0) {             // team members pull together into a tight group
-      const c = TEAMS[tm], l = 1.08;
-      const cx = c[0] * 3 * l, cy = c[1] * 3 * l, cz = c[2] * 3 * l, k = ph.team * 0.62;
-      x += (cx - x) * k; y += (cy - y) * k; z += (cz - z) * k;
-      const pulse = 1 + ph.prove * 0.06 * Math.sin(t * 4 + tm);
-      x *= pulse; y *= pulse; z *= pulse;
-    }
-    const kb = clamp(ph.build * 1.3 - rnd[q + 1] * 0.3), e = ease(kb);   // build: fly in from scattered
-    const ko = ph.out;                                                     // end of cycle: drift apart again
-    const sx = SCAT[q], sy = SCAT[q + 1], sz = SCAT[q + 2];
-    o[0] = lerp(sx, x, e) * (1 - ko) + sx * ko; o[1] = lerp(sy, y, e) * (1 - ko) + sy * ko; o[2] = lerp(sz, z, e) * (1 - ko) + sz * ko;
+    const u = rng(), v = rng(), w = rng();
+    const tp = u * Math.PI * 2, p = loopPt(tp);
+    LOOP[i * 3] = p[0] + g() * 0.04; LOOP[i * 3 + 1] = p[1] + g() * 0.04; LOOP[i * 3 + 2] = p[2] + g() * 0.04;
+    const zz = 2 * v - 1, ph = w * Math.PI * 2, r = Math.sqrt(1 - zz * zz), R = 0.85 * (0.96 + 0.08 * rng());
+    SPH[i * 3] = r * Math.cos(ph) * R; SPH[i * 3 + 1] = zz * R; SPH[i * 3 + 2] = r * Math.sin(ph) * R;
   }
 
+  // 2: cubes (verify) — a 4x4 grid of particle blocks, heights fluctuate per cell — demo's exact dimensions
+  const CELLS = 4, PITCH = 0.44, CS = 0.165, CBASE = -0.42;
+  const NC = CELLS * CELLS;
+  const cph1 = new Float32Array(NC), cph2 = new Float32Array(NC);
+  for (let c = 0; c < NC; c++) { cph1[c] = rng(); cph2[c] = rng() * 6.28; }
+  const cXZ = Array.from({ length: NC }, (_, c) => [((c % CELLS) - (CELLS - 1) / 2) * PITCH, (Math.floor(c / CELLS) - (CELLS - 1) / 2) * PITCH]);
+  const accentCells = new Set<number>(); while (accentCells.size < 4) accentCells.add(Math.floor(rng() * NC));
+  const cCell = new Uint8Array(N), cSide = new Uint8Array(N), cA = new Float32Array(N), cB = new Float32Array(N);
+  for (let i = 0; i < N; i++) { cCell[i] = Math.floor(rng() * NC); cSide[i] = rng() < 0.42 ? 0 : 1 + Math.floor(rng() * 4); cA[i] = rng() * 2 - 1; cB[i] = rng(); }
+  const hts = new Float32Array(NC);
+  function updateCubeHeights(t: number) { for (let c = 0; c < NC; c++) hts[c] = 0.16 + 0.66 * (0.5 + 0.5 * Math.sin(t * (0.6 + cph1[c] * 0.7) + cph2[c])); }
+  function cubesAt(i: number, _t: number, o: number[]) {
+    const c = cCell[i], X = cXZ[c][0], Z = cXZ[c][1], side = cSide[i], h = hts[c];
+    let x: number, y: number, z: number;
+    if (side === 0) { x = X + cA[i] * CS; z = Z + (cB[i] * 2 - 1) * CS; y = CBASE + h; }
+    else { y = CBASE + cB[i] * h;
+      if (side === 1) { x = X - CS; z = Z + cA[i] * CS; } else if (side === 2) { x = X + CS; z = Z + cA[i] * CS; }
+      else if (side === 3) { z = Z - CS; x = X + cA[i] * CS; } else { z = Z + CS; x = X + cA[i] * CS; } }
+    o[0] = x; o[1] = y; o[2] = z;
+  }
+
+  // 3: ring (found) — demo's exact RING_R; tube radius Lr = RING_R*(.5/3.3)
+  const RING_R = 0.92, LR = RING_R, Lr = RING_R * (0.5 / 3.3);
+  const rPh = new Float32Array(N), rPs = new Float32Array(N), rRr = new Float32Array(N);
+  for (let i = 0; i < N; i++) { rPh[i] = rng() * 6.283; rPs[i] = rng() * 6.283; rRr[i] = rng(); }
+  function torusAt(i: number, t: number, o: number[]) {
+    const w = rRr[i];
+    const u = rPh[i] + (reduce ? 0 : t * 0.25 * (0.6 + w * 0.4)), v = rPs[i] + (reduce ? 0 : t * 0.3);
+    const rr = Lr * (0.4 + w * 0.6), q = LR + rr * Math.cos(v);
+    o[0] = q * Math.cos(u); o[1] = q * Math.sin(u); o[2] = rr * Math.sin(v);
+  }
+
+  // 4: WebL[loop]p wordmark — sampled from Geist Bold text on an offscreen canvas
+  // (same source metrics drive both the particle cloud AND the solid canvas-texture
+  // reveal below, so there is exactly one wordmark, never two).
+  let WORD: Float32Array | null = null;
+  let WM: { w: number; h: number } | null = null;
+  const FAM = 'Inter,"Helvetica Neue",Arial,sans-serif';
+  const TC_W = 1600, TC_H = 480;
+  const wordTexCanvas = document.createElement('canvas');
+  wordTexCanvas.width = TC_W; wordTexCanvas.height = TC_H;
+  const wordTex = new THREE.CanvasTexture(wordTexCanvas);
+  function buildWordmark(targetWidth = 2.0) {
+    const oc = document.createElement('canvas'); oc.width = 1500; oc.height = 420;
+    const o = oc.getContext('2d', { willReadFrequently: true })!;
+    o.font = `700 200px ${FAM}`; o.textBaseline = 'alphabetic';
+    const wWebL = o.measureText('WebL').width, wOO = o.measureText('oo').width, wP = o.measureText('p').width;
+    const x0 = 100, base = 300, mm = o.measureText('WebLp');
+    const xh = o.measureText('o').actualBoundingBoxAscent;
+    o.fillStyle = '#000'; o.fillText('WebL', x0, base); o.fillText('p', x0 + wWebL + wOO, base);
+    const id = o.getImageData(0, 0, 1500, 420).data, cand: number[] = [];
+    for (let y = 0; y < 420; y += 2) for (let x = 0; x < 1500; x += 2) if (id[(y * 1500 + x) * 4 + 3] > 128) cand.push(x, y);
+    const total = wWebL + wOO + wP, xc = x0 + total / 2, yc = base - (mm.actualBoundingBoxAscent - mm.actualBoundingBoxDescent) / 2, k = targetWidth / total;
+    const lcx = (x0 + wWebL + wOO / 2 - xc) * k, lcy = -(base - xh / 2 - yc) * k, lhw = wOO * 0.5 * k * 0.98;
+    const arr = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) {
+      let x: number, y: number, z: number;
+      if (rng() < 0.74 && cand.length) { const j = Math.floor((rng() * cand.length) / 2) * 2;
+        x = (cand[j] - xc + (rng() - 0.5) * 2) * k; y = -(cand[j + 1] - yc + (rng() - 0.5) * 2) * k; z = g() * 0.03; }
+      else { const p = loopPt(rng() * Math.PI * 2); x = lcx + p[0] * lhw + g() * 0.03; y = lcy + p[1] * lhw + g() * 0.03; z = p[2] * lhw * 0.3 + g() * 0.02; }
+      arr[i * 3] = x; arr[i * 3 + 1] = y; arr[i * 3 + 2] = z;
+    }
+    WORD = arr;
+
+    // draw the SAME "WebL" + "p" glyphs (leaving the loop's gap empty) onto a canvas
+    // where the text sits dead-centre, so the texture plane needs no offset to line
+    // up with the particle cloud above — ink colour is applied via material tint.
+    const tc = wordTexCanvas.getContext('2d')!;
+    tc.clearRect(0, 0, TC_W, TC_H);
+    tc.font = `700 200px ${FAM}`; tc.textBaseline = 'alphabetic';
+    const tx0 = (TC_W - total) / 2, tbase = TC_H / 2 + (mm.actualBoundingBoxAscent - mm.actualBoundingBoxDescent) / 2;
+    tc.fillStyle = '#fff';
+    tc.fillText('WebL', tx0, tbase); tc.fillText('p', tx0 + wWebL + wOO, tbase);
+    wordTex.needsUpdate = true;
+    WM = { w: TC_W * k, h: TC_H * k };
+  }
+  buildWordmark();
+  if (document.fonts && document.fonts.load) document.fonts.load('700 200px Inter').then(() => document.fonts.ready).then(() => buildWordmark()).catch(() => {});
+
   const SHAPES = [
-    heroAt,
-    (i, t, o) => { o[0] = CARD[i * 3]; o[1] = CARD[i * 3 + 1]; o[2] = CARD[i * 3 + 2]; },
+    (i: number, _t: number, o: number[]) => { o[0] = LOOP[i * 3]; o[1] = LOOP[i * 3 + 1]; o[2] = LOOP[i * 3 + 2]; },
+    (i: number, _t: number, o: number[]) => { o[0] = SPH[i * 3]; o[1] = SPH[i * 3 + 1]; o[2] = SPH[i * 3 + 2]; },
+    cubesAt,
     torusAt,
-    infAt,
+    (i: number, _t: number, o: number[]) => { const w = WORD; if (!w) { o[0] = 0; o[1] = 0; o[2] = 0; return; } o[0] = w[i * 3]; o[1] = w[i * 3 + 1]; o[2] = w[i * 3 + 2]; },
   ];
 
   const pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
@@ -108,252 +142,301 @@ export function startParticleStage(): () => void {
   const vs = 'attribute vec3 color; varying vec3 vC; uniform float uSize; uniform float uPix; void main(){ vC = color; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = uSize * uPix / -mv.z; gl_Position = projectionMatrix * mv; }';
   const fs = 'varying vec3 vC; uniform float uOpacity; void main(){ float d = length(gl_PointCoord - 0.5); float a = smoothstep(0.52, 0.04, d); vec3 col = vC + vec3(a) * 0.18; gl_FragColor = vec4(col, a * a * uOpacity); }';
   const mat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, vertexShader: vs, fragmentShader: fs, uniforms: { uSize: { value: 26 }, uPix: { value: renderer.getPixelRatio() }, uOpacity: { value: 0.85 } } });
-  group.add(new THREE.Points(geo, mat));
+  const points = new THREE.Points(geo, mat); points.renderOrder = 2; group.add(points);
+
   const beadPos = new Float32Array(9), beadCol = new Float32Array(9);
   const bgeo = new THREE.BufferGeometry();
   bgeo.setAttribute('position', new THREE.BufferAttribute(beadPos, 3));
   bgeo.setAttribute('color', new THREE.BufferAttribute(beadCol, 3));
   const bmat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, vertexShader: vs, fragmentShader: fs, uniforms: { uSize: { value: 260 }, uPix: { value: renderer.getPixelRatio() }, uOpacity: { value: 0 } } });
-  group.add(new THREE.Points(bgeo, bmat));
+  const beadPoints = new THREE.Points(bgeo, bmat); beadPoints.renderOrder = 3; group.add(beadPoints);
 
-  // lines that connect each team
-  const LINK_PER = 5, linkPos = new Float32Array(TEAMS.length * LINK_PER * 2 * 2 * 3);
-  const lgeo = new THREE.BufferGeometry(); lgeo.setAttribute('position', new THREE.BufferAttribute(linkPos, 3));
-  const lmat = new THREE.LineBasicMaterial({ transparent: true, opacity: 0, color: 0x0e7490 });
-  group.add(new THREE.LineSegments(lgeo, lmat));
-  const nodeOffsets = TEAMS.map((c) => {
-    const up = Math.abs(c[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0];
-    const u = [c[1] * up[2] - c[2] * up[1], c[2] * up[0] - c[0] * up[2], c[0] * up[1] - c[1] * up[0]], ul = Math.hypot(...u); u.forEach((_, k) => (u[k] /= ul));
-    const w = [c[1] * u[2] - c[2] * u[1], c[2] * u[0] - c[0] * u[2], c[0] * u[1] - c[1] * u[0]];
-    return Array.from({ length: LINK_PER }, (_, k) => { const a = k / LINK_PER * 6.283 + 0.4; return [Math.cos(a), Math.sin(a), u, w]; });
-  });
-  const chips = TEAMS.map(() => { const d = document.createElement('span'); d.className = 'vchip'; d.textContent = 'Team verified'; document.getElementById('vchips').appendChild(d); return d; });
-  const baseCol = new Float32Array(N * 3), proveCol = new THREE.Color(), teamCol = new THREE.Color();
-  const steps = Array.from(document.querySelectorAll('.hstep'));
-  const phrases = Array.from(document.querySelectorAll('.ph')), h1 = document.querySelector('h1');
-  const PHASE_CAP = ['Build: everyone starts on their own and comes together', 'Find your team: students group up around a project', 'Prove your skills: every team’s work gets verified'];
+  // solid translucent block faces — top cap vs. side walls get their own colour,
+  // exactly like the demo's drawBlocks(): top/side/accent-top tones per theme.
+  const sideGeo = new THREE.BoxGeometry(1, 1, 1);
+  const sideMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+  const sideMesh = new THREE.InstancedMesh(sideGeo, sideMat, NC); sideMesh.renderOrder = 0; group.add(sideMesh);
+  const topGeo = new THREE.PlaneGeometry(1, 1); topGeo.rotateX(-Math.PI / 2);
+  const topMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+  const topMesh = new THREE.InstancedMesh(topGeo, topMat, NC); topMesh.renderOrder = 1;
+  topMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(NC * 3), 3);
+  group.add(topMesh);
+  const dummy = new THREE.Object3D();
+  function layoutCubeMesh() {
+    for (let c = 0; c < NC; c++) {
+      const h = Math.max(hts[c], 0.02);
+      dummy.position.set(cXZ[c][0], CBASE + h / 2, cXZ[c][1]);
+      dummy.scale.set(CS * 1.85, h, CS * 1.85);
+      dummy.updateMatrix();
+      sideMesh.setMatrixAt(c, dummy.matrix);
+      dummy.position.set(cXZ[c][0], CBASE + h, cXZ[c][1]);
+      dummy.scale.set(CS * 1.85, 1, CS * 1.85);
+      dummy.updateMatrix();
+      topMesh.setMatrixAt(c, dummy.matrix);
+    }
+    sideMesh.instanceMatrix.needsUpdate = true;
+    topMesh.instanceMatrix.needsUpdate = true;
+  }
 
+  // the wordmark's solid "WebL" + "p" reveal, drawn once from the same raster as the particles
+  const wordPlaneGeo = new THREE.PlaneGeometry(1, 1);
+  const wordPlaneMat = new THREE.MeshBasicMaterial({ map: wordTex, transparent: true, opacity: 0, depthWrite: false });
+  // drawn AFTER the points (renderOrder 3 > 2) so the solid ink letters fully cover the
+  // teal letter-forming particles once they fade in — only the infinity gap stays see-through
+  const wordPlane = new THREE.Mesh(wordPlaneGeo, wordPlaneMat); wordPlane.renderOrder = 4;
+  group.add(wordPlane);
+
+  const baseCol = new Float32Array(N * 3);
   let light = true;
+  // exact demo tokens — particle gradient runs neutral -> accent; block faces per theme
+  const THEMES = {
+    light: { acc: [8, 145, 178], neu: [52, 68, 95], top: '#eef4f9', sA: '#cbd5e1', sB: '#dde6f0', accTop: '#0891b2', ink: '#0b1630' },
+    dark: { acc: [34, 211, 238], neu: [180, 195, 216], top: '#15233a', sA: '#0c1a2e', sB: '#101e33', accTop: '#22d3ee', ink: '#eaf2fc' },
+  };
   function applyTheme() {
     light = document.documentElement.classList.contains('light');
-    // one accent family only (teal → cyan) — no second decorative hue
-    const a = new THREE.Color(light ? '#0E7490' : '#00827C'), b = new THREE.Color(light ? '#06B6D4' : '#CBFFFC'), c = new THREE.Color();
+    const T = light ? THEMES.light : THEMES.dark;
+    const acc = new THREE.Color(T.acc[0] / 255, T.acc[1] / 255, T.acc[2] / 255);
+    const neu = new THREE.Color(T.neu[0] / 255, T.neu[1] / 255, T.neu[2] / 255);
+    const c = new THREE.Color();
     for (let i = 0; i < N; i++) {
       const k = (SPH[i * 3 + 1] / 3 + 1) / 2;
-      if (rnd[i * 3 + 2] < 0.05) c.set(light ? '#0C4A6E' : '#FFFFFF'); else c.copy(a).lerp(b, k);
+      c.copy(neu).lerp(acc, k);
       col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
     }
     baseCol.set(col);
-    teamCol.set(light ? '#0891B2' : '#67E8F9'); proveCol.set(light ? '#059669' : '#6EE7B7');
-    lmat.color.set(light ? '#0E7490' : '#CBFFFC');
     geo.attributes.color.needsUpdate = true;
-    const mid = a.clone().lerp(b, 0.55);
-    [mid, b, a].forEach((cc, q) => { beadCol[q * 3] = cc.r; beadCol[q * 3 + 1] = cc.g; beadCol[q * 3 + 2] = cc.b; });
+    const mid = neu.clone().lerp(acc, 0.65);
+    [mid, acc, neu].forEach((cc, q) => { beadCol[q * 3] = cc.r; beadCol[q * 3 + 1] = cc.g; beadCol[q * 3 + 2] = cc.b; });
     bgeo.attributes.color.needsUpdate = true;
     mat.blending = light ? THREE.NormalBlending : THREE.AdditiveBlending;
     bmat.blending = mat.blending;
     mat.needsUpdate = true; bmat.needsUpdate = true;
     mat.uniforms.uSize.value = light ? 34 : 30;
+
+    sideMat.color.set(T.sA);
+    const topNeutral = new THREE.Color(T.top), topAccent = new THREE.Color(T.accTop);
+    for (let cI = 0; cI < NC; cI++) topMesh.setColorAt(cI, accentCells.has(cI) ? topAccent : topNeutral);
+    if (topMesh.instanceColor) topMesh.instanceColor.needsUpdate = true;
+    wordPlaneMat.color.set(T.ink);
   }
   window.addEventListener('themechange', applyTheme);
   applyTheme();
 
-  // stages follow your sections: hero → why webloop → the loop → finale
+  // one anchor element per section, used only to find each section's scroll centre
   const STAGES = [
-    { el: document.getElementById('heroSec'), anchor: ['anchorHero', 'anchorHeroMobile'], size: 6.2, tilt: -0.08, cap: '' },
-    { el: document.getElementById('anchorCV'), anchor: ['anchorCV'], size: 6.6, tilt: 0, cap: '' },
-    { el: document.getElementById('anchorLoop'), anchor: ['anchorLoop'], size: 8.2, tilt: 0.5, cap: '' },
-    { el: document.getElementById('anchorLogo'), anchor: ['anchorLogo'], inf: true, tilt: 0, cap: 'Build. Find. Prove. Repeat.' },
-  ];
+    document.getElementById('heroSec'),
+    document.getElementById('anchorBuild'),
+    document.getElementById('anchorVerify'),
+    document.getElementById('anchorFound'),
+    document.getElementById('anchorLogo'),
+  ].filter(Boolean) as HTMLElement[];
   const lastIdx = STAGES.length - 1;
-  const clamp = (x) => Math.max(0, Math.min(1, x));
-  const ease = (x) => x * x * (3 - 2 * x);
-  const lerp = (a, b, t) => a + (b - a) * t;
-  let A = 0, B = 0, f = 0, fsm = 0, fraw = 0, lastA = 0, mobile = false, visH = 8.28, visW = 15;
-  // once the finale (last stage) settles, we hold it centred instead of letting it
-  // keep tracking the anchor div as the page scrolls past, then ease it out
-  let settled = false, settleY = 0;
-  const frozen = [0, 0, 1];
-  const HOLD_PX = 60, FADE_PX = 160;
+  const clamp = (x: number) => Math.max(0, Math.min(1, x));
+  const ease = (x: number) => x * x * (3 - 2 * x);
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+  let A = 0, B = 0, f = 0, mobile = false, visH = 8.28;
   const glow = document.getElementById('particleGlow');
   const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
-  const onPointerMove = (e) => { pointer.tx = e.clientX / innerWidth - 0.5; pointer.ty = e.clientY / innerHeight - 0.5; };
+  const onPointerMove = (e: PointerEvent) => { pointer.tx = e.clientX / W - 0.5; pointer.ty = e.clientY / H - 0.5; };
   addEventListener('pointermove', onPointerMove);
+  let W = 0, H = 0;
 
+  // [centerX, centerY, scale, tiltX, baseRotY, swayAmp, swaySpeed] — exact demo values
+  const CFG_D = [[.73, .5, .88, .18, 0, .75, .35], [.7, .36, .62, .2, 0, .9, .2], [.73, .52, .7, .6, Math.PI / 4, .14, .3], [.73, .5, .84, 1.0, .2, .35, .25], [.5, .4, 1.1, 0, 0, 0, 0]];
+  const CFG_M = [[.5, .3, .72, .18, 0, .75, .35], [.5, .26, .55, .2, 0, .9, .2], [.5, .3, .8, .6, Math.PI / 4, .14, .3], [.5, .28, .7, 1.0, .2, .35, .25], [.5, .34, .8, 0, 0, 0, 0]];
+
+  // section holds; it only morphs between two adjacent centres (demo's exact window)
   function measure() {
-    const vh = innerHeight, y = scrollY;
-    const centers = STAGES.map((st) => { const r = st.el.getBoundingClientRect(); return r.top + y + r.height / 2 - vh / 2; });
-    centers[0] = 0;
-    let i = 0;
-    while (i < centers.length - 1 && y >= centers[i + 1]) i++;
+    // demo's exact formula: section centres compared against scrollY + viewport-half (mid);
+    // the shape holds at each section and only morphs between 30% and 80% of the way to the
+    // next one. Each anchor's absolute page position comes from getBoundingClientRect() + scrollY
+    // (not offsetTop — several of these anchors sit inside position:relative sections, which
+    // would make offsetTop relative to that section instead of the page).
+    const y = scrollY;
+    const centers = STAGES.map((el) => { const r = el.getBoundingClientRect(); return r.top + y + r.height / 2; });
+    const mid = y + innerHeight * 0.5;
+    let i = 0; for (let k = 0; k <= centers.length - 1; k++) if (mid >= centers[k]) i = k;
     if (i >= centers.length - 1) { A = B = centers.length - 1; f = 0; return; }
-    const raw = (y - centers[i]) / (centers[i + 1] - centers[i]);
-    A = i; B = i + 1; f = ease(clamp((raw - 0.2) / 0.6));
+    const frac = (mid - centers[i]) / (centers[i + 1] - centers[i] || 1);
+    A = i; B = i + 1; f = ease(clamp((frac - 0.3) / 0.5, 0, 1));
   }
   addEventListener('scroll', measure, { passive: true });
   addEventListener('resize', measure);
 
-  const ov = { core: document.getElementById('core'), who: document.getElementById('coreWho'), verb: document.getElementById('coreVerb'), tag: document.getElementById('coreTag'), beads: Array.from(document.querySelectorAll('.bead')), fw: document.getElementById('fw'), L: document.getElementById('fwL'), R: document.getElementById('fwR'), cap: document.getElementById('caption') };
-  const WORDS = [['Students', 'build', 'real projects'], ['Companies', 'hire', 'proven talent'], ['Universities', 'teach', 'with real evidence']];
-  let coreIdx = -1, lastCap = -1;
-  const ta = [0, 0, 0], tb = [0, 0, 0], v3 = new THREE.Vector3();
-  const toScreen = (x, y, z) => { v3.set(x, y, z); group.localToWorld(v3); v3.project(camera); return [(v3.x + 1) / 2 * innerWidth, (1 - v3.y) / 2 * innerHeight]; };
+  const $ = (id: string) => document.getElementById(id);
+  const loopChips = [{ el: $('chipP'), t: 0.95 }, { el: $('chipC'), t: Math.PI + 0.75 }, { el: $('chipU'), t: -0.5 }].filter((c) => c.el) as any[];
+  const beadEls = Array.from(document.querySelectorAll('.bead'));
+  let last = 0, solidS = 0;
 
-  function frame(ms) {
-    raf = requestAnimationFrame(frame);
-    const t = ms / 1000;
-    // when the page passes a stage, carry the progress over instead of jumping (fixes the flash between shapes)
-    if (A !== lastA) { if (A === lastA + 1) fraw -= 1; else if (A === lastA - 1) fraw += 1; else fraw = f; lastA = A; }
-    fraw += (f - fraw) * (reduce ? 1 : 0.08);
-    fsm = clamp(fraw);
-    pointer.x += (pointer.tx - pointer.x) * 0.04; pointer.y += (pointer.ty - pointer.y) * 0.04;
-    updatePhase(t);
-    const heroW = A === 0 ? 1 - fsm : 0;   // how much the hero story is on screen
-    // colours: teams turn violet, then green when verified
-    const ct = ph.team * heroW, cp = ph.prove * heroW;
-    col.set(baseCol);
-    for (let i = 0; i < N; i++) {
-      if (teamOf[i] < 0) continue;
-      const q = i * 3;
-      col[q] = baseCol[q] + (teamCol.r - baseCol[q]) * ct; col[q + 1] = baseCol[q + 1] + (teamCol.g - baseCol[q + 1]) * ct; col[q + 2] = baseCol[q + 2] + (teamCol.b - baseCol[q + 2]) * ct;
-      col[q] += (proveCol.r - col[q]) * cp; col[q + 1] += (proveCol.g - col[q + 1]) * cp; col[q + 2] += (proveCol.b - col[q + 2]) * cp;
-    }
-    geo.attributes.color.needsUpdate = true;
-    // team lines + badges
-    let li = 0;
-    TEAMS.forEach((c, k) => {
-      const C = [c[0] * 3.25, c[1] * 3.25, c[2] * 3.25];
-      const nodes = nodeOffsets[k].map(([ca, sa, u, w]) => { const r = 0.55; return [C[0] + (u[0] * ca + w[0] * sa) * r, C[1] + (u[1] * ca + w[1] * sa) * r, C[2] + (u[2] * ca + w[2] * sa) * r]; });
-      nodes.forEach((n, j) => { const m = nodes[(j + 1) % nodes.length]; [C, n, n, m].forEach((p) => { linkPos[li++] = p[0]; linkPos[li++] = p[1]; linkPos[li++] = p[2]; }); });
-      v3.set(C[0] * 1.12, C[1] * 1.12, C[2] * 1.12); group.localToWorld(v3);
-      const facing = v3.z > group.position.z + 0.8;
-      v3.project(camera);
-      chips[k].style.left = ((v3.x + 1) / 2 * innerWidth) + 'px'; chips[k].style.top = ((1 - v3.y) / 2 * innerHeight) + 'px';
-      chips[k].style.opacity = facing && !mobile ? cp : 0;
+  // per-particle easing state: rate in [0.035, 0.095], frame-rate independent chase
+  const seedRng = mulberry(77331);
+  const seed = new Float32Array(N), rate = new Float32Array(N), cur = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) { seed[i] = seedRng(); rate[i] = reduce ? 1 : 0.035 + seedRng() * 0.06; cur[i * 3] = (seedRng() - 0.5) * 2; cur[i * 3 + 1] = (seedRng() - 0.5) * 2; cur[i * 3 + 2] = (seedRng() - 0.5) * 2; }
+
+  const ov = { who: $('coreWho'), verb: $('coreVerb'), tag: $('coreTag'), core: $('core') };
+  const WORDS = [['People', 'build', 'real projects'], ['Companies', 'hire', 'proven talent'], ['Universities', 'teach', 'with real evidence']];
+  let coreIdx = -1, pinnedIdx: number | null = null;
+  const ta: number[] = [0, 0, 0], tb: number[] = [0, 0, 0], v3 = new THREE.Vector3();
+  const toScreen = (x: number, y: number, z: number) => { v3.set(x, y, z); group.localToWorld(v3); v3.project(camera); return [((v3.x + 1) / 2) * innerWidth, ((1 - v3.y) / 2) * innerHeight]; };
+
+  beadEls.forEach((el, idx) => {
+    el.addEventListener('click', () => { pinnedIdx = idx; coreIdx = -1; });
+  });
+  // clicking a hero loop label pins that role too, then scrolls down to the ring where the centre text lives
+  loopChips.forEach((c, idx) => {
+    c.el.addEventListener('click', () => {
+      pinnedIdx = idx; coreIdx = -1;
+      const foundEl = document.getElementById('anchorFound');
+      foundEl?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
     });
-    lgeo.attributes.position.needsUpdate = true;
-    lmat.opacity = ct * (light ? 0.55 : 0.45);
-    // headline follows the story
-    h1.classList.toggle('playing', heroW > 0.5 && !reduce);
-    phrases.forEach((el, k) => el.classList.toggle('on', k === ph.idx));
-    const prog = [clamp(ph.pt / 4), clamp((ph.pt - 4) / 4), clamp((ph.pt - 8) / 4)];
-    steps.forEach((el, k) => { el.classList.toggle('on', k === ph.idx); el.querySelector('.hbar').style.width = (ph.out > 0 ? (1 - ph.out) * 100 : prog[k] * 100) + '%'; });
+  });
 
-    const shA = SHAPES[A], shB = SHAPES[B], breathe = reduce ? 1 : 1 + Math.sin(t * 1.2) * 0.012;
+  // overlap of the scroll position with a given stage index (demo's ov(k) helper) — drives
+  // the hero loop labels and the dark-theme halo, which only shows behind found + finale
+  const ovAt = (k: number) => Math.max(0, 1 - Math.abs(A + f - k) * 2.2);
+
+  function frame(now: number) {
+    raf = requestAnimationFrame(frame);
+    const t = reduce ? 1.2 : now / 1000;
+    const dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now;
+    pointer.x += (pointer.tx - pointer.x) * 0.05; pointer.y += (pointer.ty - pointer.y) * 0.05;
+
+    const fsm = f; // the shape holds at each section, morphing only in the demo's scroll window
+    const ov0 = ovAt(0), ov3 = ovAt(3), ov4 = ovAt(lastIdx);
+
+    if (A === 2 || B === 2) updateCubeHeights(t);
+
+    const PA = SHAPES[A], PB = SHAPES[B];
     for (let i = 0; i < N; i++) {
-      const o = i * 3;
-      shA(i, t, ta); shB(i, t, tb);
-      const k = clamp(fsm * 1.25 - rnd[o + 1] * 0.25);
-      pos[o] = lerp(ta[0], tb[0], k) * breathe; pos[o + 1] = lerp(ta[1], tb[1], k) * breathe; pos[o + 2] = lerp(ta[2], tb[2], k) * breathe;
+      const fi = ease(clamp((fsm - seed[i] * 0.35) / 0.65, 0, 1));
+      const k = 1 - Math.pow(1 - rate[i], dt * 60), j = i * 3;
+      PA(i, t, ta); PB(i, t, tb);
+      cur[j] += (lerp(ta[0], tb[0], fi) - cur[j]) * k;
+      cur[j + 1] += (lerp(ta[1], tb[1], fi) - cur[j + 1]) * k;
+      cur[j + 2] += (lerp(ta[2], tb[2], fi) - cur[j + 2]) * k;
+      let x = cur[j], y = cur[j + 1], z = cur[j + 2];
+      if (!reduce) { const s = seed[i] * 6.28; x += Math.sin(t * 0.8 + s) * 0.006; y += Math.cos(t * 0.7 + s) * 0.006; }
+      pos[j] = x; pos[j + 1] = y; pos[j + 2] = z;
     }
     geo.attributes.position.needsUpdate = true;
 
-    const sA = STAGES[A], sB = STAGES[B];
-    // each shape sits inside its own section and scrolls with it
-    const place2 = (st) => {
-      const el = st.anchor.map((id) => document.getElementById(id)).find((e) => e && e.offsetParent !== null) || st.el;
-      const r = el.getBoundingClientRect(), k = visH / innerHeight;
-      const x = ((r.left + r.width / 2) / innerWidth - 0.5) * visH * camera.aspect, y = -((r.top + r.height / 2) / innerHeight - 0.5) * visH;
-      let sc;
-      if (st.inf) { const em = Math.min(r.width * 0.5 / 4.3, r.height * 0.8, 190); sc = (em * 1.15 / 2 * k) / 3.6; }
-      else sc = Math.min(r.width * k / st.size, r.height * k / st.size, 1.15);
-      return [x, y, sc];
-    };
-    // once the finale fully settles, stop chasing the anchor div (which keeps scrolling
-    // past underneath) — hold the reveal dead-centre for a beat, then ease it out smoothly
-    // instead of letting it dart off-screen or clip against the navbar. The centred spot is
-    // computed from the viewport, not the div's rect, so a fast jump (or a rect read before
-    // layout has settled) can never freeze it somewhere off-screen.
-    let pa, pb;
-    if (A === B && A === lastIdx) {
-      if (!settled) {
-        settled = true; settleY = scrollY;
-        const em = Math.min(innerWidth * 0.5 / 4.3, innerHeight * 0.6, 190);
-        frozen[0] = 0; frozen[1] = 0; frozen[2] = (em * 1.15 / 2 * (visH / innerHeight)) / 3.6;
-      }
-      pa = pb = frozen;
-    } else {
-      settled = false;
-      pa = place2(sA); pb = sB === sA ? pa : place2(sB);
-    }
-    group.position.set(lerp(pa[0], pb[0], fsm), lerp(pa[1], pb[1], fsm), 0);
-    group.scale.setScalar(lerp(pa[2], pb[2], fsm));
-    const tilt = lerp(sA.tilt, sB.tilt, fsm);
-    const spin = (reduce ? 0 : t * 0.07) * (A === 0 ? 1 - fsm : 0);
-    const cardTurn = (A === 1 ? 1 - fsm : B === 1 ? fsm : 0) * (reduce ? 0 : Math.sin(t * 0.5) * 0.2);
-    group.rotation.set(tilt + pointer.y * 0.12, spin + pointer.x * 0.2 + cardTurn, 0);
-    const showing = fsm > 0.5 ? B : A;
-    const dim = (A !== B ? 1 - 0.65 * Math.sin(Math.PI * fsm) : 1);   // particles fade while travelling between sections
-    const pastHold = settled ? Math.max(0, scrollY - settleY - HOLD_PX) : 0;
-    const settleFade = settled ? clamp(1 - pastHold / FADE_PX) : 1;   // held in view, then eased out — never an abrupt vanish
-    mat.uniforms.uOpacity.value = (light ? 0.97 : 0.94) * dim * settleFade;
+    const C = mobile ? CFG_M : CFG_D, CA = C[A], CB = C[B];
+    const tilt = lerp(CA[3], CB[3], fsm) + pointer.y * 0.1;
+    // a continuous slow spin only belongs to the hero loop — every other stage (and the
+    // settled finale) must hold still and readable, so this never applies past stage 0
+    const heroSpin = (reduce ? 0 : t * 0.05) * Math.max(0, 1 - (A + fsm));
+    const ry = lerp(CA[4] + Math.sin(t * CA[6]) * CA[5] * (reduce ? 0 : 1), CB[4] + Math.sin(t * CB[6]) * CB[5] * (reduce ? 0 : 1), fsm) + pointer.x * 0.25 + heroSpin;
 
-    // the loop: beads + centre text
-    const beadOn = clamp((A === 2 ? 1 - fsm : B === 2 ? fsm : 0) * 5 - 4);   // only once the ring has fully formed
+    // solid blocks fade in once the particles have converged onto the grid, fade out scrolling away
+    let conv = 0;
+    if (A === 2 || B === 2) {
+      let d = 0, n = 0; const tmp = [0, 0, 0];
+      for (let i = 0; i < N; i += 11) { cubesAt(i, t, tmp); const j = i * 3; d += Math.abs(cur[j] - tmp[0]) + Math.abs(cur[j + 1] - tmp[1]) + Math.abs(cur[j + 2] - tmp[2]); n++; }
+      conv = clamp(1 - (d / n) / 0.42, 0, 1);
+    }
+    solidS += (conv - solidS) * Math.min(1, dt * (conv > solidS ? 2.2 : 5));
+    const solid = ease(clamp((solidS - 0.45) / 0.5, 0, 1));
+    const showCubes = solid > 0.01 && (A === 2 || B === 2);
+    if (showCubes) layoutCubeMesh();
+    sideMesh.visible = topMesh.visible = showCubes;
+    sideMat.opacity = topMat.opacity = solid * 0.85;
+
+    mat.uniforms.uSize.value = (light ? 34 : 30) * (1 + 0.25 * (1 - solid) * ov0);
+
+    // demo's exact camera placement: cx/cy/sc are fractions of the viewport, not DOM rects —
+    // this is what makes every shape (including the ring and the finale) the correct size.
+    const cxPx = lerp(CA[0], CB[0], fsm) * innerWidth, cyPx = lerp(CA[1], CB[1], fsm) * innerHeight;
+    const scPx = lerp(CA[2], CB[2], fsm) * Math.min(innerWidth * 0.38, innerHeight * 0.46) * (mobile ? 1.5 : 1);
+    const pxPerUnit = innerHeight / visH;
+    group.position.set((cxPx / innerWidth - 0.5) * visH * camera.aspect, -(cyPx / innerHeight - 0.5) * visH, 0);
+    group.scale.setScalar(scPx / pxPerUnit);
+    group.rotation.set(tilt, ry, 0);
+
+    const dim = A !== B ? 1 - 0.55 * Math.sin(Math.PI * fsm) : 1;
+    mat.uniforms.uOpacity.value = (light ? 0.97 : 0.94) * dim;
+
+    // hero: loop labels riding the shape — DOM transform only, and only while visible
+    loopChips.forEach((c) => {
+      const on = ov0 > 0.02;
+      c.el.style.opacity = on ? String(ov0) : '0';
+      if (on) { const p = loopPt(c.t); const [lx, ly] = toScreen(p[0], p[1], p[2]); c.el.style.translate = `${(lx + 14).toFixed(1)}px ${(ly - 8).toFixed(1)}px`; }
+    });
+
+    // found: orbiting beads + centre text (bead nearest the top drives it, unless a bead was clicked)
+    const beadOn = ov3;
     bmat.uniforms.uOpacity.value = beadOn * dim;
-    let best = 0, bestD = 9;
+    if (!(A === 3 || B === 3)) pinnedIdx = null;
+    let best = pinnedIdx ?? 0, bestD = 9;
+    const beadsOn = beadOn > 0.02;
     for (let q = 0; q < 3; q++) {
-      const u = (reduce ? 0 : t * 0.35) + q * (Math.PI * 2 / 3);
-      beadPos[q * 3] = LR * Math.cos(u); beadPos[q * 3 + 1] = LR * Math.sin(u); beadPos[q * 3 + 2] = 0;
-      const d = Math.abs(Math.atan2(Math.sin(u - Math.PI / 2), Math.cos(u - Math.PI / 2))); if (d < bestD) { bestD = d; best = q; }
-      const [bx, by] = toScreen(beadPos[q * 3], beadPos[q * 3 + 1], 0);
-      ov.beads[q].style.left = bx + 'px'; ov.beads[q].style.top = by + 'px'; ov.beads[q].style.opacity = mobile ? 0 : beadOn;
+      const an = (reduce ? 0 : t * 0.35) + (q * Math.PI * 2) / 3;
+      beadPos[q * 3] = LR * Math.cos(an); beadPos[q * 3 + 1] = LR * Math.sin(an); beadPos[q * 3 + 2] = 0;
+      if (pinnedIdx === null) { const d = Math.abs(Math.atan2(Math.sin(an - Math.PI / 2), Math.cos(an - Math.PI / 2))); if (d < bestD) { bestD = d; best = q; } }
+      const el = beadEls[q] as HTMLElement;
+      el.style.opacity = mobile || !beadsOn ? '0' : String(beadOn);
+      if (beadsOn && !mobile) { const [bx, by] = toScreen(beadPos[q * 3], beadPos[q * 3 + 1], 0); el.style.translate = `${bx.toFixed(1)}px ${by.toFixed(1)}px`; }
     }
     bgeo.attributes.position.needsUpdate = true;
     if (best !== coreIdx) {
-      coreIdx = best; [ov.who.textContent, ov.verb.textContent, ov.tag.textContent] = WORDS[best];
-      ov.verb.style.animation = 'none'; void ov.verb.offsetWidth; ov.verb.style.animation = '';
-      ov.beads.forEach((L, q) => { L.style.color = q === best ? 'rgb(var(--signal-violet))' : ''; });
+      coreIdx = best;
+      if (ov.who && ov.verb && ov.tag) { ov.who.textContent = WORDS[best][0]; ov.verb.textContent = WORDS[best][1]; ov.tag.textContent = WORDS[best][2];
+        ov.verb.style.animation = 'none'; void ov.verb.offsetWidth; ov.verb.style.animation = ''; }
+      beadEls.forEach((el, q) => el.classList.toggle('active', q === best));
     }
-    const [cx, cy] = toScreen(0, 0, 0);
-    ov.core.style.left = cx + 'px'; ov.core.style.top = cy + 'px'; ov.core.style.opacity = mobile ? 0 : beadOn;
-
-    // WebL ∞ p
-    const wOn = (A === lastIdx ? 1 : B === lastIdx ? clamp(fsm * 5 - 4) : 0) * settleFade;
-    ov.fw.style.opacity = wOn;
-    if (wOn > 0) {
-      const [xl] = toScreen(-3.6, 0, 0), [xr, yc] = toScreen(3.6, 0, 0);
-      const size = (xr - xl) / 1.15, top = yc - size * 0.6;
-      ov.L.style.fontSize = ov.R.style.fontSize = size + 'px';
-      ov.L.style.transform = `translate(${xl - size * 0.05}px, ${top}px) translateX(-100%)`;
-      ov.R.style.transform = `translate(${xr + size * 0.03}px, ${top}px)`;
+    if (ov.core) {
+      (ov.core as HTMLElement).style.opacity = mobile || !beadsOn ? '0' : String(beadOn);
+      if (beadsOn && !mobile) { const [ccx, ccy] = toScreen(0, 0, 0); (ov.core as HTMLElement).style.translate = `${ccx.toFixed(1)}px ${ccy.toFixed(1)}px`; }
     }
 
-    const capKey = showing === 0 ? 'h' + ph.idx : showing;
-    if (capKey !== lastCap) { lastCap = capKey; ov.cap.textContent = showing === 0 ? PHASE_CAP[ph.idx] : STAGES[showing].cap; }
-    ov.cap.style.opacity = (Math.abs(fsm - 0.5) > 0.3 || A === B ? 1 : 0) * settleFade;
+    // finale: the particle letters turn solid on the SAME canvas — one wordmark, no DOM copy
+    const wOn = clamp((ov4 - 0.5) / 0.4, 0, 1);
+    if (WM) {
+      wordPlane.position.set(0, 0, 0.01);
+      wordPlane.scale.set(WM.w, WM.h, 1);
+    }
+    wordPlaneMat.opacity = wOn;
+    wordPlane.visible = wOn > 0.01;
 
-    // soft bioluminescent halo behind the particle shape — tracks its screen position/size
-    // and theme (dark: additive glow; light: a tinted wash so it still reads against white)
+    // soft bioluminescent halo — dark theme only, and only behind the ring + finale
     if (glow) {
-      const [gx, gy] = toScreen(0, 0, 0);
-      const pxPerUnit = innerHeight / visH;
-      const r = 3.9 * group.scale.x * pxPerUnit;
-      glow.style.left = gx + 'px';
-      glow.style.top = gy + 'px';
-      glow.style.width = (r * 2.3) + 'px';
-      glow.style.height = (r * 2.3) + 'px';
-      glow.style.opacity = String(Math.max(0, mat.uniforms.uOpacity.value) * (light ? 0.95 : 1));
+      const haloOn = light ? 0 : (ov3 + ov4 * 0.8);
+      if (haloOn > 0.01) {
+        const [gx, gy] = toScreen(0, 0, 0);
+        const pxPerUnit = innerHeight / visH;
+        const r = 1.1 * group.scale.x * pxPerUnit;
+        (glow as HTMLElement).style.translate = `${gx}px ${gy}px`;
+        (glow as HTMLElement).style.width = r * 2.3 + 'px'; (glow as HTMLElement).style.height = r * 2.3 + 'px';
+        (glow as HTMLElement).style.opacity = String(Math.max(0, mat.uniforms.uOpacity.value) * haloOn);
+      } else {
+        (glow as HTMLElement).style.opacity = '0';
+      }
     }
+
     renderer.render(scene, camera);
   }
+
   function resize() {
-    const w = innerWidth, h = innerHeight;
-    mobile = w < 1024;
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h; camera.position.z = 10; camera.updateProjectionMatrix();
-    const depth = camera.position.z + (mobile ? 3 : 0);
+    W = innerWidth; H = innerHeight;
+    mobile = W < 1024;
+    renderer.setSize(W, H, false);
+    camera.aspect = W / H; camera.position.z = 10; camera.updateProjectionMatrix();
     visH = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    visW = 2 * depth * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
-    STAGES[3].fit = (mobile ? 0.21 : 0.2) * visW / 7.2;
   }
   addEventListener('resize', resize);
   resize(); measure();
   raf = requestAnimationFrame(frame);
+
+  // pause the loop while the tab is hidden
+  const onVisibility = () => { if (document.hidden) cancelAnimationFrame(raf); else { last = performance.now(); raf = requestAnimationFrame(frame); } };
+  document.addEventListener('visibilitychange', onVisibility);
+
   return () => {
     cancelAnimationFrame(raf);
     removeEventListener('scroll', measure); removeEventListener('resize', measure); removeEventListener('resize', resize);
     removeEventListener('pointermove', onPointerMove); window.removeEventListener('themechange', applyTheme);
-    chips.forEach((c) => c.remove()); geo.dispose(); bgeo.dispose(); lgeo.dispose(); mat.dispose(); bmat.dispose(); lmat.dispose(); renderer.dispose();
+    document.removeEventListener('visibilitychange', onVisibility);
+    geo.dispose(); bgeo.dispose(); sideGeo.dispose(); topGeo.dispose(); wordPlaneGeo.dispose(); wordTex.dispose();
+    mat.dispose(); bmat.dispose(); sideMat.dispose(); topMat.dispose(); wordPlaneMat.dispose(); renderer.dispose();
   };
 }

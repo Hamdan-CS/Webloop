@@ -3,9 +3,13 @@ import { startParticleStage } from './particleEngine';
 import { INF_PATH } from '@/components/layout/Wordmark';
 
 /**
- * Fixed full-screen particle canvas + the HTML overlay (loop labels, "WebL∞p" finale).
- * The home page provides the anchor elements it reads (#heroSec, #anchorHero, #anchorHeroMobile,
- * #anchorCV, #anchorLoop, #anchorLogo) and the hero text pieces (.ph, .hstep).
+ * Fixed full-screen particle canvas + its HTML overlay (loop labels, the
+ * orbiting role beads + centre text). The finale "WebL[loop]p" wordmark is
+ * drawn entirely on the canvas itself (particles + a solid canvas-texture
+ * reveal) — there is no separate DOM copy of it.
+ * The home page provides the anchor elements it reads (#heroSec,
+ * #anchorHero, #anchorHeroMobile, #anchorBuild, #anchorVerify,
+ * #anchorFound, #anchorLogo).
  */
 export function ParticleStage() {
   useEffect(() => startParticleStage(), []);
@@ -27,20 +31,19 @@ export function ParticleStage() {
             <path stroke="url(#gCore)" pathLength={100} d={INF_PATH} />
             <path className="spark" pathLength={100} d={INF_PATH} />
           </svg>
-          <span className="who" id="coreWho">Students</span>
+          <span className="who" id="coreWho">People</span>
           <span className="verb" id="coreVerb">build</span>
           <span className="tag" id="coreTag">real projects</span>
         </div>
-        <span className="bead">Students</span>
-        <span className="bead">Companies</span>
-        <span className="bead">Universities</span>
-        <div id="vchips" />
-        <div className="stage-fw" id="fw" style={{ opacity: 0 }}>
-          <span id="fwL">WebL</span>
-          <span id="fwR">p</span>
-        </div>
       </div>
-      <div id="caption" />
+      {/* Loop labels + role beads are real buttons (not aria-hidden) so clicking or
+          tabbing to one pins the centre text to that role — keyboard-reachable. */}
+      <button type="button" className="loop-chip" id="chipP" aria-label="Focus on People">People</button>
+      <button type="button" className="loop-chip" id="chipC" aria-label="Focus on Companies">Companies</button>
+      <button type="button" className="loop-chip" id="chipU" aria-label="Focus on Universities">Universities</button>
+      <button type="button" className="bead" aria-label="Focus on People">People</button>
+      <button type="button" className="bead" aria-label="Focus on Companies">Companies</button>
+      <button type="button" className="bead" aria-label="Focus on Universities">Universities</button>
     </>
   );
 }

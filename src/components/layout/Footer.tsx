@@ -35,7 +35,10 @@ export function Footer() {
   const { user } = useAuth();
 
   return (
-    <footer className="relative z-[2] mt-24 border-t border-white/5 bg-ink-950/60 backdrop-blur-md">
+    <footer
+      className="relative z-[2] mt-24 border-t backdrop-blur-md"
+      style={{ borderColor: 'var(--glass-line)', background: 'var(--panel-2)' }}
+    >
       <div className="container-page py-14">
         <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div>

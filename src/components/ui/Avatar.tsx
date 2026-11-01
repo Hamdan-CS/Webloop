@@ -5,6 +5,7 @@ interface AvatarProps {
   name: string;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
+  style?: React.CSSProperties;
 }
 
 const sizeClass = {
@@ -15,7 +16,7 @@ const sizeClass = {
   xl: 'h-20 w-20 text-lg',
 };
 
-export function Avatar({ src, name, size = 'md', className }: AvatarProps) {
+export function Avatar({ src, name, size = 'md', className, style }: AvatarProps) {
   const initials = name
     .split(' ')
     .map((w) => w[0])
@@ -29,6 +30,7 @@ export function Avatar({ src, name, size = 'md', className }: AvatarProps) {
         sizeClass[size],
         className,
       )}
+      style={style}
     >
       {src ? (
         <img src={src} alt={name} className="h-full w-full object-cover" loading="lazy" />

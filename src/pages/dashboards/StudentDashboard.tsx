@@ -28,7 +28,6 @@ import { ProjectCard } from '@/components/projects/ProjectCard';
 import { Button } from '@/components/ui/Button';
 import { statusLabel, statusTone, relativeDate } from '@/lib/labels';
 import { MyTasksPanel } from '@/components/projects/MyTasksPanel';
-import { ClipboardList } from 'lucide-react';
 
 const ContributionGrid = lazy(() =>
   import('@/components/contributions').then((m) => ({ default: m.ContributionGrid })),

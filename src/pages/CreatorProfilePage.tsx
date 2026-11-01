@@ -258,7 +258,8 @@ export function CreatorProfilePage() {
               src={profile.avatar_url}
               name={profile.display_name}
               size="xl"
-              className="ring-4 ring-ink-850 shrink-0"
+              className="shrink-0"
+              style={{ width: 104, height: 104, fontSize: 28, boxShadow: '0 0 0 4px var(--panel-solid), 0 0 0 5px var(--glass-line-2)' }}
             />
             <div className="flex-1 min-w-0 pb-1">
               <div className="flex items-center gap-2 flex-wrap">

@@ -37,7 +37,6 @@ import {
   statusTone,
   projectTypeLabel,
   compensationLabel,
-  compensationTone,
   difficultyLabel,
   creatorTypeLabel,
   relativeDate,
@@ -175,29 +174,32 @@ export function ProjectDetailPage() {
         <ArrowLeft size={15} /> Back to Explore
       </Link>
 
-      {/* Hero cover */}
-      <div className="relative h-[36vh] min-h-[280px] overflow-hidden rounded-xl border border-white/10">
-        {project.cover_image_url ? (
-          <img src={project.cover_image_url} alt={project.title} className="h-full w-full object-cover" />
-        ) : (
-          <div className="h-full w-full bg-ink-800" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink-950 via-ink-950/40 to-ink-950/30" />
-        <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
-          <div className="flex flex-wrap items-center gap-2 mb-3">
+      {/* Hero — reference's pd-hero: copy + stats on the left, a tilted browser preview on the right */}
+      <div className="pd-hero">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
             <Badge tone={statusTone[project.status]}>{statusLabel[project.status]}</Badge>
-            <span className="rounded-md bg-ink-950/70 px-3 py-1 text-xs font-medium text-slate-200 backdrop-blur-sm border border-white/10">
-              {projectTypeLabel[project.project_type]}
-            </span>
-            {project.category && (
-              <span className="rounded-md bg-ink-950/70 px-3 py-1 text-xs font-medium text-slate-300 backdrop-blur-sm border border-white/10">
-                {project.category}
-              </span>
-            )}
+            <span className="ref-tag">{projectTypeLabel[project.project_type]}</span>
+            {project.category && <span className="ref-tag">{project.category}</span>}
           </div>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-white max-w-3xl leading-tight">
-            {project.title}
-          </h1>
+          <h2 className="font-display font-bold text-white">{project.title}</h2>
+          <p className="tl">{project.category ?? projectTypeLabel[project.project_type]}</p>
+          <p className="ds">{project.summary}</p>
+          <div className="pd-stats">
+            <div><Users size={22} /><span><b>{project.team_size}</b>Team size</span></div>
+            <div><CheckCircle2 size={22} /><span><b>{openRoles.length}</b>Open roles</span></div>
+            <div><Flag size={22} /><span><b>{stats.count}</b>Reviews</span></div>
+          </div>
+        </div>
+        <div className="pd-prev">
+          <div className="browser">
+            <div className="bbar"><i /><i /><i /><span>{project.title.toLowerCase().replace(/\s+/g, '')}.app</span></div>
+            <div className="big">
+              {project.cover_image_url ? <img src={project.cover_image_url} alt={project.title} /> : <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, var(--cyan), var(--blue))' }} />}
+              <h4>{project.title}</h4>
+              <p>{projectTypeLabel[project.project_type]}</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -353,7 +355,7 @@ export function ProjectDetailPage() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-5 lg:sticky lg:top-20 lg:self-start">
+        <div className="side space-y-5 lg:sticky lg:top-20 lg:self-start">
           {/* Actions */}
           <div className="surface-raised p-5 space-y-2.5">
             {isOwner ? (
@@ -528,8 +530,8 @@ export function ProjectDetailPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section>
-      <h2 className="label-overline mb-3">{title}</h2>
+    <section className="card-g pbox">
+      <h4>{title}</h4>
       {children}
     </section>
   );

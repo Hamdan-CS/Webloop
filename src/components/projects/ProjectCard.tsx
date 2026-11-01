@@ -26,12 +26,11 @@ export function ProjectCard({ project, selected, onClick, compact }: ProjectCard
   const inner = (
     <article
       className={cn(
-        'group relative flex flex-col overflow-hidden rounded-lg border border-transparent bg-ink-900/70 transition-colors duration-300',
-        selected
-          ? 'border-accent-400/50 shadow-glow'
-          : 'hover:border-white/15 hover:bg-ink-850/80',
+        'surface-raised group relative flex flex-col overflow-hidden transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5',
+        selected ? 'shadow-glow' : '',
         onClick && 'cursor-pointer',
       )}
+      style={{ borderColor: selected ? 'var(--cyan)' : undefined }}
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-ink-800">
         {project.cover_image_url && (
