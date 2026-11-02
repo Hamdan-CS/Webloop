@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { AuthPromptProvider } from '@/components/auth/AuthPrompt';
 import { AuthProvider, useAuth } from '@/components/auth/AuthContext';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
-import { FloatingPanelProvider, FloatingButtons, FloatingPanel } from '@/components/FloatingPanel';
+import { FloatingPanelProvider, PanelBadgeSync, FloatingPanel } from '@/components/FloatingPanel';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { HomePage } from '@/pages/HomePage';
@@ -25,6 +25,7 @@ import { GuestOnlyRoute } from '@/components/auth/GuestOnlyRoute';
 import { StudentDashboard } from '@/pages/dashboards/StudentDashboard';
 import { CompanyDashboard } from '@/pages/dashboards/CompanyDashboard';
 import { UniversityDashboard } from '@/pages/dashboards/UniversityDashboard';
+import { GlobalTip } from '@/components/ui/GlobalTip';
 
 /**
  * Google OAuth signs a brand-new user in the same way it signs a returning
@@ -94,8 +95,9 @@ function App() {
               </Routes>
             </main>
             <Footer />
-            <FloatingButtons />
+            <PanelBadgeSync />
             <FloatingPanel />
+            <GlobalTip />
           </div>
           </FloatingPanelProvider>
           </AuthPromptProvider>

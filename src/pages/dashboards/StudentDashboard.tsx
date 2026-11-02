@@ -1,58 +1,69 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Users,
-  GitBranch,
-  Inbox,
-  Plus,
-  Sparkles,
-  Star,
-  TrendingUp,
-  ArrowRight,
-  Briefcase,
-  FolderGit2,
+  Users, GitBranch, Inbox, Plus, Sparkles, Star, ArrowRight, Briefcase, FolderGit2,
+  ClipboardList, CheckCircle2, Clock, MessageSquare, FileText, Pencil, UserCircle2,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
 import { useFloatingPanel } from '@/components/FloatingPanel';
 import {
-  fetchProfileProjects,
-  fetchProfilePortfolio,
-  fetchProfileStats,
-  fetchProjectApplicationCount,
+  fetchProfileProjects, fetchProfilePortfolio, fetchProfileStats, fetchProjectApplicationCount,
+  fetchAssignedTasks, fetchMyApplications, fetchInboxMessages,
 } from '@/lib/api';
-import type { PortfolioItem, Project } from '@/lib/types';
+import type { Application, Message, PortfolioItem, Project, Task } from '@/lib/types';
 import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
 import { Rating, NoRating } from '@/components/ui/Rating';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { Button } from '@/components/ui/Button';
-import { statusLabel, statusTone, relativeDate } from '@/lib/labels';
+import { statusLabel, relativeDate } from '@/lib/labels';
 import { MyTasksPanel } from '@/components/projects/MyTasksPanel';
+import { cn } from '@/lib/utils';
 
-const ContributionGrid = lazy(() =>
-  import('@/components/contributions').then((m) => ({ default: m.ContributionGrid })),
-);
+type Tab = 'ov' | 'pj' | 'tk' | 'rq';
+type TaskView = 'all' | 'todo' | 'submitted' | 'approved' | 'changes';
+
+const TODO = ['open', 'in_progress'];
+const TASK_VIEWS: { key: TaskView; label: string; test: (t: Task) => boolean }[] = [
+  { key: 'all', label: 'All', test: () => true },
+  { key: 'todo', label: 'To do', test: (t) => TODO.includes(t.status) },
+  { key: 'changes', label: 'Needs changes', test: (t) => t.status === 'changes_requested' },
+  { key: 'submitted', label: 'In review', test: (t) => t.status === 'submitted' },
+  { key: 'approved', label: 'Approved', test: (t) => t.status === 'approved' },
+];
+
+interface FeedItem { id: string; icon: React.ReactNode; text: React.ReactNode; at: string }
 
 export function StudentDashboard() {
   const { profile, unreadMessages } = useAuth();
   const { openPanel } = useFloatingPanel();
+  const [tab, setTab] = useState<Tab>('ov');
+  const [taskView, setTaskView] = useState<TaskView>('all');
   const [projects, setProjects] = useState<Project[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [stats, setStats] = useState({ avg: 0, count: 0 });
   const [appCounts, setAppCounts] = useState<Record<string, number>>({});
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [myApps, setMyApps] = useState<Application[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!profile) return;
     (async () => {
-      const [prs, pfs, st] = await Promise.all([
+      const [prs, pfs, st, tks, apps, msgs] = await Promise.all([
         fetchProfileProjects(profile.id),
         fetchProfilePortfolio(profile.id),
         fetchProfileStats(profile.id),
+        fetchAssignedTasks(profile.id).catch(() => [] as Task[]),
+        fetchMyApplications(profile.id).catch(() => [] as Application[]),
+        fetchInboxMessages(profile.id).catch(() => [] as Message[]),
       ]);
       setProjects(prs);
       setPortfolio(pfs);
       setStats({ avg: st.avg_rating, count: st.review_count });
+      setTasks(tks);
+      setMyApps(apps);
+      setMessages(msgs);
       const counts: Record<string, number> = {};
       await Promise.all(prs.map(async (p) => { counts[p.id] = await fetchProjectApplicationCount(p.id); }));
       setAppCounts(counts);
@@ -60,160 +71,281 @@ export function StudentDashboard() {
     })();
   }, [profile]);
 
+  const approved = tasks.filter((t) => t.status === 'approved').length;
+  const inReview = tasks.filter((t) => t.status === 'submitted').length;
+  const todo = tasks.filter((t) => TODO.includes(t.status)).length;
+  const changes = tasks.filter((t) => t.status === 'changes_requested').length;
+  const pct = tasks.length ? Math.round((approved / tasks.length) * 100) : 0;
+  const requests = Object.values(appCounts).reduce((a, b) => a + b, 0);
+  const activeProjects = projects.filter((p) => p.status === 'recruiting' || p.status === 'in_progress').length;
+
+  const nextUp = useMemo(
+    () =>
+      tasks
+        .filter((t) => TODO.includes(t.status) || t.status === 'changes_requested')
+        .sort((a, b) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999'))
+        .slice(0, 4),
+    [tasks],
+  );
+
+  const feed = useMemo<FeedItem[]>(() => {
+    if (!profile) return [];
+    const items: FeedItem[] = [];
+    tasks.forEach((t) => {
+      const proj = t.project?.title ? ` in ${t.project.title}` : '';
+      if (t.status === 'approved') items.push({ id: 't' + t.id, icon: <CheckCircle2 size={14} />, text: <><b>{t.title}</b> was approved{proj}</>, at: t.updated_at });
+      else if (t.status === 'changes_requested') items.push({ id: 't' + t.id, icon: <Pencil size={14} />, text: <>Changes requested on <b>{t.title}</b></>, at: t.updated_at });
+      else if (t.status === 'submitted') items.push({ id: 't' + t.id, icon: <Clock size={14} />, text: <>You submitted <b>{t.title}</b> for review</>, at: t.updated_at });
+    });
+    myApps.forEach((a) => {
+      const verb = a.status === 'accepted' ? 'was accepted' : a.status === 'declined' ? 'was declined' : 'is pending';
+      items.push({ id: 'a' + a.id, icon: <FileText size={14} />, text: <>Your application to <b>{a.project?.title ?? 'a project'}</b> {verb}</>, at: a.updated_at ?? a.created_at });
+    });
+    messages.filter((m) => m.recipient_id === profile.id).slice(0, 5).forEach((m) =>
+      items.push({ id: 'm' + m.id, icon: <MessageSquare size={14} />, text: <><b>{m.sender?.display_name ?? 'Someone'}</b> sent you a message</>, at: m.created_at }));
+    return items.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 6);
+  }, [tasks, myApps, messages, profile]);
+
   if (!profile) return null;
 
+  const goTasks = (v: TaskView) => { setTaskView(v); setTab('tk'); };
+  const view = TASK_VIEWS.find((v) => v.key === taskView) ?? TASK_VIEWS[0];
+  const pendingApps = myApps.filter((a) => a.status === 'pending').length;
+
   return (
-    <div className="container-page py-8">
-      {/* Greeting */}
-      <div className="surface-raised p-6 flex flex-col sm:flex-row sm:items-center gap-4">
-        <Avatar src={profile.avatar_url} name={profile.display_name} size="xl" />
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="font-display text-2xl font-bold text-white">Welcome back, {profile.display_name.split(' ')[0]}</h1>
-            <Badge tone="accent">Student</Badge>
+    <div className="container-page py-8 pf sd">
+      {/* Header + tabs */}
+      <div className="surface-raised pf-card pf-head p-5 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <Avatar src={profile.avatar_url} name={profile.display_name} size="xl" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="pf-name">Welcome back, {profile.display_name.split(' ')[0]}</h1>
+              <span className="ref-tag pf-type">Student</span>
+            </div>
+            <p className="mt-1 text-sm text-slate-400">
+              @{profile.handle} · {projects.length} project{projects.length !== 1 ? 's' : ''} · {portfolio.length} portfolio item{portfolio.length !== 1 ? 's' : ''}
+            </p>
           </div>
-          <p className="mt-1 text-sm text-slate-400">
-            @{profile.handle} · {projects.length} projects · {portfolio.length} portfolio items
-          </p>
+          <div className="flex gap-2">
+            <Link to="/publish"><Button className="btn-sm"><Plus size={15} /> New Project</Button></Link>
+            <Link to="/explore"><Button variant="ghost" className="btn-sm"><Sparkles size={15} /> Explore</Button></Link>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Link to="/publish"><Button><Plus size={15} /> New Project</Button></Link>
-          <Link to="/explore"><Button variant="secondary"><Sparkles size={15} /> Explore</Button></Link>
+        <div className="d-tabs pf-tabs sd-tabs mt-5" role="tablist">
+          {([
+            ['ov', 'Overview', null],
+            ['pj', 'My Projects', projects.length],
+            ['tk', 'Tasks', todo + changes],
+            ['rq', 'Requests', requests + pendingApps],
+          ] as [Tab, string, number | null][]).map(([k, label, n]) => (
+            <button key={k} type="button" role="tab" aria-selected={tab === k} className={cn('pf-tab', tab === k && 'on')} onClick={() => setTab(k)}>
+              {label}
+              {n ? <span className={cn('pf-count', k === 'rq' && 'amber')}>{n}</span> : null}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Contribution grid */}
-      <div className="mt-6">
-        <Suspense fallback={<div className="skeleton h-[340px] rounded-xl" />}>
-          <ContributionGrid studentId={profile.id} size="full" />
-        </Suspense>
-      </div>
-
-      {/* Stat cards */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={<FolderGit2 size={18} />} label="Active Projects" value={projects.filter((p) => p.status === 'recruiting' || p.status === 'in_progress').length} />
-        <StatCard icon={<Inbox size={18} />} label="Join Requests" value={Object.values(appCounts).reduce((a, b) => a + b, 0)} tone="amber" />
-        <StatCard icon={<Star size={18} />} label="Avg Rating" value={stats.count > 0 ? stats.avg.toFixed(1) : '—'} />
-        <StatCard icon={<TrendingUp size={18} />} label="Portfolio Items" value={portfolio.length} />
-      </div>
-
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1.6fr_1fr]">
-        {/* My projects */}
-        <div className="space-y-8">
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="label-overline">My Projects</h2>
-              <Link to="/publish" className="text-xs text-accent-300 hover:text-accent-200 inline-flex items-center gap-1">
-                <Plus size={12} /> Publish new
-              </Link>
-            </div>
-            {loading ? (
-              <div className="surface p-8 text-center text-sm text-slate-500">Loading…</div>
-            ) : projects.length === 0 ? (
-              <div className="surface p-8 text-center">
-                <GitBranch size={24} className="mx-auto text-slate-600" />
-                <p className="mt-3 text-sm text-slate-400">You haven't published a project yet.</p>
-                <Link to="/publish" className="mt-4 inline-block"><Button variant="secondary"><Plus size={14} /> Publish your first project</Button></Link>
+      {/* OVERVIEW */}
+      {tab === 'ov' && (
+        <div className="dpane mt-6 space-y-6">
+          <div className="grid gap-6 lg:grid-cols-[1fr_1.25fr]">
+            <section className="surface pf-card p-5">
+              <h2 className="pf-h4 mb-4">Your progress <small>approved tasks</small></h2>
+              <div className="donut-wrap">
+                <button type="button" className="donut" aria-label="Your progress. Open tasks" onClick={() => goTasks('all')}>
+                  <svg viewBox="0 0 120 120">
+                    <defs><linearGradient id="sdg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#22d3ee" /><stop offset="1" stopColor="#3b82f6" /></linearGradient></defs>
+                    <circle className="bg" cx="60" cy="60" r="50" />
+                    <circle className="fg" cx="60" cy="60" r="50" style={{ stroke: 'url(#sdg)', strokeDashoffset: 314 * (1 - pct / 100) }} />
+                  </svg>
+                  <b>{pct}<span>%</span></b>
+                </button>
+                <div className="kpis sd-kpis">
+                  <button type="button" onClick={() => goTasks('all')}><b>{tasks.length}</b>Assigned</button>
+                  <button type="button" onClick={() => goTasks('approved')}><b className="c1">{approved}</b>Approved</button>
+                  <button type="button" onClick={() => goTasks('todo')}><b className="c2">{todo + changes}</b>To do</button>
+                  <button type="button" onClick={() => goTasks('submitted')}><b>{inReview}</b>In review</button>
+                </div>
               </div>
-            ) : (
-              <div className="grid gap-5 sm:grid-cols-2">
-                {projects.map((p) => (
-                  <div key={p.id}>
-                    <ProjectCard project={p} />
-                    <div className="mt-2 flex items-center justify-between rounded-xl border border-white/8 bg-ink-900/60 px-3 py-2">
-                      <Badge tone={statusTone[p.status]}>{statusLabel[p.status]}</Badge>
-                      {appCounts[p.id] > 0 && (
-                        <Link to={`/creators/${profile.handle}?tab=applications`} className="text-[11px] text-signal-amber hover:text-signal-amber/80 inline-flex items-center gap-1">
-                          <Inbox size={11} /> {appCounts[p.id]} requests
-                        </Link>
-                      )}
+              <div className="sd-mini mt-5">
+                <button type="button" onClick={() => setTab('pj')}><FolderGit2 size={15} /><b>{activeProjects}</b> active project{activeProjects !== 1 ? 's' : ''}</button>
+                <button type="button" onClick={() => setTab('rq')}><Inbox size={15} /><b>{requests}</b> join request{requests !== 1 ? 's' : ''}</button>
+                <span><Star size={15} />{stats.count > 0 ? <><b>{stats.avg.toFixed(1)}</b> avg rating</> : 'No ratings yet'}</span>
+              </div>
+            </section>
+
+            <section className="surface pf-card p-5">
+              <h2 className="pf-h4 mb-3">Next up <small>closest deadline first</small></h2>
+              {loading ? (
+                <p className="text-sm text-slate-500">Loading…</p>
+              ) : nextUp.length === 0 ? (
+                <div className="sd-empty">
+                  <ClipboardList size={22} />
+                  <p>Nothing waiting on you. Join a project to get tasks from its owner.</p>
+                  <Link to="/explore" className="btn btn-ghost btn-sm">Explore projects</Link>
+                </div>
+              ) : (
+                <ul className="sd-next">
+                  {nextUp.map((t) => (
+                    <li key={t.id}>
+                      <button type="button" onClick={() => goTasks('all')}>
+                        <span className={cn('sd-dot', t.status === 'changes_requested' && 'warn')} />
+                        <span className="sd-next-t"><b>{t.title}</b><small>{t.project?.title ?? 'Project'}{t.due_date ? ` · due ${t.due_date}` : ''}</small></span>
+                        {t.status === 'changes_requested' ? <span className="ref-tag">Needs changes</span> : <ArrowRight size={14} />}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="sd-quick mt-4">
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => openPanel('messages')}><Inbox size={14} /> Messages{unreadMessages > 0 && <span className="pf-count amber">{unreadMessages}</span>}</button>
+                <Link to="/my-applications" className="btn btn-ghost btn-sm"><Briefcase size={14} /> My applications</Link>
+                <Link to={`/creators/${profile.handle}`} className="btn btn-ghost btn-sm"><UserCircle2 size={14} /> View profile</Link>
+                <Link to="/settings" className="btn btn-ghost btn-sm"><Pencil size={14} /> Edit profile</Link>
+              </div>
+            </section>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[1.25fr_1fr]">
+            <section className="surface pf-card p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="pf-h4">My projects</h2>
+                <button type="button" className="sd-link" onClick={() => setTab('pj')}>View all <ArrowRight size={12} /></button>
+              </div>
+              {loading ? <p className="text-sm text-slate-500">Loading…</p> : projects.length === 0 ? (
+                <div className="sd-empty">
+                  <GitBranch size={22} />
+                  <p>You haven't published a project yet.</p>
+                  <Link to="/publish" className="btn btn-ghost btn-sm"><Plus size={14} /> Publish your first project</Link>
+                </div>
+              ) : (
+                <ul className="sd-list">
+                  {projects.slice(0, 4).map((p) => (
+                    <li key={p.id}>
+                      <Link to={`/projects/${p.slug}`}>
+                        <span className="sd-list-t"><b>{p.title}</b><small>{statusLabel[p.status]}</small></span>
+                        {appCounts[p.id] > 0 && <span className="pf-count amber">{appCounts[p.id]} request{appCounts[p.id] !== 1 ? 's' : ''}</span>}
+                        <ArrowRight size={14} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="surface pf-card p-5">
+              <h2 className="pf-h4 mb-3">Recent activity</h2>
+              {feed.length === 0 ? (
+                <p className="text-sm text-slate-500">Activity from your tasks, applications and messages will show up here.</p>
+              ) : (
+                <div className="dash-feed" style={{ maxHeight: 'none' }}>
+                  {feed.map((f) => (
+                    <div key={f.id} className="fi">
+                      <span className="sd-fi-ic">{f.icon}</span>
+                      <div>{f.text}<small>{relativeDate(f.at)}</small></div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* My assigned tasks */}
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="label-overline">My Assigned Tasks</h2>
-            </div>
-            {loading ? (
-              <div className="surface p-8 text-center text-sm text-slate-500">Loading…</div>
-            ) : (
-              <MyTasksPanel profileId={profile.id} />
-            )}
-          </section>
+                  ))}
+                </div>
+              )}
+              <div className="mt-4">{stats.count > 0 ? <Rating value={stats.avg} count={stats.count} /> : <NoRating label="No reviews yet" />}</div>
+            </section>
+          </div>
         </div>
+      )}
 
-        {/* Sidebar */}
-        <div className="space-y-5">
-          <section className="surface p-5">
-            <h2 className="label-overline mb-4">Quick actions</h2>
-            <nav className="space-y-1.5">
-              <QuickLink onClick={() => openPanel('messages')} icon={<Inbox size={15} />} label="Messages" count={unreadMessages} />
-              <QuickLink to="/publish" icon={<Plus size={15} />} label="Publish a project" />
-              <QuickLink to="/explore" icon={<Sparkles size={15} />} label="Explore projects" />
-              <QuickLink to="/my-applications" icon={<Briefcase size={15} />} label="My applications" />
-              <QuickLink to={`/creators/${profile.handle}`} icon={<Users size={15} />} label="View my profile" />
-              <QuickLink to="/settings" icon={<GitBranch size={15} />} label="Edit profile" />
-            </nav>
+      {/* MY PROJECTS */}
+      {tab === 'pj' && (
+        <div className="dpane mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="pf-h4">My projects</h2>
+            <Link to="/publish" className="sd-link"><Plus size={12} /> Publish new</Link>
+          </div>
+          {loading ? (
+            <div className="surface pf-card p-8 text-center text-sm text-slate-500">Loading…</div>
+          ) : projects.length === 0 ? (
+            <div className="surface pf-card p-8 text-center">
+              <GitBranch size={24} className="mx-auto text-slate-600" />
+              <p className="mt-3 text-sm text-slate-400">You haven't published a project yet.</p>
+              <Link to="/publish" className="mt-4 inline-block"><Button variant="ghost" className="btn-sm"><Plus size={14} /> Publish your first project</Button></Link>
+            </div>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {projects.map((p) => (
+                <div key={p.id}>
+                  <ProjectCard project={p} />
+                  <div className="sd-proj-foot">
+                    <span className="ref-tag">{statusLabel[p.status]}</span>
+                    {appCounts[p.id] > 0 && (
+                      <Link to={`/creators/${profile.handle}?tab=applications`} className="sd-link amber"><Inbox size={11} /> {appCounts[p.id]} request{appCounts[p.id] !== 1 ? 's' : ''}</Link>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TASKS */}
+      {tab === 'tk' && (
+        <div className="dpane mt-6">
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {TASK_VIEWS.map((v) => (
+              <button key={v.key} type="button" className={cn('pill', taskView === v.key && 'on')} onClick={() => setTaskView(v.key)}>
+                {v.label}
+                <span className="sd-pill-n">{tasks.filter(v.test).length}</span>
+              </button>
+            ))}
+          </div>
+          <MyTasksPanel profileId={profile.id} filter={view.test} onTasks={setTasks} />
+        </div>
+      )}
+
+      {/* REQUESTS */}
+      {tab === 'rq' && (
+        <div className="dpane mt-6 grid gap-6 lg:grid-cols-2">
+          <section className="surface pf-card p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="pf-h4">Join requests on your projects</h2>
+              <Link to={`/creators/${profile.handle}?tab=applications`} className="sd-link">Manage <ArrowRight size={12} /></Link>
+            </div>
+            {requests === 0 ? <p className="text-sm text-slate-500">No pending requests right now.</p> : (
+              <ul className="sd-list">
+                {projects.filter((p) => appCounts[p.id] > 0).map((p) => (
+                  <li key={p.id}>
+                    <Link to={`/creators/${profile.handle}?tab=applications`}>
+                      <span className="sd-list-t"><b>{p.title}</b><small>{appCounts[p.id]} waiting for your decision</small></span>
+                      <span className="pf-count amber">{appCounts[p.id]}</span><ArrowRight size={14} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
-
-          <section className="surface p-5">
-            <h2 className="label-overline mb-4">Reputation</h2>
-            {stats.count > 0 ? <Rating value={stats.avg} count={stats.count} /> : <NoRating label="No reviews yet" />}
-            <p className="mt-3 text-xs text-slate-500">Ratings come from collaborators after you contribute to a project.</p>
-          </section>
-
-          <section className="surface p-5">
-            <h2 className="label-overline mb-4">Recent portfolio</h2>
-            {portfolio.length === 0 ? (
-              <p className="text-xs text-slate-500">No portfolio items yet.</p>
+          <section className="surface pf-card p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="pf-h4">My applications</h2>
+              <Link to="/my-applications" className="sd-link">View all <ArrowRight size={12} /></Link>
+            </div>
+            {myApps.length === 0 ? (
+              <div className="sd-empty"><Users size={22} /><p>You haven't applied to a project yet.</p><Link to="/explore" className="btn btn-ghost btn-sm">Find a project</Link></div>
             ) : (
-              <ul className="space-y-2">
-                {portfolio.slice(0, 4).map((item) => (
-                  <li key={item.id} className="flex items-center gap-2 text-xs">
-                    <span className="truncate text-slate-300">{item.title}</span>
-                    <span className="text-slate-600 shrink-0">{relativeDate(item.created_at)}</span>
+              <ul className="sd-list">
+                {myApps.slice(0, 6).map((a) => (
+                  <li key={a.id}>
+                    <Link to={a.project ? `/projects/${a.project.slug}` : '/my-applications'}>
+                      <span className="sd-list-t"><b>{a.project?.title ?? 'Project'}</b><small>{a.role_title ?? 'General application'} · {relativeDate(a.created_at)}</small></span>
+                      <span className={cn('ref-tag', a.status === 'accepted' && 'sd-ok', a.status === 'declined' && 'sd-no')}>{a.status}</span>
+                    </Link>
                   </li>
                 ))}
               </ul>
             )}
           </section>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: number | string; tone?: 'amber' }) {
-  return (
-    <div className="surface p-5">
-      <div className="flex items-center gap-2">
-        <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${tone === 'amber' ? 'bg-signal-amber/15 text-signal-amber' : 'bg-accent-500/15 text-accent-300'}`}>{icon}</div>
-        <span className="text-xs text-slate-500">{label}</span>
-      </div>
-      <p className="mt-3 font-display text-2xl font-bold text-white">{value}</p>
-    </div>
-  );
-}
-
-function QuickLink({ to, onClick, icon, label, count }: { to?: string; onClick?: () => void; icon: React.ReactNode; label: string; count?: number }) {
-  const className = 'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors';
-  const content = (
-    <>
-      <span className="text-slate-500">{icon}</span>
-      <span className="flex-1 text-left">{label}</span>
-      {!!count && (
-        <span className="rounded-full bg-accent-500 px-1.5 py-0.5 text-[10px] font-semibold text-ink-950">{count}</span>
       )}
-      <ArrowRight size={13} className="text-slate-600" />
-    </>
+    </div>
   );
-  if (to) {
-    return <Link to={to} className={className}>{content}</Link>;
-  }
-  return <button onClick={onClick} className={className}>{content}</button>;
 }

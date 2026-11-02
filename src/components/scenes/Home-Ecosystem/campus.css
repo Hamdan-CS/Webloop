@@ -1,0 +1,127 @@
+/* ============================================================
+   HOME HERO — photoreal campus (theme-graded renders + WebGL depth).
+   Full-bleed stage behind the copy; edges of the art fade into the
+   page background, so there is no photo box. Falls back to <img>.
+   ============================================================ */
+.home-hero.campus { position: relative; isolation: isolate; }
+.home-hero.campus .home-grid { position: relative; z-index: 4; pointer-events: none; grid-template-columns: minmax(330px, .72fr) minmax(0, 1.28fr); }
+.home-hero.campus .home-copy { pointer-events: auto; }
+.home-hero.campus .how-wrap { position: relative; z-index: 4; pointer-events: none; }
+.home-hero.campus .how { pointer-events: auto; }
+.campus-eco { position: absolute; inset: 0; z-index: 1; margin: 0; }
+.campus-stage { position: absolute; inset: 0; height: auto; touch-action: pan-y; overflow: hidden; background: var(--body-bg); }
+.campus-stage::before { display: none; }
+.campus-fallback, .campus-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.campus-fallback img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; user-select: none; -webkit-user-drag: none; }
+.campus-fallback .cf-light { opacity: 0; transition: opacity .6s var(--ease, ease); }
+html.light .campus-fallback .cf-light { opacity: 1; }
+.campus-canvas { z-index: 1; opacity: 0; transition: opacity .9s var(--ease, ease); outline: none; }
+.campus-stage.is-ready .campus-canvas { opacity: 1; }
+.campus-scrim { position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background:
+    linear-gradient(90deg, var(--body-bg) 0%, color-mix(in srgb, var(--body-bg) 82%, transparent) 26%, transparent 52%),
+    linear-gradient(0deg, var(--body-bg) 0%, transparent 16%),
+    linear-gradient(180deg, var(--body-bg) 0%, transparent 10%); }
+.eco-pins { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.eco-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; will-change: transform; }
+.eco-pin-dot { position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent), 0 0 14px color-mix(in srgb, var(--accent) 70%, transparent); }
+.eco-pin-dot::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 1px solid var(--accent); opacity: 0; animation: eco-ping 3.2s var(--ease, ease) infinite; }
+@keyframes eco-ping { 0% { transform: scale(.5); opacity: .7; } 70%, 100% { transform: scale(1.7); opacity: 0; } }
+.eco-pin .eco-card { left: 0; top: 0; translate: 0 -50%; margin-left: 18px; opacity: 1; max-width: 230px; }
+.eco-pin[data-side="l"] .eco-card { translate: -100% -50%; margin-left: -18px; }
+.eco-pin.on { z-index: 5; }
+.eco-pin.on .eco-card ul { max-height: 110px; opacity: 1; margin-top: 8px; }
+.eco-pin.on .eco-card { border-color: var(--accent); box-shadow: 0 20px 38px -16px color-mix(in srgb, var(--accent) 70%, transparent), inset 0 1px 0 rgba(255, 255, 255, .4); }
+.eco-open { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--accent-text); }
+.eco-back { position: absolute; z-index: 6; right: clamp(16px, 3vw, 40px); top: calc(var(--nav-h, 80px) + 14px); display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: var(--panel); border: 1px solid var(--line-2); backdrop-filter: blur(10px); cursor: pointer; box-shadow: var(--shadow); }
+.eco-back:hover { border-color: var(--accent); }
+.eco-list { display: none; }
+@media (prefers-reduced-motion: reduce) { .eco-pin-dot::after { animation: none; } .campus-canvas, .campus-fallback .cf-light { transition: none; } }
+@media (max-width: 1000px) {
+  .home-hero.campus { display: flex; flex-direction: column; }
+  .home-hero.campus .home-grid { grid-template-columns: 1fr; order: 3; }
+  .campus-eco { position: relative; inset: auto; order: 1; margin: 0 0 4px; }
+  .campus-stage { position: relative; height: clamp(300px, 68vw, 520px); }
+  .campus-scrim { background: linear-gradient(0deg, var(--body-bg) 0%, transparent 16%), linear-gradient(180deg, var(--body-bg) 0%, transparent 8%); }
+  .home-hero.campus .how-wrap { order: 4; }
+  .eco-list { display: block; position: relative; z-index: 4; padding: 0 16px; margin-top: 8px; }
+  .eco-list-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
+  .eco-chip { flex: none; display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 13.5px; font-weight: 600; color: var(--text); background: var(--panel); border: 1px solid var(--line-2); cursor: pointer; }
+  .eco-chip svg { width: 16px; height: 16px; color: var(--blue); }
+  .eco-chip.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .eco-detail { margin-top: 8px; padding: 14px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line-2); display: grid; gap: 12px; }
+  .eco-detail ul { list-style: none; display: grid; gap: 6px; font-size: 13.5px; color: var(--text-2); margin: 0; padding: 0; }
+  .eco-pins { display: none; }
+  .eco-back { top: 12px; }
+}
+.eco-pin .eco-card { transition: border-color .25s, box-shadow .25s, min-width .35s var(--ease, ease); min-width: 0; }
+.eco-pin .eco-card ul { width: 0; min-width: 100%; }
+.eco-pin.on .eco-card { min-width: 212px; }
+.eco-pin .eco-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---- copy blended into the scene: bottom-left, minimal, animated ---- */
+@media (min-width: 1001px) {
+  .home-hero.campus { display: flex; flex-direction: column; }
+  .home-hero.campus .home-grid { flex: 1; align-items: start; grid-template-columns: minmax(0, 1fr); }
+  .home-hero.campus .home-copy { max-width: 660px; padding: 0 0 40px; }
+  .campus-scrim {
+    background:
+      radial-gradient(62% 58% at 0% 0%, color-mix(in srgb, var(--body-bg) 58%, transparent) 0%, transparent 72%),
+      linear-gradient(90deg, var(--body-bg) 0%, transparent 12%),
+      linear-gradient(0deg, var(--body-bg) 0%, transparent 14%),
+      linear-gradient(180deg, var(--body-bg) 0%, transparent 9%);
+  }
+  .eco-panel { position: absolute; z-index: 6; left: clamp(28px, 5vw, 84px); top: 50%; translate: 0 -46%; width: min(420px, 29vw); visibility: hidden; display: grid; gap: 18px; pointer-events: none; }
+  .eco-panel > * { opacity: 0; }
+  .eco-panel-b { pointer-events: auto; justify-self: start; }
+}
+.eco-panel-k { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent-text); }
+.eco-panel-k svg { width: 18px; height: 18px; }
+.eco-panel-t { margin: 0; font-size: clamp(38px, 4.2vw, 62px); line-height: 1.04; letter-spacing: -.03em; font-weight: 800; color: var(--text); }
+.eco-panel-p { margin: 0; font-size: clamp(15px, 1.2vw, 17.5px); line-height: 1.6; color: var(--text-2); }
+@media (max-width: 1000px) { .eco-panel { display: none; } }
+.home-hero.campus h1.hc-h1 { font-size: clamp(34px, 3.3vw, 50px); line-height: 1.02; letter-spacing: -.035em; font-weight: 800; margin: 14px 0 0; max-width: 13.2em; }
+.hc-w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .08em; margin-bottom: -.08em; }
+.hc-w > span { display: inline-block; will-change: transform; }
+.hc-hl { background: linear-gradient(90deg, var(--cyan), var(--blue) 45%, var(--violet) 75%, var(--cyan)); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: hc-shine 7s linear infinite; }
+@keyframes hc-shine { to { background-position: -220% 0; } }
+html.dark .hr-lead, html.dark .hc-tags { text-shadow: 0 1px 14px rgba(3, 8, 20, .8); }
+html.dark .hc-h1 { text-shadow: 0 2px 30px rgba(3, 8, 20, .55); }
+.home-hero.campus .hr-lead { font-size: clamp(15px, 1.25vw, 18px); max-width: 30em; margin-top: 16px; }
+.home-hero.campus .hr-cta { margin-top: 24px; }
+.hc-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 22px 0 0; font-size: 12.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.hc-tags i { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); opacity: .8; }
+@media (max-width: 1000px) { .home-hero.campus h1.hc-h1 { font-size: clamp(34px, 9vw, 52px); } .home-hero.campus .home-copy { padding-bottom: 8px; } }
+@media (prefers-reduced-motion: reduce) { .hc-hl { animation: none; } }
+html.light .hc-hl { background-image: linear-gradient(90deg, #0a6fd6, #2a56d8 45%, #6d3fe0 75%, #0a6fd6); background-size: 220% 100%; }
+.home-hero.campus .hr-lead { max-width: 24em; }
+@media (min-width: 1001px) { html.light .home-hero.campus .hr-lead { color: var(--text-2); } }
+
+/* while a role is framed, the left third turns into clean silver/navy so the panel text never sits on the picture */
+.campus-veil { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity .9s var(--ease, ease);
+  background: linear-gradient(90deg, var(--body-bg) 0%, var(--body-bg) 24%, color-mix(in srgb, var(--body-bg) 80%, transparent) 33%, color-mix(in srgb, var(--body-bg) 35%, transparent) 42%, transparent 52%); }
+.is-focus .campus-veil { opacity: 1; }
+@media (max-width: 1000px) { .campus-veil { display: none; } }
+@media (prefers-reduced-motion: reduce) { .campus-veil { transition: none; } }
+
+/* compact role panel: a narrow diagonal silver/navy wedge on the left, the picture keeps the rest of the stage */
+@media (min-width: 1001px) {
+  .campus-veil { background: linear-gradient(72deg, color-mix(in srgb, var(--body-bg) 74%, transparent) 0%, color-mix(in srgb, var(--body-bg) 62%, transparent) 16%, color-mix(in srgb, var(--body-bg) 36%, transparent) 26%, color-mix(in srgb, var(--body-bg) 12%, transparent) 33%, transparent 40%); }
+  .eco-panel { left: clamp(24px, 3vw, 46px); top: 58%; translate: 0 -50%; width: min(285px, 21vw); gap: 12px; }
+  .eco-panel-t { font-size: clamp(30px, 2.7vw, 42px); }
+  .eco-panel-p { font-size: 14.5px; line-height: 1.55; }
+  .eco-panel-b { height: 42px; padding: 0 18px; font-size: 14px; margin-top: 6px; }
+}
+
+/* softer edge fades: the picture stays vivid, only a light wash sits behind text */
+html.dark .eco-panel-t, html.dark .eco-panel-p, html.dark .eco-panel-k { text-shadow: 0 1px 16px rgba(2, 6, 16, .85); }
+html.light .eco-panel-p { color: var(--text); }
+@media (min-width: 1001px) {
+  .campus-scrim {
+    background:
+      radial-gradient(60% 50% at 0% 0%, color-mix(in srgb, var(--body-bg) 38%, transparent) 0%, transparent 70%),
+      linear-gradient(90deg, color-mix(in srgb, var(--body-bg) 70%, transparent) 0%, transparent 9%),
+      linear-gradient(0deg, color-mix(in srgb, var(--body-bg) 85%, transparent) 0%, transparent 10%),
+      linear-gradient(180deg, color-mix(in srgb, var(--body-bg) 85%, transparent) 0%, transparent 8%);
+  }
+}

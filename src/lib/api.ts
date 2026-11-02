@@ -237,7 +237,7 @@ export async function fetchProfileContributions(profileId: string): Promise<{ to
   }
 }
 
-export async function fetchPortfolioGallery(limit = 24): Promise<PortfolioItem[]> {
+export async function fetchPortfolioGallery(limit = 60): Promise<PortfolioItem[]> {
   const { data, error } = await supabase
     .from('portfolio_items')
     .select(`
@@ -261,6 +261,31 @@ export async function fetchCompanies(): Promise<Profile[]> {
 
   if (error) throw error;
   return (data ?? []) as unknown as Profile[];
+}
+
+export interface CompanyProjectSummary {
+  count: number;
+  people: { id: string; display_name: string; avatar_url: string | null }[];
+}
+
+/** Published-project counts and a few contributor avatars per company profile id. */
+export async function fetchCompanyProjectSummaries(ownerIds: string[]): Promise<Record<string, CompanyProjectSummary>> {
+  if (ownerIds.length === 0) return {};
+  const { data, error } = await supabase
+    .from('projects')
+    .select('owner_id, members:project_members(profile:profiles!project_members_profile_id_fkey(id, display_name, avatar_url))')
+    .in('owner_id', ownerIds)
+    .in('status', VISIBLE_STATUSES);
+  if (error) throw error;
+  const out: Record<string, CompanyProjectSummary> = {};
+  for (const row of (data ?? []) as unknown as { owner_id: string; members: { profile: CompanyProjectSummary['people'][number] | null }[] }[]) {
+    const e = (out[row.owner_id] ??= { count: 0, people: [] });
+    e.count += 1;
+    for (const m of row.members ?? []) {
+      if (m.profile && !e.people.some((x) => x.id === m.profile!.id)) e.people.push(m.profile);
+    }
+  }
+  return out;
 }
 
 export type { ProjectMember, ProjectRole, ProjectSkill };

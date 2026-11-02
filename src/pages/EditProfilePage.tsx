@@ -131,20 +131,20 @@ export function EditProfilePage() {
   };
 
   return (
-    <div className="container-page py-8 max-w-2xl">
+    <div className="container-page py-8 max-w-2xl pf">
       <Link to={`/creators/${profile.handle}`} className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors mb-6">
         <ArrowLeft size={15} /> Back to profile
       </Link>
 
       <div className="mb-8">
         <span className="label-overline">Settings</span>
-        <h1 className="mt-2 font-display text-3xl font-bold text-white">Edit your profile</h1>
+        <h1 className="pf-name mt-2">Edit your profile</h1>
         <p className="mt-2 text-slate-400">Update how you appear to other members and companies on WebLoop.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Banner + avatar preview */}
-        <div className="surface overflow-hidden">
+        <div className="surface pf-card overflow-hidden">
           <div className="relative h-32">
             {form.banner_url ? (
               <img src={form.banner_url} alt="" className="h-full w-full object-cover" />
@@ -188,7 +188,7 @@ export function EditProfilePage() {
         <Section title="Interests">
           <div className="flex flex-wrap gap-2 mb-3">
             {interests.map((s) => (
-              <span key={s} className="chip">
+              <span key={s} className="ref-tag">
                 {s}
                 <button type="button" onClick={() => removeInterest(s)} className="ml-1 text-slate-500 hover:text-white">
                   <X size={12} />
@@ -206,7 +206,7 @@ export function EditProfilePage() {
               placeholder="Type an interest and press Enter"
               className="flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-accent-400/40 focus:bg-ink-900 transition-colors"
             />
-            <Button type="button" variant="secondary" onClick={addInterest}><Plus size={14} /> Add</Button>
+            <Button type="button" variant="ghost" className="btn-sm" onClick={addInterest}><Plus size={14} /> Add</Button>
           </div>
         </Section>
 
@@ -240,8 +240,8 @@ export function EditProfilePage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="surface p-6">
-      <h3 className="label-overline mb-4">{title}</h3>
+    <div className="surface pf-card p-6">
+      <h3 className="pf-h4 mb-4">{title}</h3>
       <div className="space-y-4">{children}</div>
     </div>
   );

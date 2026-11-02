@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, CheckCircle2, ArrowRight, Globe, Search } from 'lucide-react';
-import { fetchCompanies, fetchProfileStats } from '@/lib/api';
+import { Loader2, Search } from 'lucide-react';
+import { fetchCompanies, fetchCompanyProjectSummaries, type CompanyProjectSummary } from '@/lib/api';
 import type { Profile } from '@/lib/types';
-import { Avatar } from '@/components/ui/Avatar';
-import { Rating, NoRating } from '@/components/ui/Rating';
+import { CompanyCard } from '@/components/companies/CompanyCard';
 import { Select } from '@/components/ui/Select';
 import { CompaniesCityScene } from '@/components/scenes/Companies-City/CompaniesCityScene';
 
@@ -14,22 +13,19 @@ export function CompaniesPage() {
   const navigate = useNavigate();
   const [companies, setCompanies] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<Record<string, { avg: number; count: number }>>({});
+  const [summaries, setSummaries] = useState<Record<string, CompanyProjectSummary>>({});
+  const [hoverId, setHoverId] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<Sort>('new');
 
   useEffect(() => {
-    fetchCompanies().then(async (c) => {
-      setCompanies(c);
-      const entries = await Promise.all(
-        c.map(async (p) => {
-          const s = await fetchProfileStats(p.id);
-          return [p.id, { avg: s.avg_rating, count: s.review_count }] as const;
-        }),
-      );
-      setStats(Object.fromEntries(entries));
-      setLoading(false);
-    });
+    fetchCompanies()
+      .then(async (c) => {
+        setCompanies(c);
+        try { setSummaries(await fetchCompanyProjectSummaries(c.map((p) => p.id))); } catch { /* cards still render without counts */ }
+      })
+      .catch(() => setCompanies([]))
+      .finally(() => setLoading(false));
   }, []);
 
   const list = useMemo(() => {
@@ -43,7 +39,7 @@ export function CompaniesPage() {
 
   return (
     <div className="container-page py-8">
-      {!loading && companies.length > 0 && <CompaniesCityScene companies={companies} onOpen={openCompany} />}
+      {!loading && companies.length > 0 && <CompaniesCityScene companies={companies} onOpen={openCompany} hoveredId={hoverId} onHoverId={setHoverId} />}
 
       {loading ? (
         <div className="flex h-[40vh] items-center justify-center">
@@ -72,29 +68,7 @@ export function CompaniesPage() {
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {list.map((c) => (
-                <article key={c.id} className="cc">
-                  <div className="banner" style={c.banner_url ? { backgroundImage: `url(${c.banner_url})` } : { background: 'linear-gradient(135deg, var(--cyan), var(--blue))' }} />
-                  <div className="main">
-                    <div className="hd">
-                      <div className="logo-sq"><Avatar src={c.avatar_url} name={c.display_name} size="lg" /></div>
-                      <div className="nm">
-                        <h3>{c.display_name}{c.verified && <CheckCircle2 size={16} className="vf" />}</h3>
-                      </div>
-                    </div>
-                    <div className="meta">
-                      <span className="ref-tag">Company</span>
-                      {c.location && <span className="ref-tag">{c.location}</span>}
-                    </div>
-                    {c.bio && <p className="line-clamp-2">{c.bio}</p>}
-                    {c.website_url && <span className="url"><Globe size={14} /> {c.website_url.replace(/^https?:\/\//, '')}</span>}
-                    <div className="foot">
-                      {stats[c.id]?.count ? <Rating value={stats[c.id].avg} count={stats[c.id].count} /> : <NoRating label="No reviews yet" />}
-                      <button type="button" className="go" aria-label={`Open ${c.display_name}`} onClick={() => openCompany(c.handle)}>
-                        <ArrowRight size={16} />
-                      </button>
-                    </div>
-                  </div>
-                </article>
+                <CompanyCard key={c.id} company={c} summary={summaries[c.id]} glow={hoverId === c.id} onHover={setHoverId} onOpen={openCompany} />
               ))}
             </div>
           )}

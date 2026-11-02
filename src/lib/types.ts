@@ -28,6 +28,13 @@ export interface Profile {
   preferred_roles: string[] | null;
   languages: string[] | null;
   portfolio_links: string[] | null;
+  headline?: string | null;
+  industry?: string | null;
+  company_size?: string | null;
+  badge?: string | null;
+  accent_hue?: number | null;
+  focus_area?: string | null;
+  is_remote?: boolean | null;
   is_demo: boolean;
   created_at: string;
 }
@@ -55,6 +62,12 @@ export interface Project {
   duration_weeks: number | null;
   time_commitment_hours: string | null;
   location: string | null;
+  tagline?: string | null;
+  progress?: number | null;
+  stars_count?: number | null;
+  views_count?: number | null;
+  commits_count?: number | null;
+  license?: string | null;
   published_at: string | null;
   is_demo: boolean;
   created_at: string;
@@ -102,6 +115,9 @@ export interface PortfolioItem {
   contributions: string | null;
   lessons_learned: string | null;
   work_type: string | null;
+  tech?: string[] | null;
+  activity?: number | null;
+  is_verified?: boolean | null;
   is_public: boolean;
   is_demo: boolean;
   created_at: string;
@@ -155,6 +171,7 @@ export interface Task {
   acceptance_criteria: string | null;
   status: TaskStatus;
   size: TaskSize;
+  tag?: string | null;
   created_by: string;
   due_date: string | null;
   created_at: string;

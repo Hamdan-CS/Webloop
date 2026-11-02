@@ -227,7 +227,7 @@ export function CreatorProfilePage() {
   if (!profile) {
     return (
       <div className="container-page py-20 text-center">
-        <h1 className="font-display text-2xl font-bold text-white">Profile not found</h1>
+        <h1 className="pf-name">Profile not found</h1>
         <Link to="/explore" className="mt-4 inline-block link-accent">Back to Explore</Link>
       </div>
     );
@@ -237,17 +237,17 @@ export function CreatorProfilePage() {
   const publishedProjects = projects.filter((p) => p.status !== 'draft' && p.status !== 'archived');
 
   return (
-    <div className="container-page py-8 max-w-5xl">
+    <div className="container-page py-8 max-w-5xl pf">
       {/* ===== Profile Card (LinkedIn-style header) ===== */}
-      <div className="surface-raised overflow-hidden">
+      <div className="surface-raised pf-card pf-head overflow-hidden">
         {/* Banner */}
         <div className="relative h-32 sm:h-40">
           {profile.banner_url ? (
             <img src={profile.banner_url} alt="" className="h-full w-full object-cover" />
           ) : (
-            <div className="h-full w-full bg-ink-800" />
+            <div className="h-full w-full" style={{ background: `linear-gradient(135deg, hsl(${profile.accent_hue ?? 210} 70% 42%), hsl(${(profile.accent_hue ?? 210) + 40} 75% 58%))` }} />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-ink-900/60 to-transparent" />
+          <div className="pf-banner-fade" />
         </div>
 
         {/* Profile body */}
@@ -263,12 +263,15 @@ export function CreatorProfilePage() {
             />
             <div className="flex-1 min-w-0 pb-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-display text-xl sm:text-2xl font-bold text-white">{profile.display_name}</h1>
+                <h1 className="pf-name">{profile.display_name}</h1>
                 {profile.verified && <CheckCircle2 size={18} className="text-accent-400 shrink-0" />}
               </div>
               {profile.major && <p className="mt-0.5 text-sm font-semibold text-slate-200">{profile.major}</p>}
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                <Badge tone="accent">{creatorTypeLabel[profile.creator_type]}</Badge>
+              <div className="pf-meta mt-2 flex flex-wrap items-center gap-2 text-xs">
+                <span className="ref-tag pf-type">{creatorTypeLabel[profile.creator_type]}</span>
+                {isCompany && profile.industry && <span className="ref-tag">{profile.industry}</span>}
+                {isCompany && profile.company_size && <span className="ref-tag">{profile.company_size} people</span>}
+                {isCompany && profile.website_url && <span className="ref-tag">{profile.website_url.replace(/^https?:\/\//, '')}</span>}
                 {profile.education_level && (
                   <span className="inline-flex items-center gap-1">{profile.education_level} student</span>
                 )}
@@ -292,33 +295,31 @@ export function CreatorProfilePage() {
 
           {/* Bio */}
           {profile.bio && (
-            <p className="mt-4 text-sm text-slate-300 leading-relaxed max-w-2xl">{profile.bio}</p>
+            <p className="pf-bio mt-4">{profile.bio}</p>
           )}
 
           {/* Stats row */}
-          <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
-            {stats.count > 0 ? (
-              <Rating value={stats.avg} count={stats.count} size="md" />
-            ) : (
-              <NoRating label="Not rated yet" />
-            )}
-            <StatPill icon={<FolderGit2 size={13} />} label={`${publishedProjects.length} project${publishedProjects.length !== 1 ? 's' : ''}`} />
-            <StatPill icon={<Award size={13} />} label={`${contributions.approved} approved contribution${contributions.approved !== 1 ? 's' : ''}`} />
-            {portfolio.length > 0 && (
-              <StatPill icon={<ImageIcon size={13} />} label={`${portfolio.length} portfolio item${portfolio.length !== 1 ? 's' : ''}`} />
-            )}
+          <div className="pf-kpis mt-5">
+            <div className="pf-kpi">
+              {stats.count > 0 ? <Rating value={stats.avg} count={stats.count} size="md" /> : <b className="pf-kpi-na">&mdash;</b>}
+              <span>{stats.count > 0 ? 'Rating' : 'Not rated yet'}</span>
+            </div>
+            <Kpi value={publishedProjects.length} label={`Project${publishedProjects.length !== 1 ? 's' : ''}`} />
+            {contributions.total > 0 && <Kpi value={contributions.total} label={`Submission${contributions.total !== 1 ? 's' : ''}`} />}
+            <Kpi value={contributions.approved} label={`Approved contribution${contributions.approved !== 1 ? 's' : ''}`} tone="ok" />
+            {portfolio.length > 0 && <Kpi value={portfolio.length} label={`Portfolio item${portfolio.length !== 1 ? 's' : ''}`} />}
           </div>
 
           {/* Action buttons + social links */}
           <div className="mt-5 flex flex-wrap items-center gap-2.5">
             {isOwner ? (
               <Link to="/settings">
-                <Button variant="secondary" size="sm">
+                <Button variant="ghost" className="btn-sm">
                   <Sparkles size={14} /> Edit Profile
                 </Button>
               </Link>
             ) : (
-              <Button size="sm" onClick={handleContact}>
+              <Button className="btn-sm" onClick={handleContact}>
                 <Mail size={14} /> Message
               </Button>
             )}
@@ -327,7 +328,7 @@ export function CreatorProfilePage() {
                 href={profile.website_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-300 hover:border-accent-400/30 hover:text-accent-200 transition-colors"
+                className="btn btn-ghost btn-sm"
               >
                 <Globe size={13} /> Website
               </a>
@@ -337,7 +338,7 @@ export function CreatorProfilePage() {
                 href={profile.github_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-300 hover:border-accent-400/30 hover:text-accent-200 transition-colors"
+                className="btn btn-ghost btn-sm"
               >
                 <Github size={13} /> GitHub
               </a>
@@ -347,7 +348,7 @@ export function CreatorProfilePage() {
                 href={profile.linkedin_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-300 hover:border-accent-400/30 hover:text-accent-200 transition-colors"
+                className="btn btn-ghost btn-sm"
               >
                 <Linkedin size={13} /> LinkedIn
               </a>
@@ -356,7 +357,7 @@ export function CreatorProfilePage() {
 
           {/* Demo badge */}
           {profile.is_demo && (
-            <div className="mt-4 rounded-lg border border-signal-amber/20 bg-signal-amber/5 px-3 py-2 text-xs text-signal-amber/90 inline-block">
+            <div className="demo-note mt-4">
               Demo content — sample profile for platform preview.
             </div>
           )}
@@ -374,7 +375,7 @@ export function CreatorProfilePage() {
 
       {/* ===== Owner management tabs ===== */}
       {isOwner && (
-        <div ref={tabSectionRef} className="mt-6 flex gap-1 border-b border-white/8">
+        <div ref={tabSectionRef} className="d-tabs pf-tabs mt-6" role="tablist">
           <TabButton active={tab === 'projects'} onClick={() => setTab('projects')} icon={<GitBranch size={15} />} label="My Projects" badge={projects.length} />
           <TabButton active={tab === 'applications'} onClick={() => setTab('applications')} icon={<Users size={15} />} label="Join Requests" badge={pendingApps} badgeTone="amber" />
         </div>
@@ -386,8 +387,8 @@ export function CreatorProfilePage() {
         <div className="space-y-6 min-w-0">
           {/* Owner management views */}
           {isOwner && tab === 'applications' && (
-            <section className="surface p-5">
-              <h2 className="label-overline mb-4">Join requests across your projects</h2>
+            <section className="surface pf-card p-5">
+              <h2 className="pf-h4 mb-4">Join requests across your projects</h2>
               {projects.length === 0 ? (
                 <EmptyState label="You haven't published any projects yet." />
               ) : (
@@ -479,7 +480,7 @@ export function CreatorProfilePage() {
                 <SectionCard title="Skills" icon={<Award size={14} />}>
                   <div className="flex flex-wrap gap-2">
                     {profile.interests.map((skill) => (
-                      <span key={skill} className="chip">{skill}</span>
+                      <span key={skill} className="ref-tag">{skill}</span>
                     ))}
                   </div>
                 </SectionCard>
@@ -490,7 +491,7 @@ export function CreatorProfilePage() {
                 <SectionCard title="Preferred roles" icon={<Users size={14} />}>
                   <div className="flex flex-wrap gap-2">
                     {profile.preferred_roles.map((role) => (
-                      <span key={role} className="chip">{role}</span>
+                      <span key={role} className="ref-tag">{role}</span>
                     ))}
                   </div>
                 </SectionCard>
@@ -501,7 +502,7 @@ export function CreatorProfilePage() {
                 <SectionCard title="Languages" icon={<LanguagesIcon size={14} />}>
                   <div className="flex flex-wrap gap-2">
                     {profile.languages.map((lang) => (
-                      <span key={lang} className="chip">{lang}</span>
+                      <span key={lang} className="ref-tag">{lang}</span>
                     ))}
                   </div>
                 </SectionCard>
@@ -581,22 +582,25 @@ export function CreatorProfilePage() {
                 <SectionCard title="Experience & Portfolio" icon={<ImageIcon size={14} />}>
                   <div className="grid gap-4 sm:grid-cols-2">
                     {portfolio.map((item) => (
-                      <div key={item.id} className="group rounded-xl border border-white/8 overflow-hidden bg-white/[0.02]">
+                      <div key={item.id} className="group pf-work">
                         <div className="relative aspect-[16/10] overflow-hidden">
                           {item.cover_image_url ? (
                             <img src={item.cover_image_url} alt={item.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                           ) : (
-                            <div className="h-full w-full bg-ink-800" />
+                            <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, var(--blue), var(--cyan))' }} />
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 to-transparent" />
-                          <span className="absolute left-2.5 top-2.5"><Badge tone="violet">{item.category}</Badge></span>
+                          {item.is_verified && <span className="vbadge">&#10003; Verified contribution</span>}
+                          {item.category && <span className="pf-cat">{item.category}</span>}
                         </div>
-                        <div className="p-3.5">
-                          <p className="font-display text-sm font-semibold text-white">{item.title}</p>
-                          {item.role && <p className="mt-0.5 text-[11px] text-accent-300">{item.role}</p>}
-                          {item.description && <p className="mt-1 text-xs text-slate-500 line-clamp-2">{item.description}</p>}
+                        <div className="pf-work-body">
+                          <p className="pf-work-title">{item.title}</p>
+                          {item.role && <p className="pf-work-role">{item.role}</p>}
+                          {item.description && <p className="pf-work-desc line-clamp-2">{item.description}</p>}
+                          {item.tech && item.tech.length > 0 && (
+                            <div className="ref-tags">{item.tech.slice(0, 4).map((t) => <span key={t} className="ref-tag">{t}</span>)}</div>
+                          )}
                           {item.repo_url && (
-                            <a href={item.repo_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-accent-300">
+                            <a href={item.repo_url} target="_blank" rel="noopener noreferrer" className="pf-work-link">
                               <GitBranch size={11} /> Repository
                             </a>
                           )}
@@ -652,17 +656,6 @@ export function CreatorProfilePage() {
               </ul>
             )}
           </SectionCard>
-
-          {/* Quick stats card */}
-          <SectionCard title="Activity" icon={<Briefcase size={14} />}>
-            <div className="space-y-3 text-sm">
-              <ActivityRow label="Projects" value={publishedProjects.length} />
-              <ActivityRow label="Portfolio items" value={portfolio.length} />
-              <ActivityRow label="Total submissions" value={contributions.total} />
-              <ActivityRow label="Approved" value={contributions.approved} />
-              <ActivityRow label="Reviews received" value={stats.count} />
-            </div>
-          </SectionCard>
         </div>
       </div>
 
@@ -705,41 +698,27 @@ export function CreatorProfilePage() {
 
 function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="surface p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-accent-300">{icon}</span>
-        <h2 className="label-overline">{title}</h2>
+    <section className="surface pf-card p-5">
+      <div className="pf-sec-hd">
+        <span className="pf-ic">{icon}</span>
+        <h2 className="pf-h4">{title}</h2>
       </div>
       {children}
     </section>
   );
 }
 
-function StatPill({ icon, label }: { icon: React.ReactNode; label: string }) {
+function Kpi({ value, label, tone }: { value: number; label: string; tone?: 'ok' }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-slate-400">
-      {icon}
-      {label}
-    </span>
+    <div className="pf-kpi">
+      <b className={tone === 'ok' ? 'c1' : undefined}>{value}</b>
+      <span>{label}</span>
+    </div>
   );
 }
 
 function ContributionStat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-xl border border-white/8 bg-white/[0.02] px-4 py-3.5">
-      <p className="font-display text-2xl font-bold text-white">{value}</p>
-      <p className="text-[11px] text-slate-500 mt-0.5">{label}</p>
-    </div>
-  );
-}
-
-function ActivityRow({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-slate-400">{label}</span>
-      <span className="font-semibold text-white">{value}</span>
-    </div>
-  );
+  return <Kpi value={value} label={label} />;
 }
 
 function TabButton({
@@ -758,22 +737,11 @@ function TabButton({
   badgeTone?: 'amber' | 'accent';
 }) {
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
-        active ? 'border-accent-400 text-white' : 'border-transparent text-slate-400 hover:text-white',
-      )}
-    >
+    <button type="button" role="tab" aria-selected={active} onClick={onClick} className={cn('pf-tab', active && 'on')}>
       {icon}
       {label}
       {badge !== undefined && badge > 0 && (
-        <span className={cn(
-          'rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
-          badgeTone === 'amber' ? 'bg-signal-amber/20 text-signal-amber' : 'bg-accent-500/20 text-accent-300',
-        )}>
-          {badge}
-        </span>
+        <span className={cn('pf-count', badgeTone === 'amber' && 'amber')}>{badge}</span>
       )}
     </button>
   );

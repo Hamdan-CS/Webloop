@@ -29,9 +29,13 @@ const statusBadge: Record<string, { tone: 'default' | 'accent' | 'green' | 'ambe
 
 interface Props {
   profileId: string;
+  /** Optional filter applied to the loaded tasks (used by the dashboard's status pills). */
+  filter?: (task: Task) => boolean;
+  /** Reports the full (unfiltered) task list after every load/reload so a parent can show live stats. */
+  onTasks?: (tasks: Task[]) => void;
 }
 
-export function MyTasksPanel({ profileId }: Props) {
+export function MyTasksPanel({ profileId, filter, onTasks }: Props) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [submittingFor, setSubmittingFor] = useState<string | null>(null);
@@ -41,10 +45,12 @@ export function MyTasksPanel({ profileId }: Props) {
     try {
       const t = await fetchAssignedTasks(profileId);
       setTasks(t);
+      onTasks?.(t);
     } catch {
       // ignore
     }
     setLoading(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileId]);
 
   useEffect(() => {
@@ -93,9 +99,19 @@ export function MyTasksPanel({ profileId }: Props) {
     );
   }
 
+  const shown = filter ? tasks.filter(filter) : tasks;
+  if (shown.length === 0) {
+    return (
+      <div className="surface pf-card p-8 text-center">
+        <ClipboardList size={32} className="mx-auto text-slate-600" />
+        <p className="mt-3 text-sm text-slate-400">No tasks in this view.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
-      {tasks.map((task) => (
+      {shown.map((task) => (
         <MyTaskRow
           key={task.id}
           task={task}
@@ -129,7 +145,7 @@ function MyTaskRow({
   const latestSub = task.submissions?.[task.submissions.length - 1];
 
   return (
-    <div className="surface-raised overflow-hidden">
+    <div className="surface-raised pf-card overflow-hidden">
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1">

@@ -13,7 +13,20 @@ export interface CityCompanyInput {
   bio: string | null;
 }
 
-export function CompaniesCityScene({ companies, onOpen }: { companies: CityCompanyInput[]; onOpen: (handle: string) => void }) {
+export function CompaniesCityScene({
+  companies,
+  onOpen,
+  hoveredId,
+  onHoverId,
+}: {
+  companies: CityCompanyInput[];
+  onOpen: (handle: string) => void;
+  /** Company id hovered elsewhere (a card or legend chip): the matching building lights up. */
+  hoveredId?: string | null;
+  /** Called when the user hovers a building in the scene, so cards can glow in sync. */
+  onHoverId?: (id: string | null) => void;
+}) {
+  const handleRef = useRef<ReturnType<typeof createCityEngine> | null>(null);
   const viewRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [supported] = useState(() => supportsWebGL());
@@ -27,13 +40,22 @@ export function CompaniesCityScene({ companies, onOpen }: { companies: CityCompa
     const view = viewRef.current, canvas = canvasRef.current;
     if (!view || !canvas || !supported || cityCompanies.length === 0) return;
     const handle = createCityEngine(view, canvas, cityCompanies, {
-      onHoverChange: (id) => setHover(id ? cityCompanies.find((c) => c.id === id) ?? null : null),
+      onHoverChange: (id, external) => {
+        if (external) return;
+        setHover(id ? cityCompanies.find((c) => c.id === id) ?? null : null);
+        onHoverId?.(id);
+      },
       onOpen: (id) => { const p = byId.get(id); if (p) onOpen(p.handle); },
       onTipPosition: (x, y) => setTip({ x, y }),
     });
-    return () => handle.dispose();
+    handleRef.current = handle;
+    return () => { handleRef.current = null; handle.dispose(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supported, companies.map((c) => c.id).join(',')]);
+
+  useEffect(() => {
+    handleRef.current?.setHover(hoveredId ?? null);
+  }, [hoveredId]);
 
   if (cityCompanies.length === 0) return null;
 
@@ -62,7 +84,7 @@ export function CompaniesCityScene({ companies, onOpen }: { companies: CityCompa
             </div>
             <div className="co-legend">
               {cityCompanies.map((c) => (
-                <button key={c.id} type="button" className={hover?.id === c.id ? 'on' : ''} aria-label={`Open ${c.name}`} onClick={() => { const p = byId.get(c.id); if (p) onOpen(p.handle); }}>
+                <button key={c.id} type="button" className={hover?.id === c.id || hoveredId === c.id ? 'on' : ''} aria-label={`Open ${c.name}`} onPointerEnter={() => onHoverId?.(c.id)} onPointerLeave={() => onHoverId?.(null)} onClick={() => { const p = byId.get(c.id); if (p) onOpen(p.handle); }}>
                   <span style={{ width: 20, height: 20, borderRadius: 6, background: c.tintCss, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#07131f' }}>{c.initial}</span>
                   {c.name}
                 </button>

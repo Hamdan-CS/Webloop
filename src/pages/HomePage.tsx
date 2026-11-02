@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { CompaniesCityScene } from '@/components/scenes/Companies-City/CompaniesCityScene';
@@ -25,6 +25,7 @@ function SceneLoading() {
  * data here instead of a live Supabase fetch, and "Open" just goes to the
  * real companies page since these fictional companies have no profile. */
 function CompaniesPreview() {
+  const [hoverId, setHoverId] = useState<string | null>(null);
   const demoCompanies = COMPANIES.map((c) => ({
     id: c.id,
     handle: c.id,
@@ -36,8 +37,8 @@ function CompaniesPreview() {
   return (
     <section id="companies" className="ws-scene home-sec" aria-labelledby="h-co">
       <div className="wrap">
-        <CompaniesCityScene companies={demoCompanies} onOpen={() => { window.location.assign('/companies'); }} />
-        <CompaniesGrid />
+        <CompaniesCityScene companies={demoCompanies} onOpen={() => { window.location.assign('/companies'); }} hoveredId={hoverId} onHoverId={setHoverId} />
+        <CompaniesGrid hoveredId={hoverId} onHover={setHoverId} />
       </div>
     </section>
   );

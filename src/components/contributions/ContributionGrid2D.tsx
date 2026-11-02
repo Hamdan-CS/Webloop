@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { buildColumns, formatDayLabel } from './grid-layout';
-import { ratingSteps, tileGrey, colorForRating } from './palette';
 import { cn } from '@/lib/utils';
 import type { DayCell } from './types';
 
@@ -17,9 +16,7 @@ const MAX_POINTS = 6;
 export function ContributionGrid2D({ cells, mini = false, onSelectDay, selectedDate, profileHandle }: Props) {
   const navigate = useNavigate();
   const columns = buildColumns(cells);
-  const steps = ratingSteps();
-  const grey = tileGrey();
-  const tileSize = mini ? 7 : 11;
+  const tileSize = mini ? 7 : 13;
   const gap = mini ? 2 : 3;
 
   const content = (
@@ -35,18 +32,18 @@ export function ContributionGrid2D({ cells, mini = false, onSelectDay, selectedD
             if (cell.isPadding) {
               return <span key={ri} style={{ width: tileSize, height: tileSize }} />;
             }
-            const color = colorForRating(cell.avgRating, steps, grey);
-            const scale = cell.points > 0 ? 0.55 + 0.45 * Math.min(cell.points, MAX_POINTS) / MAX_POINTS : 0.3;
+            // same heat scale as the home page (--h0..--h4), driven by points per day
+            const level = cell.points <= 0 ? 0 : cell.points >= MAX_POINTS ? 4 : cell.points >= 4 ? 3 : cell.points >= 2 ? 2 : 1;
+            const color = `var(--h${level})`;
             const title = `${formatDayLabel(cell.date)} — ${cell.points} point${cell.points === 1 ? '' : 's'}${
               cell.avgRating != null ? `, ${cell.avgRating.toFixed(1)} avg rating` : ''
             }`;
             const common = {
-              title,
+              'data-tip': title,
               style: {
                 width: tileSize,
                 height: tileSize,
                 background: color,
-                opacity: cell.points > 0 ? 0.35 + 0.65 * scale : 1,
                 transform: cell.isToday ? 'scale(1.15)' : undefined,
               },
             };
@@ -62,7 +59,7 @@ export function ContributionGrid2D({ cells, mini = false, onSelectDay, selectedD
                 aria-label={title}
                 onClick={() => onSelectDay?.(cell.date)}
                 className={cn(
-                  'rounded-[2px] transition-transform hover:scale-125 focus-visible:scale-125 focus-visible:ring-2 focus-visible:ring-accent-400',
+                  'rounded-[3px] cursor-crosshair transition-transform hover:scale-125 focus-visible:scale-125 focus-visible:ring-2 focus-visible:ring-accent-400',
                   selectedDate === cell.date && 'ring-2 ring-accent-400',
                 )}
               />

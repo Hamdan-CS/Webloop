@@ -8,6 +8,14 @@ import { WORKS, personOf } from '@/data/homeDemo';
 import { art } from '@/data/homeArt';
 import { IllustratedAvatar } from '../shared/IllustratedAvatar';
 import { Reveal } from '@/components/ui/Reveal';
+import { MiniHeat } from '@/components/gallery/MiniHeat';
+import { hashS } from '@/lib/heat';
+import { useTilt } from '@/lib/useTilt';
+
+function TiltArticle({ children }: { children: React.ReactNode }) {
+  const { ref, onPointerMove, onPointerLeave } = useTilt<HTMLElement>(4);
+  return <article ref={ref} className="gc gal-card" onPointerMove={onPointerMove} onPointerLeave={onPointerLeave}>{children}</article>;
+}
 
 const FEATURED = [...WORKS].sort((a, b) => b.activity - a.activity).slice(0, 3);
 
@@ -34,12 +42,13 @@ export function StudentWorkPreview() {
             const author = personOf(w.by);
             return (
               <Reveal key={w.id} delay={i * 0.08}>
-                <article className="gc">
+                <TiltArticle>
                   <div className="thumb">
                     <img src={art(...w.art)} alt="" loading="lazy" width={600} height={400} />
                     <span className="vbadge">&#10003; Verified contribution</span>
                     <span className="cat">{w.category}</span>
                   </div>
+                  <div className="gloss" />
                   <div className="body">
                     <h3>{w.title}</h3>
                     <p>{w.desc}</p>
@@ -51,9 +60,10 @@ export function StudentWorkPreview() {
                         <IllustratedAvatar personKey={author.key} name={author.name} female={author.female} size={38} />
                         <div><b>{author.name}</b><small>{author.role}</small></div>
                       </div>
+                      <MiniHeat seed={hashS(w.id) % 1000} intensity={w.activity} />
                     </div>
                   </div>
-                </article>
+                </TiltArticle>
               </Reveal>
             );
           })}
