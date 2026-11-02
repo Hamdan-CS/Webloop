@@ -18,9 +18,12 @@ import {
   X,
   AlertCircle,
   Send,
+  Star,
+  Eye,
+  GitCommit,
 } from 'lucide-react';
-import { fetchProjectBySlug, fetchProfileStats, fetchProfileContributions, createApplication, checkExistingApplication, fetchProjectApplicationsDetailed, fetchProjectMembers, updateMemberRole } from '@/lib/api';
-import type { Project, Application, ProjectMember } from '@/lib/types';
+import { fetchProjectBySlug, fetchProfileStats, fetchProfileContributions, createApplication, checkExistingApplication, fetchProjectApplicationsDetailed, fetchProjectMembers, updateMemberRole, fetchProjectTasks } from '@/lib/api';
+import type { Project, Application, ProjectMember, Task } from '@/lib/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -67,6 +70,9 @@ export function ProjectDetailPage() {
   const [editingRoleFor, setEditingRoleFor] = useState<string | null>(null);
   const [roleDraft, setRoleDraft] = useState('');
   const [roleSaving, setRoleSaving] = useState(false);
+  const [tab, setTab] = useState<'ov' | 'tk' | 'tm'>('ov');
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [starred, setStarred] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -80,6 +86,8 @@ export function ProjectDetailPage() {
         }
         // Load team members and pending applications for enhanced view
         fetchProjectMembers(p.id).then(setTeamMembers).catch(() => {});
+        fetchProjectTasks(p.id).then(setTasks).catch(() => setTasks([]));
+        try { setStarred(localStorage.getItem(`wl-star-${p.id}`) === '1'); } catch { /* storage unavailable */ }
         fetchProjectApplicationsDetailed(p.id).then((apps) => {
           setPendingApps(apps.filter((a) => a.status === 'pending'));
         }).catch(() => {});
@@ -87,6 +95,13 @@ export function ProjectDetailPage() {
       setLoading(false);
     });
   }, [slug, user, profile]);
+
+  const toggleStar = () => {
+    if (!project) return;
+    const next = !starred;
+    setStarred(next);
+    try { localStorage.setItem(`wl-star-${project.id}`, next ? '1' : '0'); } catch { /* ignore */ }
+  };
 
   if (loading) {
     return (
@@ -113,6 +128,15 @@ export function ProjectDetailPage() {
   const openRoles = project.roles?.filter((r) => r.is_open) ?? [];
   const isCompleted = project.status === 'completed';
   const isOwner = !!(user && profile && project.owner_id === profile.id);
+  const taskDone = tasks.filter((t) => t.status === 'approved');
+  const taskProg = tasks.filter((t) => ['in_progress', 'submitted', 'changes_requested'].includes(t.status));
+  const taskTodo = tasks.filter((t) => t.status === 'open');
+  const progressPct = project.progress && project.progress > 0
+    ? project.progress
+    : tasks.length ? Math.round((taskDone.length / tasks.length) * 100) : 0;
+  const starCount = (project.stars_count ?? 0) + (starred ? 1 : 0);
+  const contributors = Math.max(teamMembers.length, project.team_size);
+  const tags = ['Feature', 'Core', 'Docs', 'Perf'];
 
   const handleJoin = () => {
     if (isOwner) return;
@@ -185,10 +209,16 @@ export function ProjectDetailPage() {
           <h2 className="font-display font-bold text-white">{project.title}</h2>
           <p className="tl">{project.category ?? projectTypeLabel[project.project_type]}</p>
           <p className="ds">{project.summary}</p>
+          {project.skills && project.skills.length > 0 && (
+            <div className="ref-tags" style={{ marginBottom: 6 }}>
+              {project.skills.map((sk) => <span key={sk.id} className="ref-tag">{sk.name}</span>)}
+            </div>
+          )}
           <div className="pd-stats">
-            <div><Users size={22} /><span><b>{project.team_size}</b>Team size</span></div>
-            <div><CheckCircle2 size={22} /><span><b>{openRoles.length}</b>Open roles</span></div>
-            <div><Flag size={22} /><span><b>{stats.count}</b>Reviews</span></div>
+            <div><Star size={22} /><span><b>{starCount.toLocaleString('en')}</b>Likes</span></div>
+            <div><Users size={22} /><span><b>{contributors}</b>Contributors</span></div>
+            <div><Eye size={22} /><span><b>{(project.views_count ?? 0).toLocaleString('en')}</b>Views</span></div>
+            <div><GitCommit size={22} /><span><b>{(project.commits_count ?? 0).toLocaleString('en')}</b>Commits</span></div>
           </div>
         </div>
         <div className="pd-prev">
@@ -203,23 +233,57 @@ export function ProjectDetailPage() {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1.6fr_1fr]">
+      <div className="pd-tabs" role="tablist">
+        {([['ov', 'Overview'], ['tk', 'Tasks'], ['tm', 'Team']] as const).map(([k, l]) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
+        ))}
+      </div>
+
+      <div className="mt-6 grid gap-8 lg:grid-cols-[1.6fr_1fr]">
         {/* Main column */}
         <div className="space-y-8">
-          <p className="text-lg text-slate-300 leading-relaxed">{project.summary}</p>
+          {tab === 'ov' && (
+            <>
+          <section className="card-g pbox">
+            <h4>Project progress</h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span className="pd-muted">{taskDone.length} completed · {taskProg.length} in progress · {taskTodo.length} remaining</span>
+              <b>{progressPct}%</b>
+            </div>
+            <div className="prog"><i style={{ width: `${progressPct}%` }} /></div>
+            <div className="prog-meta"><span>{tasks.length} total tasks</span>{project.is_demo && <span className="demo-note">Demonstration data</span>}</div>
+          </section>
 
-          <Section title="Overview">
-            <p className="text-sm text-slate-300 leading-relaxed">{project.overview}</p>
-          </Section>
+          <section className="card-g pbox">
+            <h4>About the project</h4>
+            <ul className="checks">
+              <li>Open, documented and easy to contribute to</li>
+              <li>Clear tasks labelled by difficulty and area</li>
+              <li>Mentors review every pull request</li>
+              <li>{project.compensation === 'open_source' ? 'Open source and community-driven' : 'Maintained by its owner with invited contributors'}</li>
+            </ul>
+          </section>
 
-          <div className="grid sm:grid-cols-2 gap-6">
-            <Section title="Problem">
-              <p className="text-sm text-slate-400 leading-relaxed">{project.problem}</p>
+          {project.overview && (
+            <Section title="Overview">
+              <p className="text-sm text-slate-300 leading-relaxed">{project.overview}</p>
             </Section>
-            <Section title="Target users">
-              <p className="text-sm text-slate-400 leading-relaxed">{project.target_users}</p>
-            </Section>
-          </div>
+          )}
+
+          {(project.problem || project.target_users) && (
+            <div className="grid sm:grid-cols-2 gap-6">
+              {project.problem && (
+                <Section title="Problem">
+                  <p className="text-sm text-slate-400 leading-relaxed">{project.problem}</p>
+                </Section>
+              )}
+              {project.target_users && (
+                <Section title="Target users">
+                  <p className="text-sm text-slate-400 leading-relaxed">{project.target_users}</p>
+                </Section>
+              )}
+            </div>
+          )}
 
           {/* Technologies */}
           {project.skills && project.skills.length > 0 && (
@@ -252,6 +316,60 @@ export function ProjectDetailPage() {
             </Section>
           )}
 
+          <section className="card-g pbox">
+            <h4>Recent tasks</h4>
+            {tasks.length === 0 ? (
+              <p className="pd-muted">No tasks have been published for this project yet.</p>
+            ) : (
+              <div className="kan2">
+                {([['To Do', taskTodo, ''], ['In Progress', taskProg, 'b'], ['Completed', taskDone, 'g']] as const).map(([h, list, c]) => (
+                  <div key={h}>
+                    <h5>{h} ({list.length})</h5>
+                    {list.slice(0, 4).map((t, i) => (
+                      <div key={t.id} className="pd-task">
+                        <span className={`ck ${c}`} />
+                        <span className="pd-task-t">{t.title}</span>
+                        <span className="ref-tag pd-task-tag">{t.tag ?? tags[i % 4]}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+            </>
+          )}
+
+          {tab === 'tk' && (
+            <>
+          <section className="card-g pbox">
+            <h4>Recent tasks</h4>
+            {tasks.length === 0 ? (
+              <p className="pd-muted">No tasks have been published for this project yet.</p>
+            ) : (
+              <div className="kan2">
+                {([['To Do', taskTodo, ''], ['In Progress', taskProg, 'b'], ['Completed', taskDone, 'g']] as const).map(([h, list, c]) => (
+                  <div key={h}>
+                    <h5>{h} ({list.length})</h5>
+                    {list.slice(0, 4).map((t, i) => (
+                      <div key={t.id} className="pd-task">
+                        <span className={`ck ${c}`} />
+                        <span className="pd-task-t">{t.title}</span>
+                        <span className="ref-tag pd-task-tag">{t.tag ?? tags[i % 4]}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+            </>
+          )}
+
+          {tab === 'tm' && (
+            <>
           {/* Team members */}
           {(teamMembers.length > 0 || pendingApps.length > 0) && (
             <Section title="Team members">
@@ -347,6 +465,9 @@ export function ProjectDetailPage() {
             </Section>
           )}
 
+            </>
+          )}
+
           {project.is_demo && (
             <div className="rounded-lg border border-signal-amber/20 bg-signal-amber/5 px-3 py-2 text-xs text-signal-amber/90">
               Demo content — sample project for platform preview.
@@ -396,6 +517,9 @@ export function ProjectDetailPage() {
                 <Send size={15} /> Contact Team
               </Button>
             )}
+            <button type="button" className={`pd-star ${starred ? 'on' : ''}`} onClick={toggleStar} aria-pressed={starred}>
+              <Star size={18} fill={starred ? 'currentColor' : 'none'} /> <span>{starred ? 'Starred' : 'Star Project'}</span>
+            </button>
           </div>
 
           {/* Creator card */}
@@ -420,14 +544,25 @@ export function ProjectDetailPage() {
           {/* Meta */}
           <div className="surface p-5 space-y-3">
             <MetaRow icon={<Target size={14} />} label="Type" value={projectTypeLabel[project.project_type]} />
+            {owner && <MetaRow icon={<Users size={14} />} label="Owner" value={owner.display_name} />}
+            {project.license && <MetaRow icon={<CheckCircle2 size={14} />} label="License" value={project.license} />}
             {project.difficulty && <MetaRow icon={<Flag size={14} />} label="Difficulty" value={difficultyLabel[project.difficulty]} />}
             {project.compensation && <MetaRow icon={<CheckCircle2 size={14} />} label="Compensation" value={compensationLabel[project.compensation]} />}
             <MetaRow icon={<Users size={14} />} label="Team size" value={project.team_size > 0 ? `${project.team_size} members` : 'Solo / forming'} />
             {project.duration_weeks && <MetaRow icon={<Calendar size={14} />} label="Duration" value={`${project.duration_weeks} weeks`} />}
             {project.time_commitment_hours && <MetaRow icon={<Clock size={14} />} label="Commitment" value={project.time_commitment_hours} />}
             <MetaRow icon={<MapPin size={14} />} label="Location" value={project.is_remote ? 'Remote' : project.location ?? '—'} />
-            <MetaRow icon={<Calendar size={14} />} label="Published" value={relativeDate(project.published_at)} />
+            <MetaRow icon={<Calendar size={14} />} label="Created" value={new Date(project.published_at ?? project.created_at).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })} />
           </div>
+
+          {project.skills && project.skills.length > 0 && (
+            <div className="surface p-5">
+              <h4 className="mb-3 text-sm font-semibold text-white">Technologies</h4>
+              <div className="techs">
+                {project.skills.slice(0, 4).map((sk) => <div key={sk.id}>{sk.name}</div>)}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

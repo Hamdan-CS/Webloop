@@ -52,6 +52,8 @@ export function buildCityCompanies(list: { id: string; display_name: string; ava
 }
 
 export interface CityHandle {
+  /** Highlight a building from outside the canvas (e.g. a hovered company card). */
+  setHover(id: string | null): void;
   dispose(): void;
 }
 
@@ -60,7 +62,7 @@ export function createCityEngine(
   canvas: HTMLCanvasElement,
   companies: CityCompany[],
   opts: {
-    onHoverChange?: (id: string | null) => void;
+    onHoverChange?: (id: string | null, external: boolean) => void;
     onOpen?: (id: string) => void;
     onTipPosition?: (x: number, y: number) => void;
   },
@@ -69,7 +71,7 @@ export function createCityEngine(
   try {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
   } catch {
-    return { dispose() {} };
+    return { setHover() {}, dispose() {} };
   }
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -288,7 +290,7 @@ export function createCityEngine(
     if (hoverId === id) return;
     hoverId = id; extHover = ext;
     view.classList.toggle('hover', !!id && !ext);
-    opts.onHoverChange?.(id);
+    opts.onHoverChange?.(id, ext);
   }
   function pick(e: PointerEvent) {
     const r = canvas.getBoundingClientRect();
@@ -369,6 +371,7 @@ export function createCityEngine(
   canvas.addEventListener('webglcontextlost', onContextLost);
 
   return {
+    setHover: (id: string | null) => setHover(id, true),
     dispose() {
       stop();
       window.removeEventListener('themechange', applyTheme);

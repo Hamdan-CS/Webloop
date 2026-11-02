@@ -32,7 +32,13 @@ const INITIAL_TASKS: Task[] = [
 const MEMB_KEYS = ['alex', 'maya', 'daniel', 'sara', 'adam', 'noah']; // matches the prototype's MEMB exactly
 const MEMB = MEMB_KEYS.map((key) => personOf(key));
 const COMMITS: Record<string, number> = { alex: 42, maya: 51, daniel: 35, sara: 19, adam: 23, noah: 8 };
-const EVENTS = [
+interface Ev { who: string; t: string; a: string }
+const NEW_EVENTS: [string, string][] = [
+  ['sara', 'opened a pull request for report export'], ['noah', 'added 12 regression tests'], ['adam', 'deployed staging build #48'],
+  ['alex', 'merged \u201cdashboard filters\u201d'], ['maya', 'closed issue #31'], ['daniel', 'shared new empty-state designs'],
+];
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const BASE_EVENTS: Ev[] = [
   { who: 'alex', t: 'pushed new code', a: '2 hours ago' },
   { who: 'maya', t: 'completed API integration', a: '5 hours ago' },
   { who: 'daniel', t: 'updated the design system', a: '1 day ago' },
@@ -58,7 +64,39 @@ export function LiveDashboardScene() {
   const [filterWho, setFilterWho] = useState<string>('all');
   const [newTask, setNewTask] = useState('');
   const [newArea, setNewArea] = useState<Area>('Frontend');
+  const [events, setEvents] = useState<Ev[]>(BASE_EVENTS);
   const donutRef = useRef<SVGCircleElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const visRef = useRef(false);
+  const nextEv = useRef(0);
+
+  /* live simulated feed — newest on top, older "just now" entries age (reference `ev()`) */
+  const pushEvent = (who: string, t: string) =>
+    setEvents((prev) => [{ who, t, a: 'just now' }, ...prev.map((e, i) => (i >= 0 && e.a === 'just now' ? { ...e, a: i + 1 < 3 ? 'a moment ago' : 'earlier' } : e))]);
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const rm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const io = new IntersectionObserver((es) => es.forEach((e) => { visRef.current = e.isIntersecting; }), { threshold: 0.25 });
+    io.observe(el);
+    const id = window.setInterval(() => {
+      if (!visRef.current || rm) return;
+      const n = NEW_EVENTS[nextEv.current++ % NEW_EVENTS.length];
+      pushEvent(n[0], n[1]);
+    }, 6000);
+    return () => { io.disconnect(); window.clearInterval(id); };
+  }, []);
+
+  const tiltRef = useRef<HTMLDivElement>(null);
+  const canTilt = () => window.innerWidth > 960 && !!window.matchMedia?.('(pointer: fine)').matches && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const onTiltMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = tiltRef.current;
+    if (!el || !canTilt()) return;
+    const b = el.getBoundingClientRect();
+    el.style.transition = 'transform .8s cubic-bezier(.16,1,.3,1)';
+    el.style.transform = `rotateX(${(-((e.clientY - b.top) / b.height - 0.5) * 4).toFixed(2)}deg) rotateY(${(((e.clientX - b.left) / b.width - 0.5) * 6).toFixed(2)}deg)`;
+  };
+  const onTiltLeave = () => { if (tiltRef.current) tiltRef.current.style.transform = ''; };
 
   const done = tasks.filter((t) => t.st === 'done').length;
   const prog = tasks.filter((t) => t.st === 'prog').length;
@@ -77,20 +115,36 @@ export function LiveDashboardScene() {
   let msStep = 0; while (msStep < MILESTONES.length && msDone[msStep]) msStep++;
   const mp = Math.max(0, msStep - 1) / 3 * 75;
 
-  const cycleTask = (id: number) => setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, st: ({ todo: 'prog', prog: 'done', done: 'todo' } as const)[t.st] } : t)));
-  const deleteTask = (id: number) => setTasks((prev) => prev.filter((t) => t.id !== id));
+  const cycleTask = (id: number) => {
+    const t = tasks.find((x) => x.id === id);
+    if (!t) return;
+    const st = ({ todo: 'prog', prog: 'done', done: 'todo' } as const)[t.st];
+    setTasks((prev) => prev.map((x) => (x.id === id ? { ...x, st } : x)));
+    pushEvent(AREA_OWNER_KEY[t.area], st === 'done' ? `completed \u201c${t.t}\u201d` : st === 'prog' ? `started \u201c${t.t}\u201d` : `reopened \u201c${t.t}\u201d`);
+  };
+  const deleteTask = (id: number) => {
+    const t = tasks.find((x) => x.id === id);
+    setTasks((prev) => prev.filter((x) => x.id !== id));
+    if (t) pushEvent(AREA_OWNER_KEY[t.area], `removed \u201c${t.t}\u201d`);
+  };
   const addTask = () => {
     if (!newTask.trim()) return;
     setTasks((prev) => [T(newTask.trim(), newArea, 'todo'), ...prev]);
+    pushEvent(AREA_OWNER_KEY[newArea], `added \u201c${newTask.trim()}\u201d`);
     setNewTask('');
   };
   const openTasksFor = (area: Area) => { setFilterArea(area); setTab('tk'); };
 
   const filteredTasks = tasks.filter((t) => (filterSt === 'all' || t.st === filterSt) && (filterArea === 'all' || t.area === filterArea));
   const STATUS_LABEL: Record<Status, string> = { todo: 'To do', prog: 'In progress', done: 'Done' };
-  const filteredFeed = filterWho === 'all' ? EVENTS : EVENTS.filter((e) => e.who === filterWho);
+  const filteredFeed = filterWho === 'all' ? events : events.filter((e) => e.who === filterWho);
 
   const commitData = range === 'm' ? COMMITS_MONTH : COMMITS_WEEK;
+  const commitDate = (i: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (commitData.length - 1 - i) * (range === 'm' ? 2 : 1));
+    return `${MON[d.getMonth()]} ${d.getDate()}`;
+  };
   const commitMax = Math.max(...commitData);
   const commitSum = commitData.reduce((a, b) => a + b, 0);
 
@@ -101,9 +155,11 @@ export function LiveDashboardScene() {
           <span className="eyebrow-link"><span className="dot" />Live dashboard</span>
           <h2 id="h-rdash" className="hr-h2" style={{ maxWidth: '18ch' }}>From collaboration to measurable <span className="hl" style={{ background: 'linear-gradient(90deg, var(--cyan), var(--blue))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>progress.</span></h2>
           <p className="hr-lead" style={{ marginTop: 14 }}>Companies and teams can see what is happening inside a project, task by task and commit by commit.</p>
+          <span className="demo-note" style={{ marginTop: 14 }}>Demonstration data · activity feed is simulated</span>
         </div>
 
-        <div className="dash-stage">
+        <div className="dash-stage" ref={stageRef}>
+          <div className="dash-tilt" ref={tiltRef} onPointerMove={onTiltMove} onPointerLeave={onTiltLeave}>
           <div className="dash">
             <div className="dash-top">
               <h3><span className="art" style={{ backgroundImage: `url("${art(...project.art)}")`, backgroundSize: 'cover', backgroundPosition: 'center' }} />{project.name}</h3>
@@ -138,9 +194,10 @@ export function LiveDashboardScene() {
                     </div>
                   </div>
                   <div className="dcell">
-                    <h4>Team members <button type="button" className="btn btn-ghost btn-sm">Invite</button></h4>
+                    <h4>Team members <button type="button" className="btn btn-ghost btn-sm" onClick={() => setTab('tm')}>Invite</button></h4>
                     <div className="ref-avs" style={{ display: 'flex' }}>
-                      {MEMB.map((m) => <IllustratedAvatar key={m.key} personKey={m.key} name={m.name} female={m.female} size={34} className="pcard-av" />)}
+                      {MEMB.slice(0, 4).map((m) => <IllustratedAvatar key={m.key} personKey={m.key} name={m.name} female={m.female} size={34} className="pcard-av" />)}
+                      <span style={{ width: 34, height: 34 }}>+{MEMB.length - 4}</span>
                     </div>
                     <h4 style={{ margin: '16px 0 4px' }}>Milestones</h4>
                     <div className="miles" style={{ ['--mp' as any]: `${mp}%` }}>
@@ -173,13 +230,13 @@ export function LiveDashboardScene() {
                     <h4>Contributions <span className="dtog"><button type="button" className={range === 'm' ? 'on' : ''} onClick={() => setRange('m')}>30 days</button><button type="button" className={range === 'w' ? 'on' : ''} onClick={() => setRange('w')}>7 days</button></span></h4>
                     <div className="commit-big"><b>+{commitSum}</b><span className="muted" style={{ fontSize: 12 }}>commits {range === 'm' ? 'in 30 days' : 'in 7 days'}</span></div>
                     <div className="commit">
-                      {commitData.map((v, i) => <i key={i} style={{ height: `${(v / commitMax) * 100}%` }} title={`${v} commits`} />)}
+                      {commitData.map((v, i) => <i key={i} style={{ height: `${(v / commitMax) * 100}%` }} data-tip={`${v} commits \u00b7 ${commitDate(i)}`} />)}
                     </div>
                   </div>
                   <div className="dcell">
                     <h4>Activity feed</h4>
                     <div className="dash-feed">
-                      {EVENTS.slice(0, 4).map((e, i) => {
+                      {events.slice(0, 4).map((e, i) => {
                         const m = MEMB.find((x) => x.key === e.who) ?? MEMB[0];
                         return (
                           <div key={i} className="fi">
@@ -261,6 +318,7 @@ export function LiveDashboardScene() {
                 </div>
               </div>
             )}
+          </div>
           </div>
         </div>
       </div>

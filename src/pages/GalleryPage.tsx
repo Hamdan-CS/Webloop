@@ -1,33 +1,54 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Loader2, Images, ArrowUpRight } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Loader2, Images } from 'lucide-react';
 import { fetchPortfolioGallery } from '@/lib/api';
 import type { PortfolioItem } from '@/lib/types';
-import { Badge } from '@/components/ui/Badge';
-import { Avatar } from '@/components/ui/Avatar';
+import { WorkCard } from '@/components/gallery/WorkCard';
+import { WorkDetail, StudentDetail } from '@/components/gallery/GalleryOverlays';
 
-const ContributionGrid = lazy(() =>
-  import('@/components/contributions').then((m) => ({ default: m.ContributionGrid })),
-);
+type Sort = 'act' | 'new' | 'az';
+const ALL = 'All works';
 
 export function GalleryPage() {
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [active, setActive] = useState<PortfolioItem | null>(null);
+  const [cat, setCat] = useState(ALL);
+  const [q, setQ] = useState('');
+  const [sort, setSort] = useState<Sort>('act');
+  const [work, setWork] = useState<PortfolioItem | null>(null);
+  const [studentId, setStudentId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchPortfolioGallery().then((d) => {
-      setItems(d);
-      setLoading(false);
-    });
+    fetchPortfolioGallery(60)
+      .then(setItems)
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
   }, []);
+
+  const cats = useMemo(() => [ALL, ...Array.from(new Set(items.map((i) => i.category).filter(Boolean) as string[]))], [items]);
+
+  const list = useMemo(() => {
+    const n = q.trim().toLowerCase();
+    const l = items.filter(
+      (w) =>
+        (cat === ALL || w.category === cat) &&
+        (!n || `${w.title} ${w.description ?? ''} ${(w.tech ?? []).join(' ')} ${w.profile?.display_name ?? ''}`.toLowerCase().includes(n)),
+    );
+    const by = {
+      act: (a: PortfolioItem, b: PortfolioItem) => (b.activity ?? 0) - (a.activity ?? 0),
+      new: (a: PortfolioItem, b: PortfolioItem) => b.created_at.localeCompare(a.created_at),
+      az: (a: PortfolioItem, b: PortfolioItem) => a.title.localeCompare(b.title),
+    }[sort];
+    return [...l].sort(by);
+  }, [items, cat, q, sort]);
 
   return (
     <div className="container-page py-8">
-      <div className="mb-8">
-        <h1 className="font-display text-3xl sm:text-4xl font-bold text-white">Student work gallery</h1>
-        <p className="mt-2 text-slate-300 max-w-2xl">
-          Public portfolio pieces from student builders — shipped projects, experiments, and coursework.
+      <div className="sec-hd" style={{ marginBottom: 28 }}>
+        <span className="eyebrow-link"><span className="dot" />Student work gallery</span>
+        <h1 className="gal-title">Student work <span className="hl">gallery</span></h1>
+        <p className="gal-sub">
+          Every task you finish is reviewed by a project owner and becomes verified career evidence.
+          Companies hire from demonstrated work, not self-reported skills.
         </p>
       </div>
 
@@ -36,108 +57,50 @@ export function GalleryPage() {
           <Loader2 size={28} className="animate-spin text-accent-400" />
         </div>
       ) : items.length === 0 ? (
-        <div className="surface p-14 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-white/5 text-slate-500">
-            <Images size={24} />
-          </div>
-          <h3 className="mt-4 font-display text-lg font-semibold text-white">No portfolio items yet</h3>
-          <p className="mt-2 text-sm text-slate-400">Student work will appear here once published.</p>
+        <div className="gal-empty">
+          <Images size={28} style={{ margin: '0 auto 12px' }} />
+          <p>No portfolio items yet. Student work will appear here once published.</p>
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => (
-            <div key={item.id} className="group surface overflow-hidden transition-colors hover:border-accent-400/30">
-              <button type="button" onClick={() => setActive(item)} className="block w-full text-left">
-                <div className="relative aspect-[16/10] overflow-hidden">
-                  {item.cover_image_url ? (
-                    <img src={item.cover_image_url} alt={item.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                  ) : (
-                    <div className="h-full w-full bg-ink-800" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 to-transparent" />
-                  <span className="absolute left-2.5 top-2.5"><Badge tone="violet">{item.category}</Badge></span>
-                </div>
-                <div className="p-4 pb-0">
-                  <p className="font-display text-base font-semibold text-white line-clamp-1">{item.title}</p>
-                  <p className="mt-1 text-sm text-slate-400 line-clamp-2">{item.description}</p>
-                </div>
-              </button>
-              {item.profile && (
-                <div className="flex items-center gap-2 border-t border-white/5 p-4">
-                  <Link to={`/creators/${item.profile.handle}`} className="flex min-w-0 flex-1 items-center gap-2 hover:text-accent-300">
-                    <Avatar src={item.profile.avatar_url} name={item.profile.display_name} size="sm" />
-                    <span className="truncate text-xs text-slate-400">{item.profile.display_name}</span>
-                    <ArrowUpRight size={14} className="shrink-0 text-slate-500 transition-colors group-hover:text-accent-300" />
-                  </Link>
-                  {item.profile.creator_type !== 'company' && item.profile.creator_type !== 'university' && (
-                    <Suspense fallback={null}>
-                      <ContributionGrid studentId={item.profile.id} size="mini" profileHandle={item.profile.handle} />
-                    </Suspense>
-                  )}
-                </div>
-              )}
+        <>
+          <div className="gal-bar">
+            <div className="gal-pills" role="group" aria-label="Filter by category">
+              {cats.map((c) => (
+                <button key={c} type="button" className={`pill ${cat === c ? 'on' : ''}`} onClick={() => setCat(c)}>{c}</button>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Detail modal */}
-      {active && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/80 backdrop-blur-sm p-4" onClick={() => setActive(null)} role="dialog" aria-modal="true">
-          <div className="surface-raised w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-fade-in-up" onClick={(e) => e.stopPropagation()}>
-            <div className="relative aspect-[16/9] overflow-hidden rounded-t-2xl">
-              {active.cover_image_url ? (
-                <img src={active.cover_image_url} alt={active.title} className="h-full w-full object-cover" />
-              ) : (
-                <div className="h-full w-full bg-ink-800" />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-ink-950/70 to-transparent" />
-              <span className="absolute left-4 top-4"><Badge tone="violet">{active.category}</Badge></span>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <h2 className="font-display text-2xl font-bold text-white">{active.title}</h2>
-                <Badge tone="green">{active.project_status}</Badge>
-              </div>
-              {active.profile && (
-                <Link to={`/creators/${active.profile.handle}`} className="flex items-center gap-2.5">
-                  <Avatar src={active.profile.avatar_url} name={active.profile.display_name} size="md" />
-                  <div>
-                    <p className="text-sm font-medium text-white">{active.profile.display_name}</p>
-                    <p className="text-xs text-slate-500">{active.role}</p>
-                  </div>
-                </Link>
-              )}
-              {active.description && <p className="text-sm text-slate-300 leading-relaxed">{active.description}</p>}
-              {active.contributions && (
-                <div>
-                  <h3 className="label-overline mb-1.5">Contributions</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">{active.contributions}</p>
-                </div>
-              )}
-              {active.lessons_learned && (
-                <div>
-                  <h3 className="label-overline mb-1.5">Lessons learned</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed italic">{active.lessons_learned}</p>
-                </div>
-              )}
-              <div className="flex flex-wrap gap-2 pt-2">
-                <Badge>Work type: {active.work_type}</Badge>
-                {active.repo_url && (
-                  <a href={active.repo_url} target="_blank" rel="noopener noreferrer" className="chip hover:border-accent-400/40 hover:text-accent-200">Repository</a>
-                )}
-                {active.demo_url && (
-                  <a href={active.demo_url} target="_blank" rel="noopener noreferrer" className="chip hover:border-accent-400/40 hover:text-accent-200">Live demo</a>
-                )}
-              </div>
-              {active.is_demo && (
-                <div className="rounded-lg border border-signal-amber/20 bg-signal-amber/5 px-3 py-2 text-xs text-signal-amber/90">
-                  Demo content — sample portfolio item for platform preview.
-                </div>
-              )}
+            <div className="gal-tools">
+              <input className="gal-input" type="search" placeholder="Search work, tech or student" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search student work" />
+              <select className="gal-select" value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Sort">
+                <option value="act">Most active</option>
+                <option value="new">Newest</option>
+                <option value="az">A to Z</option>
+              </select>
             </div>
           </div>
-        </div>
+
+          {list.length === 0 ? (
+            <div className="gal-empty">No student work matches your search.</div>
+          ) : (
+            <div className="grid3">
+              {list.map((w) => (
+                <WorkCard key={w.id} item={w} onOpen={setWork} onOpenStudent={setStudentId} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {work && !studentId && (
+        <WorkDetail item={work} onClose={() => setWork(null)} onOpenStudent={(id) => setStudentId(id)} />
+      )}
+      {studentId && (
+        <StudentDetail
+          profileId={studentId}
+          items={items}
+          onClose={() => setStudentId(null)}
+          onOpenWork={(w) => { setStudentId(null); setWork(w); }}
+        />
       )}
     </div>
   );

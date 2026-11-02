@@ -8,7 +8,7 @@ import { logoArt } from '@/data/homeArt';
 import { IllustratedAvatar } from '../shared/IllustratedAvatar';
 import { Reveal } from '@/components/ui/Reveal';
 
-export function CompaniesGrid() {
+export function CompaniesGrid({ hoveredId, onHover }: { hoveredId?: string | null; onHover?: (id: string | null) => void } = {}) {
   return (
     <>
       <div className="result-line" style={{ marginTop: -6 }}>
@@ -21,7 +21,14 @@ export function CompaniesGrid() {
           const shown = c.people.slice(0, 3).map((k) => personOf(k));
           return (
             <Reveal key={c.id} delay={i * 0.06}>
-              <article className="cc">
+              <article
+                className={`cc${hoveredId === c.id ? ' glow' : ''}`}
+                tabIndex={0}
+                onPointerEnter={() => onHover?.(c.id)}
+                onPointerLeave={() => onHover?.(null)}
+                onFocus={() => onHover?.(c.id)}
+                onBlur={() => onHover?.(null)}
+              >
                 <div className="banner" style={{ background: `linear-gradient(135deg, hsl(${c.hue} 70% 38%), hsl(${c.hue + 40} 70% 52%))` }}>
                   {c.tag && <span className="ft">{c.tag}</span>}
                 </div>

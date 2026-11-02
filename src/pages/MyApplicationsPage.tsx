@@ -1,23 +1,25 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Inbox, ArrowRight } from 'lucide-react';
+import { Loader2, Inbox, ArrowRight, Clock, CheckCircle2, XCircle, Briefcase } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
 import { fetchMyApplications } from '@/lib/api';
 import type { Application } from '@/lib/types';
-import { Badge } from '@/components/ui/Badge';
-import { statusLabel, statusTone as projectStatusTone } from '@/lib/labels';
+import { statusLabel } from '@/lib/labels';
+import { cn } from '@/lib/utils';
 import type { ProjectStatus } from '@/lib/types';
 
-const appStatusTone: Record<Application['status'], 'default' | 'green' | 'amber' | 'rose'> = {
-  pending: 'amber',
-  accepted: 'green',
-  declined: 'rose',
+const appBadge: Record<Application['status'], string> = { pending: 'rb-prog', accepted: 'rb-rec', declined: 'rb-bad' };
+const FILTERS = ['all', 'pending', 'accepted', 'declined'] as const;
+const ago = (d: string) => {
+  const days = Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
+  return days <= 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`;
 };
 
 export function MyApplicationsPage() {
   const { user, profile } = useAuth();
   const [apps, setApps] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>('all');
 
   useEffect(() => {
     if (!profile) return;
@@ -36,11 +38,15 @@ export function MyApplicationsPage() {
     );
   }
 
+  const count = (st: Application['status']) => apps.filter((a) => a.status === st).length;
+  const shown = filter === 'all' ? apps : apps.filter((a) => a.status === filter);
+
   return (
-    <div className="container-page py-8 max-w-3xl">
-      <div className="mb-8">
-        <h1 className="font-display text-3xl font-bold text-white">Your project applications</h1>
-        <p className="mt-2 text-slate-300">Track the status of projects you've applied to join.</p>
+    <div className="container-page pf py-8 max-w-4xl">
+      <div className="mb-6">
+        <span className="label-overline">Applications</span>
+        <h1 className="mt-2 font-display text-3xl font-bold pf-name">Your project applications</h1>
+        <p className="mt-2 text-slate-400">Track the status of projects you've applied to join.</p>
       </div>
 
       {loading ? (
@@ -48,45 +54,58 @@ export function MyApplicationsPage() {
           <Loader2 size={28} className="animate-spin text-accent-400" />
         </div>
       ) : apps.length === 0 ? (
-        <div className="surface p-14 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-white/5 text-slate-500">
-            <Inbox size={24} />
-          </div>
-          <h3 className="mt-4 font-display text-lg font-semibold text-white">No applications yet</h3>
-          <p className="mt-2 text-sm text-slate-400">Find a project and apply to join a team.</p>
-          <Link to="/explore" className="mt-4 inline-block link-accent text-sm">
-            Explore Projects <ArrowRight size={13} className="inline" />
-          </Link>
+        <div className="surface pf-card app-empty">
+          <span className="pf-ic"><Inbox size={22} /></span>
+          <h3 className="pf-h4">No applications yet</h3>
+          <p>Find a project you like and apply to join its team. Your applications and their status will show up here.</p>
+          <Link to="/explore" className="btn btn-primary">Explore projects <ArrowRight size={14} /></Link>
         </div>
       ) : (
-        <ul className="space-y-3">
-          {apps.map((app) => (
-            <li key={app.id} className="surface p-5">
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  {app.project && (
-                    <Link to={`/projects/${app.project.slug}`} className="font-display text-base font-semibold text-white hover:text-accent-200 transition-colors">
-                      {app.project.title}
-                    </Link>
-                  )}
-                  {app.project && (
-                    <div className="mt-1 flex items-center gap-2">
-                      <Badge tone={projectStatusTone[app.project.status as ProjectStatus]}>{statusLabel[app.project.status as ProjectStatus]}</Badge>
-                      <Link to={`/projects/${app.project.slug}`} className="text-[11px] text-accent-300 hover:text-accent-200 inline-flex items-center gap-1">
-                        View project <ArrowRight size={10} />
-                      </Link>
+        <>
+          <div className="pf-kpis mb-5">
+            <div className="pf-kpi"><b>{apps.length}</b><span>Total</span></div>
+            <div className="pf-kpi"><b>{count('pending')}</b><span>Pending</span></div>
+            <div className="pf-kpi"><b className="c1">{count('accepted')}</b><span>Accepted</span></div>
+            <div className="pf-kpi"><b>{count('declined')}</b><span>Declined</span></div>
+          </div>
+          <div className="pills mb-4">
+            {FILTERS.map((f) => (
+              <button key={f} type="button" className={cn('pill', filter === f && 'on')} onClick={() => setFilter(f)}>
+                {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
+                <span className="app-n">{f === 'all' ? apps.length : count(f)}</span>
+              </button>
+            ))}
+          </div>
+          {shown.length === 0 ? (
+            <div className="surface pf-card app-empty"><p>No {filter} applications.</p></div>
+          ) : (
+            <ul className="app-list">
+              {shown.map((app) => {
+                const Icon = app.status === 'accepted' ? CheckCircle2 : app.status === 'declined' ? XCircle : Clock;
+                return (
+                  <li key={app.id} className="surface pf-card app-row">
+                    <span className={cn('app-ic', app.status)}><Icon size={18} /></span>
+                    <div className="app-main">
+                      {app.project ? (
+                        <Link to={`/projects/${app.project.slug}`} className="app-title">{app.project.title}</Link>
+                      ) : <span className="app-title">Project</span>}
+                      <div className="app-sub">
+                        {app.role_title && <span><Briefcase size={12} /> {app.role_title}</span>}
+                        {app.project && <span>{statusLabel[app.project.status as ProjectStatus]}</span>}
+                        {app.created_at && <span>Applied {ago(app.created_at)}</span>}
+                      </div>
+                      {app.message && <p className="app-msg">{app.message}</p>}
                     </div>
-                  )}
-                  {app.role_title && <p className="mt-0.5 text-sm text-slate-400">Applied for: {app.role_title}</p>}
-                  {app.message && <p className="mt-2 text-sm text-slate-500 leading-relaxed">{app.message}</p>}
-                </div>
-                <Badge tone={appStatusTone[app.status]}>
-                  {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                </Badge>
-              </div>
-            </li>
-          ))}
-        </ul>
+                    <div className="app-side">
+                      <span className={cn('ref-badge', appBadge[app.status])}>{app.status.charAt(0).toUpperCase() + app.status.slice(1)}</span>
+                      {app.project && <Link to={`/projects/${app.project.slug}`} className="sd-link">View project <ArrowRight size={12} /></Link>}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );

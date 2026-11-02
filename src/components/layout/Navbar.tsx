@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, Sparkles, LogOut, User, Plus, LayoutDashboard } from 'lucide-react';
+import { Menu, X, Sparkles, LogOut, User, LayoutDashboard, FileText } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
@@ -7,6 +7,7 @@ import { Wordmark } from '@/components/layout/Wordmark';
 import { Avatar } from '@/components/ui/Avatar';
 import { useAuth } from '@/components/auth/AuthContext';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { NotificationBell } from '@/components/FloatingPanel';
 import { getDashboardPath, getDashboardLabel } from '@/lib/roles';
 
 const navItems = [
@@ -38,12 +39,12 @@ export function Navbar() {
     let lastY = scrollY;
     const onScroll = () => {
       const y = scrollY, d = y - lastY;
-      if (y < 80 || d < -6) setHidden(false);
-      else if (d > 6) setHidden(true);
+      if (y < 80 || d < -6) { setHidden(false); document.documentElement.removeAttribute('data-hdr'); }
+      else if (d > 6) { setHidden(true); document.documentElement.setAttribute('data-hdr', 'hidden'); }
       lastY = y;
     };
     addEventListener('scroll', onScroll, { passive: true });
-    return () => removeEventListener('scroll', onScroll);
+    return () => { removeEventListener('scroll', onScroll); document.documentElement.removeAttribute('data-hdr'); };
   }, []);
 
   const handleSignOut = async () => {
@@ -74,6 +75,7 @@ export function Navbar() {
 
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
+          <NotificationBell />
           {user ? (
             <>
               {profile && (
@@ -81,26 +83,22 @@ export function Navbar() {
                   <LayoutDashboard size={15} /> {getDashboardLabel(profile.creator_type).replace(' Dashboard', '')}
                 </Button>
               )}
-              <Button variant="secondary" onClick={() => navigate('/publish')} className="text-sm">
-                <Plus size={15} /> Publish
-              </Button>
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen((v) => !v)}
-                  className="flex items-center gap-2 rounded-lg p-1 pr-2 hover:bg-white/5 transition-colors"
+                  className="hdr-user"
                 >
                   <Avatar src={profile?.avatar_url} name={profile?.display_name ?? 'User'} size="sm" />
-                  <span className="text-sm font-medium text-slate-200 max-w-[100px] truncate">
+                  <span className="hdr-user-n">
                     {profile?.display_name ?? 'User'}
                   </span>
                 </button>
                 {menuOpen && (
-                  <div className="absolute right-0 mt-2 w-52 rounded-xl border border-white/10 bg-ink-900/95 backdrop-blur-md py-1.5 shadow-card animate-fade-in-up">
+                  <div className="hdr-menu animate-fade-in-up">
                     <MenuItem icon={<LayoutDashboard size={15} />} label={profile ? getDashboardLabel(profile.creator_type) : 'Dashboard'} onClick={() => { setMenuOpen(false); navigate(profile ? getDashboardPath(profile.creator_type) : '/'); }} />
                     <MenuItem icon={<User size={15} />} label="My Profile" onClick={() => { setMenuOpen(false); navigate(`/creators/${profile?.handle}`); }} />
-                    <MenuItem icon={<Plus size={15} />} label="Publish Project" onClick={() => { setMenuOpen(false); navigate('/publish'); }} />
-                    <MenuItem icon={<LayoutDashboard size={15} />} label="My Applications" onClick={() => { setMenuOpen(false); navigate('/my-applications'); }} />
-                    <div className="my-1 border-t border-white/5" />
+                    <MenuItem icon={<FileText size={15} />} label="My Applications" onClick={() => { setMenuOpen(false); navigate('/my-applications'); }} />
+                    <div className="hdr-menu-sep" />
                     <MenuItem icon={<LogOut size={15} />} label="Sign Out" onClick={handleSignOut} danger />
                   </div>
                 )}
@@ -119,13 +117,16 @@ export function Navbar() {
           )}
         </div>
 
+        <div className="flex items-center gap-2 md:hidden">
+        <NotificationBell />
         <button
-          className="hdr-theme md:hidden"
+          className="hdr-theme hdr-burger md:hidden"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
         >
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
+        </div>
       </div>
 
       {mobileOpen && (
@@ -150,9 +151,6 @@ export function Navbar() {
                       <LayoutDashboard size={15} /> {getDashboardLabel(profile.creator_type)}
                     </Button>
                   )}
-                  <Button variant="secondary" onClick={() => { setMobileOpen(false); navigate('/publish'); }}>
-                    <Plus size={15} /> Publish Project
-                  </Button>
                   <Button variant="secondary" onClick={() => { setMobileOpen(false); navigate(`/creators/${profile?.handle}`); }}>
                     <User size={15} /> My Profile
                   </Button>
@@ -183,8 +181,8 @@ function MenuItem({ icon, label, onClick, danger, count }: { icon: React.ReactNo
     <button
       onClick={onClick}
       className={cn(
-        'flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors',
-        danger ? 'text-signal-rose hover:bg-signal-rose/10' : 'text-slate-300 hover:bg-white/5 hover:text-white',
+        'hdr-menu-item',
+        danger && 'danger',
       )}
     >
       {icon}
