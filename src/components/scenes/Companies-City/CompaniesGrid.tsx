@@ -8,7 +8,7 @@ import { logoArt } from '@/data/homeArt';
 import { IllustratedAvatar } from '../shared/IllustratedAvatar';
 import { Reveal } from '@/components/ui/Reveal';
 
-export function CompaniesGrid({ hoveredId, onHover }: { hoveredId?: string | null; onHover?: (id: string | null) => void } = {}) {
+export function CompaniesGrid({ hoveredId, onHover, onOpen }: { hoveredId?: string | null; onHover?: (id: string | null) => void; onOpen?: (handle: string) => void } = {}) {
   return (
     <>
       <div className="result-line" style={{ marginTop: -6 }}>
@@ -24,10 +24,15 @@ export function CompaniesGrid({ hoveredId, onHover }: { hoveredId?: string | nul
               <article
                 className={`cc${hoveredId === c.id ? ' glow' : ''}`}
                 tabIndex={0}
+                role="link"
+                aria-label={`${c.name} profile`}
+                style={{ cursor: 'pointer' }}
                 onPointerEnter={() => onHover?.(c.id)}
                 onPointerLeave={() => onHover?.(null)}
                 onFocus={() => onHover?.(c.id)}
                 onBlur={() => onHover?.(null)}
+                onClick={() => onOpen?.(c.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter') onOpen?.(c.id); }}
               >
                 <div className="banner" style={{ background: `linear-gradient(135deg, hsl(${c.hue} 70% 38%), hsl(${c.hue + 40} 70% 52%))` }}>
                   {c.tag && <span className="ft">{c.tag}</span>}

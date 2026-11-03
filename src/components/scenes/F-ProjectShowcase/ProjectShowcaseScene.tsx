@@ -6,6 +6,7 @@
  * 4-step "how a project ships" pipeline. Demonstration data only — see
  * src/data/homeDemo.ts. */
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { PROJECTS, personOf } from '@/data/homeDemo';
@@ -28,8 +29,10 @@ const PIPELINE = [
 ];
 
 export function ProjectShowcaseScene() {
+  const navigate = useNavigate();
   const mainTeam = MAIN.team.slice(0, 3).map((k) => personOf(k));
   const [pipeOn, setPipeOn] = useState(0);
+  const openProject = (id: string) => navigate(`/projects/demo-${id}`);
 
   const layersRef = useRef<HTMLDivElement>(null);
   const codeRef = useRef<HTMLDivElement>(null);
@@ -105,7 +108,16 @@ export function ProjectShowcaseScene() {
             <img src={art('dash', 1)} alt="" width={260} height={190} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
 
-          <div className="ly main" ref={mainRef} style={{ transformStyle: 'preserve-3d' }}>
+          <div
+            className="ly main"
+            ref={mainRef}
+            style={{ transformStyle: 'preserve-3d', cursor: 'pointer' }}
+            role="link"
+            tabIndex={0}
+            aria-label={`Open ${MAIN.name} project details`}
+            onClick={() => openProject(MAIN.id)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProject(MAIN.id); } }}
+          >
             <div className="browser">
               <div className="bbar"><i /><i /><i /><span>carbonledger.app</span></div>
               <div className="bbody">
@@ -124,7 +136,16 @@ export function ProjectShowcaseScene() {
             </div>
           </div>
 
-          <div className="ly card2" ref={card2Ref} style={{ transformStyle: 'preserve-3d' }}>
+          <div
+            className="ly card2"
+            ref={card2Ref}
+            style={{ transformStyle: 'preserve-3d', cursor: 'pointer' }}
+            role="link"
+            tabIndex={0}
+            aria-label={`Open ${SECOND.name} project details`}
+            onClick={() => openProject(SECOND.id)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProject(SECOND.id); } }}
+          >
             <h4>{SECOND.name}</h4>
             <p>{SECOND.tagline}</p>
             <div className="ref-tags">

@@ -2,7 +2,7 @@
  * Realm, StudyFlow — matches the prototype's fixed `feat` picks) + the top
  * 3 remaining projects by stars, plus one link to the real Explore page.
  * Demonstration data only — see src/data/homeDemo.ts. */
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Star, Users } from 'lucide-react';
 import { PROJECTS, BY_ID, projectOwnerName, projectOwnerRole, personOf, STATUS_LABEL, COMPANIES, type DemoProject } from '@/data/homeDemo';
 import { art, logoArt } from '@/data/homeArt';
@@ -31,6 +31,9 @@ function OwnerAvatar({ p, size }: { p: DemoProject; size: number }) {
 function truncate(s: string, n: number) { return s.length > n ? s.slice(0, n - 3) + '…' : s; }
 
 export function ExplorePreview() {
+  const navigate = useNavigate();
+  const openProject = (id: string) => navigate(`/projects/demo-${id}`);
+
   return (
     <section id="explore-preview" className="ws-scene home-sec" aria-labelledby="h-ex">
       <div className="wrap">
@@ -46,16 +49,24 @@ export function ExplorePreview() {
             </div>
           </Reveal>
           <Reveal delay={0.1}>
-            <div className="fan" aria-hidden="true">
-              <div className="fp f0" style={{ backgroundImage: `url("${art(...FAN[0].art)}")` }} />
-              <div className="fp f1" style={{ backgroundImage: `url("${art(...FAN[1].art)}")` }}>
+            <div className="fan">
+              <div className="fp f0" aria-hidden="true" style={{ backgroundImage: `url("${art(...FAN[0].art)}")` }} />
+              <div
+                className="fp f1"
+                style={{ backgroundImage: `url("${art(...FAN[1].art)}")`, cursor: 'pointer' }}
+                role="link"
+                tabIndex={0}
+                aria-label={`Open ${FAN[1].name} project details`}
+                onClick={() => openProject(FAN[1].id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProject(FAN[1].id); } }}
+              >
                 <div className="corner">
                   <span className={`ref-badge ${STATUS_BADGE_CLASS[FAN[1].status]}`}>{STATUS_LABEL[FAN[1].status]}</span>
                   <span className="ref-badge" style={{ background: 'rgba(10,20,40,.6)', color: '#fff' }}>{projectOwnerRole(FAN[1])} project</span>
                 </div>
                 <div className="ov-txt"><h3>{FAN[1].name}</h3><p>{FAN[1].tagline}</p></div>
               </div>
-              <div className="fp f2" style={{ backgroundImage: `url("${art(...FAN[2].art)}")` }} />
+              <div className="fp f2" aria-hidden="true" style={{ backgroundImage: `url("${art(...FAN[2].art)}")` }} />
             </div>
           </Reveal>
         </div>
@@ -65,7 +76,15 @@ export function ExplorePreview() {
         <div className="grid3">
           {GRID.map((p, i) => (
             <Reveal key={p.id} delay={i * 0.08}>
-              <article className="pc">
+              <article
+                className="pc"
+                role="link"
+                tabIndex={0}
+                aria-label={`Open ${p.name} project details`}
+                style={{ cursor: 'pointer' }}
+                onClick={() => openProject(p.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProject(p.id); } }}
+              >
                 <div className="thumb">
                   <span className="art" style={{ backgroundImage: `url("${art(...p.art)}")`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
                   <div className="corner">
