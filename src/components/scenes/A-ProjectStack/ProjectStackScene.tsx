@@ -247,8 +247,7 @@ export function ProjectStackScene() {
     <section ref={sectionRef} id="stack" className="ws-scene home-sec" aria-labelledby="h-rstack">
       <div className="wrap wide stack-grid">
         <div className="stack-copy">
-          <p className="hr-eyebrow">A &mdash; Project anatomy</p>
-          <h1 id="h-rstack" className="hr-h2" style={{ maxWidth: 'none' }}>A project is more than an <span className="hl" style={{ background: 'linear-gradient(90deg, var(--accent-text, var(--cyan)), var(--blue))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>idea.</span></h1>
+          <h2 id="h-rstack" className="hr-h2" style={{ maxWidth: 'none' }}>A project is more than an <span className="hl" style={{ background: 'linear-gradient(90deg, var(--accent-text, var(--cyan)), var(--blue))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>idea.</span></h2>
           <p className="hr-lead">Every WebLoop project is built from people, tasks, contributions, and an outcome.</p>
           <ol className="ref-steps" aria-label="Project layers">
             {STEPS.map((s, i) => (

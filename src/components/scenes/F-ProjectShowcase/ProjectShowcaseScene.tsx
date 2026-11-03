@@ -69,7 +69,6 @@ export function ProjectShowcaseScene() {
     <section id="showcase" className="ws-scene home-sec" aria-labelledby="h-show">
       <div className="wrap show-grid">
         <div className="sec-hd" style={{ margin: 0 }}>
-          <span className="eyebrow-link"><span className="dot" />Project showcase</span>
           <h2 id="h-show" className="hr-h2">Discover what people are <span className="hl">building.</span></h2>
           <p className="hr-lead" style={{ marginTop: 14 }}>Explore real projects, the people behind them, and the work that makes them possible. Ideas get shipped here.</p>
           <div className="pipeline">

@@ -62,9 +62,13 @@ export function CompaniesCityScene({
   return (
     <div className="co-hero">
       <div className="sec-hd">
-        <span className="eyebrow-link"><span className="dot" />Companies</span>
-        <h2 className="font-display text-3xl sm:text-4xl font-bold text-white" style={{ maxWidth: '14ch' }}>Discover <span className="hl">companies</span></h2>
+        <h2 className="co-hero-h2" style={{ maxWidth: '14ch' }}>Discover <span className="hl">companies</span></h2>
         <p className="lead mt-2.5">Startups and studios publishing real projects, recruiting student contributors, and hiring from verified work.</p>
+        <div className="co-benefits">
+          <div><span className="ic"><Briefcase size={18} /></span><span><b>Real opportunities</b><small>Internships, freelance and full-time</small></span></div>
+          <div><span className="ic"><Users size={18} /></span><span><b>Verified companies</b><small>Checked before they can post</small></span></div>
+          <div><span className="ic"><Zap size={18} /></span><span><b>Build your future</b><small>Connect, contribute, get hired</small></span></div>
+        </div>
       </div>
 
       <div className="co-scene" ref={viewRef}>
@@ -77,11 +81,6 @@ export function CompaniesCityScene({
                 <small>{hover.industry}</small>
               </div>
             )}
-            <div className="card benefits">
-              <div><span className="ic"><Briefcase size={18} /></span><span><b>Real opportunities</b><small>Internships, freelance and full-time</small></span></div>
-              <div><span className="ic"><Users size={18} /></span><span><b>Verified companies</b><small>Checked before they can post</small></span></div>
-              <div><span className="ic"><Zap size={18} /></span><span><b>Build your future</b><small>Connect, contribute, get hired</small></span></div>
-            </div>
             <div className="co-legend">
               {cityCompanies.map((c) => (
                 <button key={c.id} type="button" className={hover?.id === c.id || hoveredId === c.id ? 'on' : ''} aria-label={`Open ${c.name}`} onPointerEnter={() => onHoverId?.(c.id)} onPointerLeave={() => onHoverId?.(null)} onClick={() => { const p = byId.get(c.id); if (p) onOpen(p.handle); }}>

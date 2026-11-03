@@ -46,9 +46,6 @@ export function SignInPage() {
       <div className="mx-auto max-w-md">
         <div className="card-g auth-fm">
           <div>
-            <span className="eyebrow-link">
-              <span className="dot" /> Welcome back
-            </span>
             <h3>Sign in to WebLoop</h3>
             <p className="text-xs" style={{ color: 'var(--text-2)', marginTop: 4 }}>
               Sign in to contribute and manage your projects.

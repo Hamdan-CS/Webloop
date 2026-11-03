@@ -46,7 +46,7 @@ const reduceMotion = () => typeof window !== 'undefined' && window.matchMedia('(
  * 60fps must not trigger a React re-render on every tick. The step <span>
  * bodies are always in the DOM; only a CSS class toggle shows/hides them. */
 export function PinnedScene({
-  outerRef, stageRef, canvasRef, subscribeProgress, visible, eyebrow, title, sub, steps, hint, ariaLabel,
+  outerRef, stageRef, canvasRef, subscribeProgress, visible, title, sub, steps, hint, ariaLabel,
   supported, fallback, richFallback, tip, controls, legend, showMeter = true, showCaption = true, className, lengthVh = 480,
 }: PinnedSceneProps) {
   const trackRef = useRef<HTMLSpanElement>(null);
@@ -98,7 +98,6 @@ export function PinnedScene({
     <section ref={outerRef} className={cn('ws-scene', className)} style={{ height: `${lengthVh}vh` }}>
       <div ref={stageRef} className="ws-pin">
         <div className="ws-copy">
-          <p className="hr-eyebrow">{eyebrow}</p>
           <h2 className="hr-h2 ws-headline" ref={headlineRef}>{title}</h2>
           <p className="hr-lead" style={{ marginTop: 14 }}>{sub}</p>
           <ol className="ws-steps">

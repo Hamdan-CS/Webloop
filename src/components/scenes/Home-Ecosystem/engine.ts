@@ -151,11 +151,11 @@ export function createEcosystemEngine(
     const p = PEOPLE[k]; x.save(); x.beginPath(); x.arc(cx, cy, r, 0, 7); x.clip();
     const g = x.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
     g.addColorStop(0, p.cols[0]); g.addColorStop(1, p.cols[1]); x.fillStyle = g; x.fillRect(cx - r, cy - r, r * 2, r * 2);
-    x.fillStyle = '#fff'; x.font = `700 ${r}px Inter,system-ui,sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillStyle = '#fff'; x.font = `700 ${r}px Figtree,system-ui,sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle';
     x.fillText(p.n[0], cx, cy + r * 0.05);
     x.restore();
   };
-  const FONT = 'Inter,system-ui,sans-serif';
+  const FONT = 'Figtree,system-ui,sans-serif';
   const txt = (x: CanvasRenderingContext2D, s: string, px: number, py: number, sz: number, col: string, wt = 600, al: CanvasTextAlign = 'left') => {
     x.font = `${wt} ${sz}px ${FONT}`; x.fillStyle = col; x.textAlign = al; x.fillText(s, px, py);
   };
@@ -481,8 +481,8 @@ export function createEcosystemEngine(
     x.strokeStyle = gr; x.lineWidth = 20; x.shadowColor = 'rgba(0,40,120,.6)'; x.shadowBlur = 12;
     x.beginPath(); x.moveTo(256, 70); x.bezierCurveTo(226, 20, 150, 20, 150, 70); x.bezierCurveTo(150, 120, 226, 120, 256, 70);
     x.bezierCurveTo(286, 20, 362, 20, 362, 70); x.bezierCurveTo(362, 120, 286, 120, 256, 70); x.stroke();
-    x.fillStyle = '#fff'; x.font = '800 78px Inter,system-ui,sans-serif'; x.fillText('WebLoop', 256, 205);
-    x.font = '600 30px Inter,system-ui,sans-serif'; x.fillText('Project Ecosystem', 256, 255);
+    x.fillStyle = '#fff'; x.font = '800 78px Figtree,system-ui,sans-serif'; x.fillText('WebLoop', 256, 205);
+    x.font = '600 30px Figtree,system-ui,sans-serif'; x.fillText('Project Ecosystem', 256, 255);
   });
   const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: label, transparent: true, depthTest: false }));
   spr.scale.set(3.1, 1.82, 1); spr.position.set(0, 0.85, 0.25); spr.renderOrder = 5; core.add(spr);

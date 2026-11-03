@@ -83,8 +83,7 @@ html.light .campus-fallback .cf-light { opacity: 1; }
 .home-hero.campus h1.hc-h1 { font-size: clamp(34px, 3.3vw, 50px); line-height: 1.02; letter-spacing: -.035em; font-weight: 800; margin: 14px 0 0; max-width: 13.2em; }
 .hc-w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .08em; margin-bottom: -.08em; }
 .hc-w > span { display: inline-block; will-change: transform; }
-.hc-hl { background: linear-gradient(90deg, var(--cyan), var(--blue) 45%, var(--violet) 75%, var(--cyan)); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: hc-shine 7s linear infinite; }
-@keyframes hc-shine { to { background-position: -220% 0; } }
+.hc-hl { font-family: var(--font-accent); font-style: italic; font-weight: 400; letter-spacing: -.01em; background: none; -webkit-background-clip: border-box; background-clip: border-box; color: inherit; font-size: 1.1em; padding-right: .08em; }
 html.dark .hr-lead, html.dark .hc-tags { text-shadow: 0 1px 14px rgba(3, 8, 20, .8); }
 html.dark .hc-h1 { text-shadow: 0 2px 30px rgba(3, 8, 20, .55); }
 .home-hero.campus .hr-lead { font-size: clamp(15px, 1.25vw, 18px); max-width: 30em; margin-top: 16px; }
@@ -92,8 +91,6 @@ html.dark .hc-h1 { text-shadow: 0 2px 30px rgba(3, 8, 20, .55); }
 .hc-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 22px 0 0; font-size: 12.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .hc-tags i { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); opacity: .8; }
 @media (max-width: 1000px) { .home-hero.campus h1.hc-h1 { font-size: clamp(34px, 9vw, 52px); } .home-hero.campus .home-copy { padding-bottom: 8px; } }
-@media (prefers-reduced-motion: reduce) { .hc-hl { animation: none; } }
-html.light .hc-hl { background-image: linear-gradient(90deg, #0a6fd6, #2a56d8 45%, #6d3fe0 75%, #0a6fd6); background-size: 220% 100%; }
 .home-hero.campus .hr-lead { max-width: 24em; }
 @media (min-width: 1001px) { html.light .home-hero.campus .hr-lead { color: var(--text-2); } }
 

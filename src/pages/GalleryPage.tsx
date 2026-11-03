@@ -44,7 +44,6 @@ export function GalleryPage() {
   return (
     <div className="container-page py-8">
       <div className="sec-hd" style={{ marginBottom: 28 }}>
-        <span className="eyebrow-link"><span className="dot" />Student work gallery</span>
         <h1 className="gal-title">Student work <span className="hl">gallery</span></h1>
         <p className="gal-sub">
           Every task you finish is reviewed by a project owner and becomes verified career evidence.

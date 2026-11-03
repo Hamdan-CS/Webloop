@@ -89,7 +89,6 @@ export function LiveProjectsScene() {
       <div className="wrap wide">
         <div className="live-top">
           <div className="sec-hd">
-            <span className="eyebrow-link"><span className="dot" />Live projects</span>
             <h2 id="h-rlive" className="hr-h2" style={{ maxWidth: '20ch' }}>
               Real projects. Real people. Real <span className="hl" style={{ background: 'linear-gradient(90deg, var(--cyan), var(--blue))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>opportunities.</span>
             </h2>

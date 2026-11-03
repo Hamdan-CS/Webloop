@@ -62,7 +62,6 @@ export function InfinityScene() {
     <section ref={sectionRef} className="ws-scene sec inf" aria-labelledby="h-rinf" style={{ paddingTop: 96, paddingBottom: 96 }}>
       <div className="wrap inf-grid">
         <div className="sec-hd inf-copy">
-          <span className="eyebrow-link"><span className="dot" />WebLoop infinity</span>
           <h2 id="h-rinf" className="hr-h2" style={{ maxWidth: '22ch' }}>
             An infinite loop of ideas, people, and <span className="hl" style={{ background: 'linear-gradient(90deg, var(--cyan), var(--blue))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>possibilities.</span>
           </h2>

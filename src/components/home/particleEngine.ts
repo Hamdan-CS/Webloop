@@ -85,7 +85,7 @@ export function startParticleStage(): () => void {
   // reveal below, so there is exactly one wordmark, never two).
   let WORD: Float32Array | null = null;
   let WM: { w: number; h: number } | null = null;
-  const FAM = 'Inter,"Helvetica Neue",Arial,sans-serif';
+  const FAM = 'Figtree,"Helvetica Neue",Arial,sans-serif';
   const TC_W = 1600, TC_H = 480;
   const wordTexCanvas = document.createElement('canvas');
   wordTexCanvas.width = TC_W; wordTexCanvas.height = TC_H;
@@ -125,7 +125,7 @@ export function startParticleStage(): () => void {
     WM = { w: TC_W * k, h: TC_H * k };
   }
   buildWordmark();
-  if (document.fonts && document.fonts.load) document.fonts.load('700 200px Inter').then(() => document.fonts.ready).then(() => buildWordmark()).catch(() => {});
+  if (document.fonts && document.fonts.load) document.fonts.load('700 200px Figtree').then(() => document.fonts.ready).then(() => buildWordmark()).catch(() => {});
 
   const SHAPES = [
     (i: number, _t: number, o: number[]) => { o[0] = LOOP[i * 3]; o[1] = LOOP[i * 3 + 1]; o[2] = LOOP[i * 3 + 2]; },

@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, Sparkles, LogOut, User, LayoutDashboard, FileText } from 'lucide-react';
+import { Menu, X, LogOut, User, LayoutDashboard, FileText } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
@@ -110,8 +110,7 @@ export function Navbar() {
                 Sign In
               </button>
               <button className="hdr-primary flex items-center gap-2 whitespace-nowrap" onClick={() => navigate('/join')}>
-                <Sparkles size={15} />
-                Join the Platform
+Join the Platform
               </button>
             </>
           )}
@@ -164,7 +163,7 @@ export function Navbar() {
                     Sign In
                   </button>
                   <button className="hdr-primary flex items-center justify-center gap-2" onClick={() => { setMobileOpen(false); navigate('/join'); }}>
-                    <Sparkles size={15} /> Join the Platform
+Join the Platform
                   </button>
                 </>
               )}

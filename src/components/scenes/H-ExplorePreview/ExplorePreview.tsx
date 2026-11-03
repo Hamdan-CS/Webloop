@@ -40,7 +40,6 @@ export function ExplorePreview() {
         <div className="ex-hero">
           <Reveal>
             <div className="sec-hd">
-              <span className="eyebrow-link"><span className="dot" />Explore projects</span>
               <h2 id="h-ex" className="hr-h2">Discover real projects built by <span className="hl">students, companies</span> and <span className="hl">universities.</span></h2>
               <p className="hr-lead" style={{ marginTop: 14 }}>Student ideas, company opportunities, and university programmes, all open to browse and join.</p>
               <Link to="/explore" className="hr-btn" style={{ marginTop: 18 }}>

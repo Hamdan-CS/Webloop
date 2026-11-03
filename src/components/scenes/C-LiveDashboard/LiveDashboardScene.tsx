@@ -152,7 +152,6 @@ export function LiveDashboardScene() {
     <section id="home-dashboard" className="ws-scene home-sec" aria-labelledby="h-rdash">
       <div className="wrap split">
         <div className="sec-hd">
-          <span className="eyebrow-link"><span className="dot" />Live dashboard</span>
           <h2 id="h-rdash" className="hr-h2" style={{ maxWidth: '18ch' }}>From collaboration to measurable <span className="hl" style={{ background: 'linear-gradient(90deg, var(--cyan), var(--blue))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>progress.</span></h2>
           <p className="hr-lead" style={{ marginTop: 14 }}>Companies and teams can see what is happening inside a project, task by task and commit by commit.</p>
           <span className="demo-note" style={{ marginTop: 14 }}>Demonstration data · activity feed is simulated</span>

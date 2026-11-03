@@ -155,7 +155,6 @@ export function TeamFormationScene() {
     <section id="team" className="ws-scene" aria-labelledby="h-rteam" style={{ paddingTop: 96, paddingBottom: 96, scrollMarginTop: 80 }}>
       <div className="wrap">
         <div className="sec-hd center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 18, marginBottom: 48 }}>
-          <span className="eyebrow-link"><span className="dot" />Team formation</span>
           <h2 id="h-rteam" className="hr-h2" style={{ maxWidth: '26ch' }}>
             Great things happen when the right people <span className="hl" style={{ background: 'linear-gradient(90deg, var(--cyan), var(--blue))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>connect.</span>
           </h2>

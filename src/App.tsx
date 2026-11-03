@@ -74,6 +74,22 @@ function NewStudentOnboardingRedirect() {
   return null;
 }
 
+/** React Router doesn't reset scroll position on navigation (it's an SPA —
+ * the browser never reloads), so without this, clicking a card from deep
+ * down a long page (e.g. the scroll-heavy home page) lands on the new page
+ * still scrolled to that same pixel offset, looking like it "opened at the
+ * bottom". Skip it on same-page hash jumps so in-page anchors still work. */
+function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+
+  useEffect(() => {
+    if (hash) return;
+    window.scrollTo(0, 0);
+  }, [pathname, hash]);
+
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -81,6 +97,7 @@ function App() {
         <AuthProvider>
           <AuthPromptProvider>
           <FloatingPanelProvider>
+          <ScrollToTop />
           <NewStudentOnboardingRedirect />
           <div className="flex min-h-dvh flex-col">
             <Navbar />

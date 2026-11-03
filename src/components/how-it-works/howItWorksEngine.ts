@@ -99,7 +99,7 @@ export function startHowItWorksStage(): () => void {
   const ease = (x: number) => x * x * (3 - 2 * x);
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
   const rand = (i: number) => Math.abs(Math.sin(i * 12.9898) * 43758.5453) % 1;
-  const FONT = 'Manrope, Inter, system-ui, sans-serif';
+  const FONT = 'Figtree, system-ui, sans-serif';
   const tmp = new THREE.Color();
   const box = new THREE.BoxGeometry(1, 1, 1);
   box.translate(0, 0.5, 0);

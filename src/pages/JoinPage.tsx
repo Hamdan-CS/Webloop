@@ -97,9 +97,6 @@ export function JoinPage() {
   return (
     <div className="container-page py-10">
       <div className="join-hd max-w-3xl">
-        <span className="eyebrow-link">
-          <span className="dot" /> Join WebLoop
-        </span>
         <h1 className="font-display text-3xl sm:text-4xl font-bold text-white">Choose how you want to participate.</h1>
         <p className="lead mt-3">
           Accounts are free. Guests can browse everything without signing in — you only need an account to contribute, apply, or publish.

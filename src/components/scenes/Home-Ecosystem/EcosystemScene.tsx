@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, GraduationCap, Landmark, Briefcase, Box, Users, ArrowUpRight, X } from 'lucide-react';
+import { GraduationCap, Landmark, Briefcase, Box, Users, ArrowUpRight, X } from 'lucide-react';
 import { ENTITIES, REGIONS, restView, viewRect, type EntityDef, type View } from './campusData';
 import { createCampusEngine, type CampusHandle, type PinLayout } from './campusEngine';
 import { supportsWebGL, prefersReducedMotion } from '@/components/contributions/webgl';
@@ -52,9 +52,8 @@ export function EcosystemScene() {
       gsap.set('.hc-w > span', { yPercent: 115, rotate: 3 });
       gsap.set('.hc-in', { opacity: 0, y: 14 });
       const tl = gsap.timeline({ delay: 0.25, defaults: { ease: 'power3.out' } });
-      tl.to('.hc-in.eyebrow-link', { opacity: 1, y: 0, duration: 0.7 })
-        .to('.hc-w > span', { yPercent: 0, rotate: 0, duration: 1.0, stagger: 0.07 }, '-=0.45')
-        .to('.hc-in:not(.eyebrow-link)', { opacity: 1, y: 0, duration: 0.8, stagger: 0.12 }, '-=0.6');
+      tl.to('.hc-w > span', { yPercent: 0, rotate: 0, duration: 1.0, stagger: 0.07 })
+        .to('.hc-in', { opacity: 1, y: 0, duration: 0.8, stagger: 0.12 }, '-=0.6');
     }, el);
     return () => ctx.revert();
   }, []);
@@ -179,14 +178,13 @@ export function EcosystemScene() {
     <section id="home" className={`home ws-scene home-hero campus${focus >= 0 ? ' is-focus' : ''}`} aria-labelledby="h-rhome" style={{ paddingTop: isStacked() ? 72 : 96 }}>
       <div className="wrap home-grid">
         <div className="home-copy" ref={copyRef}>
-          <span className="eyebrow-link hc-in"><span className="dot" />The WebLoop Ecosystem</span>
           <h1 id="h-rhome" className="hr-h1 hc-h1" aria-label="Where ideas, people and industry build real projects.">
             {HEAD.map((w, i) => (
               <span key={i} aria-hidden="true"><span className="hc-w"><span className={w.hl ? 'hc-hl' : undefined}>{w.t}</span></span>{' '}</span>
             ))}
           </h1>
           <div className="home-cta hr-cta hc-in">
-            <button type="button" className="hr-btn primary" onClick={() => navigate('/join')}><Sparkles size={15} /> Join WebLoop</button>
+            <button type="button" className="hr-btn primary" onClick={() => navigate('/join')}>Join WebLoop</button>
             <button type="button" className="hr-btn" onClick={() => navigate('/explore')}>Explore Projects</button>
           </div>
         </div>

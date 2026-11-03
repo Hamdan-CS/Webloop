@@ -6,7 +6,7 @@
  * Kept framework-agnostic (plain three.js) so every scene engine can share it. */
 import * as THREE from 'three';
 
-export const FONT = '"Space Grotesk",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif';
+export const FONT = 'Figtree,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif';
 
 export function rr(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
