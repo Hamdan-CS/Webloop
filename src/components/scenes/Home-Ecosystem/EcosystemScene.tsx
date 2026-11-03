@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, GraduationCap, Landmark, Briefcase, Box, Users, ArrowUpRight, CheckCircle2, X } from 'lucide-react';
+import { Sparkles, GraduationCap, Landmark, Briefcase, Box, Users, ArrowUpRight, X } from 'lucide-react';
 import { ENTITIES, REGIONS, restView, viewRect, type EntityDef, type View } from './campusData';
 import { createCampusEngine, type CampusHandle, type PinLayout } from './campusEngine';
 import { supportsWebGL, prefersReducedMotion } from '@/components/contributions/webgl';
@@ -98,12 +98,15 @@ export function EcosystemScene() {
   }, [navigate]);
 
   // Pin + fallback-image placement share the same view maths as the shader.
+  // Approximate footprint of a resting pin label (icon + one-word title pill).
+  const PIN_W = 150, PIN_H = 38;
   const place = useCallback((pins: PinLayout[], _view?: View) => {
     const stage = stageRef.current; if (!stage) return;
     const W = stage.clientWidth, H = stage.clientHeight;
     const copy = !isStacked() && !document.getElementById('home')?.classList.contains('is-focus') ? document.querySelector<HTMLElement>('.home-copy') : null;
     const sr = stage.getBoundingClientRect();
     const cr = copy?.getBoundingClientRect();
+    const placed: { x: number; y: number }[] = [];
     pins.forEach((p, i) => {
       const el = pinRefs.current[i]; if (!el) return;
       let { x, y } = p;
@@ -112,6 +115,12 @@ export function EcosystemScene() {
       if (cr && y > cr.top - sr.top - 10 && y < cr.bottom - sr.top + 10) x = Math.max(x, cr.right - sr.left + 22);
       const focused = !!document.getElementById('home')?.classList.contains('is-focus') && !isStacked();
       const out = (focused && x < W * 0.27) || x < 12 || y < 12 || x > W - 12 || y > H - 12 || y < 76;
+      // two neighbouring labels can otherwise land on top of each other and
+      // become unreadable; nudge this one down until it clears the others
+      for (const q of placed) {
+        if (Math.abs(x - q.x) < PIN_W && Math.abs(y - q.y) < PIN_H) y = q.y + PIN_H;
+      }
+      placed.push({ x, y });
       el.style.visibility = out && !p.on ? 'hidden' : 'visible';
       x = Math.min(W - 16, Math.max(16, x)); y = Math.min(H - 16, Math.max(16, y));
       el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;

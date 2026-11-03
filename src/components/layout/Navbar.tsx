@@ -61,19 +61,19 @@ export function Navbar() {
           <Wordmark />
         </Link>
 
-        <nav className="hidden md:flex items-center gap-[clamp(14px,2.2vw,30px)]">
+        <nav className="hidden md:flex items-center gap-[clamp(10px,1.8vw,30px)]">
           {visibleNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) => cn('hdr-link', isActive && 'active')}
+              className={({ isActive }) => cn('hdr-link whitespace-nowrap', isActive && 'active')}
             >
               {item.label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2 lg:gap-3">
           <ThemeToggle />
           <NotificationBell />
           {user ? (
@@ -106,10 +106,10 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <button className="hdr-link" onClick={() => navigate('/signin')}>
+              <button className="hdr-link whitespace-nowrap" onClick={() => navigate('/signin')}>
                 Sign In
               </button>
-              <button className="hdr-primary flex items-center gap-2" onClick={() => navigate('/join')}>
+              <button className="hdr-primary flex items-center gap-2 whitespace-nowrap" onClick={() => navigate('/join')}>
                 <Sparkles size={15} />
                 Join the Platform
               </button>
