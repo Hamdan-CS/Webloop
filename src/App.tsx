@@ -1,31 +1,43 @@
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { AuthPromptProvider } from '@/components/auth/AuthPrompt';
 import { AuthProvider, useAuth } from '@/components/auth/AuthContext';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { FloatingPanelProvider, PanelBadgeSync, FloatingPanel } from '@/components/FloatingPanel';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { HomePage } from '@/pages/HomePage';
-import { ExplorePage } from '@/pages/ExplorePage';
-import { GalleryPage } from '@/pages/GalleryPage';
-import { CompaniesPage } from '@/pages/CompaniesPage';
-import { HowItWorksPage } from '@/pages/HowItWorksPage';
-import { JoinPage } from '@/pages/JoinPage';
-import { SignInPage } from '@/pages/SignInPage';
-import { ProjectDetailPage } from '@/pages/ProjectDetailPage';
-import { CreatorProfilePage } from '@/pages/CreatorProfilePage';
-import { PublishProjectPage } from '@/pages/PublishProjectPage';
-import { MyApplicationsPage } from '@/pages/MyApplicationsPage';
-import { EditProfilePage } from '@/pages/EditProfilePage';
-import { BuildProfilePage } from '@/pages/BuildProfilePage';
-import { NotFoundPage } from '@/pages/NotFoundPage';
 import { RoleRoute } from '@/components/auth/RoleRoute';
 import { GuestOnlyRoute } from '@/components/auth/GuestOnlyRoute';
-import { StudentDashboard } from '@/pages/dashboards/StudentDashboard';
-import { CompanyDashboard } from '@/pages/dashboards/CompanyDashboard';
-import { UniversityDashboard } from '@/pages/dashboards/UniversityDashboard';
 import { GlobalTip } from '@/components/ui/GlobalTip';
+
+// Route-level code splitting: each page ships as its own chunk instead of
+// one ~1.3MB bundle, so a visitor only downloads the page they land on.
+const HomePage = lazy(() => import('@/pages/HomePage').then((m) => ({ default: m.HomePage })));
+const ExplorePage = lazy(() => import('@/pages/ExplorePage').then((m) => ({ default: m.ExplorePage })));
+const GalleryPage = lazy(() => import('@/pages/GalleryPage').then((m) => ({ default: m.GalleryPage })));
+const CompaniesPage = lazy(() => import('@/pages/CompaniesPage').then((m) => ({ default: m.CompaniesPage })));
+const HowItWorksPage = lazy(() => import('@/pages/HowItWorksPage').then((m) => ({ default: m.HowItWorksPage })));
+const JoinPage = lazy(() => import('@/pages/JoinPage').then((m) => ({ default: m.JoinPage })));
+const SignInPage = lazy(() => import('@/pages/SignInPage').then((m) => ({ default: m.SignInPage })));
+const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })));
+const CreatorProfilePage = lazy(() => import('@/pages/CreatorProfilePage').then((m) => ({ default: m.CreatorProfilePage })));
+const PublishProjectPage = lazy(() => import('@/pages/PublishProjectPage').then((m) => ({ default: m.PublishProjectPage })));
+const MyApplicationsPage = lazy(() => import('@/pages/MyApplicationsPage').then((m) => ({ default: m.MyApplicationsPage })));
+const EditProfilePage = lazy(() => import('@/pages/EditProfilePage').then((m) => ({ default: m.EditProfilePage })));
+const BuildProfilePage = lazy(() => import('@/pages/BuildProfilePage').then((m) => ({ default: m.BuildProfilePage })));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
+const StudentDashboard = lazy(() => import('@/pages/dashboards/StudentDashboard').then((m) => ({ default: m.StudentDashboard })));
+const CompanyDashboard = lazy(() => import('@/pages/dashboards/CompanyDashboard').then((m) => ({ default: m.CompanyDashboard })));
+const UniversityDashboard = lazy(() => import('@/pages/dashboards/UniversityDashboard').then((m) => ({ default: m.UniversityDashboard })));
+
+function RouteLoading() {
+  return (
+    <div className="flex h-[60vh] items-center justify-center">
+      <Loader2 size={24} className="animate-spin" style={{ color: 'var(--hr-accent)' }} />
+    </div>
+  );
+}
 
 /**
  * Google OAuth signs a brand-new user in the same way it signs a returning
@@ -74,25 +86,27 @@ function App() {
             <Navbar />
             {/* the header is now position:fixed (so it can hide on scroll), so push content below it */}
             <main className="flex-1 pt-16">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/explore" element={<ExplorePage />} />
-                <Route path="/gallery" element={<GalleryPage />} />
-                <Route path="/companies" element={<CompaniesPage />} />
-                <Route path="/how-it-works" element={<GuestOnlyRoute><HowItWorksPage /></GuestOnlyRoute>} />
-                <Route path="/join" element={<JoinPage />} />
-                <Route path="/signin" element={<SignInPage />} />
-                <Route path="/projects/:slug" element={<ProjectDetailPage />} />
-                <Route path="/creators/:handle" element={<CreatorProfilePage />} />
-                <Route path="/publish" element={<PublishProjectPage />} />
-                <Route path="/my-applications" element={<MyApplicationsPage />} />
-                <Route path="/settings" element={<EditProfilePage />} />
-                <Route path="/build-profile" element={<BuildProfilePage />} />
-                <Route path="/dashboard/student" element={<RoleRoute allowed={['student', 'team']}><StudentDashboard /></RoleRoute>} />
-                <Route path="/dashboard/company" element={<RoleRoute allowed={['company']}><CompanyDashboard /></RoleRoute>} />
-                <Route path="/dashboard/university" element={<RoleRoute allowed={['university']}><UniversityDashboard /></RoleRoute>} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
+              <Suspense fallback={<RouteLoading />}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/explore" element={<ExplorePage />} />
+                  <Route path="/gallery" element={<GalleryPage />} />
+                  <Route path="/companies" element={<CompaniesPage />} />
+                  <Route path="/how-it-works" element={<GuestOnlyRoute><HowItWorksPage /></GuestOnlyRoute>} />
+                  <Route path="/join" element={<JoinPage />} />
+                  <Route path="/signin" element={<SignInPage />} />
+                  <Route path="/projects/:slug" element={<ProjectDetailPage />} />
+                  <Route path="/creators/:handle" element={<CreatorProfilePage />} />
+                  <Route path="/publish" element={<PublishProjectPage />} />
+                  <Route path="/my-applications" element={<MyApplicationsPage />} />
+                  <Route path="/settings" element={<EditProfilePage />} />
+                  <Route path="/build-profile" element={<BuildProfilePage />} />
+                  <Route path="/dashboard/student" element={<RoleRoute allowed={['student', 'team']}><StudentDashboard /></RoleRoute>} />
+                  <Route path="/dashboard/company" element={<RoleRoute allowed={['company']}><CompanyDashboard /></RoleRoute>} />
+                  <Route path="/dashboard/university" element={<RoleRoute allowed={['university']}><UniversityDashboard /></RoleRoute>} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </Suspense>
             </main>
             <Footer />
             <PanelBadgeSync />
