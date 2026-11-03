@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { CompaniesCityScene } from '@/components/scenes/Companies-City/CompaniesCityScene';
 import { CompaniesGrid } from '@/components/scenes/Companies-City/CompaniesGrid';
@@ -9,7 +9,6 @@ const EcosystemScene = lazy(() => import('@/components/scenes/Home-Ecosystem/Eco
 const ProjectStackScene = lazy(() => import('@/components/scenes/A-ProjectStack/ProjectStackScene'));
 const LiveDashboardScene = lazy(() => import('@/components/scenes/C-LiveDashboard/LiveDashboardScene'));
 const ProjectShowcaseScene = lazy(() => import('@/components/scenes/F-ProjectShowcase/ProjectShowcaseScene'));
-const StudentWorkPreview = lazy(() => import('@/components/scenes/G-StudentWorkPreview/StudentWorkPreview'));
 const ExplorePreview = lazy(() => import('@/components/scenes/H-ExplorePreview/ExplorePreview'));
 
 function SceneLoading() {
@@ -22,9 +21,11 @@ function SceneLoading() {
 
 /** Section 7 — Discover Companies. Kept exactly as the /companies page's
  * city scene (same component, same building animation); fed demonstration
- * data here instead of a live Supabase fetch, and "Open" just goes to the
- * real companies page since these fictional companies have no profile. */
+ * data here instead of a live Supabase fetch. These demo companies have
+ * real seeded profiles under the same handle, so "Open" goes straight to
+ * their /creators/:handle page like the real companies list does. */
 function CompaniesPreview() {
+  const navigate = useNavigate();
   const [hoverId, setHoverId] = useState<string | null>(null);
   const demoCompanies = COMPANIES.map((c) => ({
     id: c.id,
@@ -33,12 +34,13 @@ function CompaniesPreview() {
     avatar_url: null,
     bio: c.desc,
   }));
+  const openCompany = (handle: string) => navigate(`/creators/${handle}`);
 
   return (
     <section id="companies" className="ws-scene home-sec" aria-labelledby="h-co">
       <div className="wrap">
-        <CompaniesCityScene companies={demoCompanies} onOpen={() => { window.location.assign('/companies'); }} hoveredId={hoverId} onHoverId={setHoverId} />
-        <CompaniesGrid hoveredId={hoverId} onHover={setHoverId} />
+        <CompaniesCityScene companies={demoCompanies} onOpen={openCompany} hoveredId={hoverId} onHoverId={setHoverId} />
+        <CompaniesGrid hoveredId={hoverId} onHover={setHoverId} onOpen={openCompany} />
       </div>
     </section>
   );
@@ -85,11 +87,6 @@ export function HomePage() {
       {/* 4 — Project Showcase */}
       <Suspense fallback={<SceneLoading />}>
         <ProjectShowcaseScene />
-      </Suspense>
-
-      {/* 5 — Student Work preview */}
-      <Suspense fallback={<SceneLoading />}>
-        <StudentWorkPreview />
       </Suspense>
 
       {/* 6 — Explore Projects preview */}
