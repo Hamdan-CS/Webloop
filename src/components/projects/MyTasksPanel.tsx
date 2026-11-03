@@ -2,12 +2,9 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   Loader2,
   Send,
-  Link as LinkIcon,
   CheckCircle2,
   XCircle,
   Star,
-  RotateCcw,
-  AlertCircle,
   ClipboardList,
 } from 'lucide-react';
 import { fetchAssignedTasks, createSubmission, reportCannotComplete } from '@/lib/api';

@@ -42,7 +42,6 @@ import {
   compensationLabel,
   difficultyLabel,
   creatorTypeLabel,
-  relativeDate,
 } from '@/lib/labels';
 
 const ContributionGrid = lazy(() =>

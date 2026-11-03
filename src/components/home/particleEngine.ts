@@ -315,7 +315,8 @@ export function startParticleStage(): () => void {
       cur[j] += (lerp(ta[0], tb[0], fi) - cur[j]) * k;
       cur[j + 1] += (lerp(ta[1], tb[1], fi) - cur[j + 1]) * k;
       cur[j + 2] += (lerp(ta[2], tb[2], fi) - cur[j + 2]) * k;
-      let x = cur[j], y = cur[j + 1], z = cur[j + 2];
+      let x = cur[j], y = cur[j + 1];
+      const z = cur[j + 2];
       if (!reduce) { const s = seed[i] * 6.28; x += Math.sin(t * 0.8 + s) * 0.006; y += Math.cos(t * 0.7 + s) * 0.006; }
       pos[j] = x; pos[j + 1] = y; pos[j + 2] = z;
     }

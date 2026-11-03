@@ -68,8 +68,7 @@ const ART: Record<ArtKind, (seed: number) => string> = {
     o += trees(r, 252, 12, ['#12142e', '#171a38']);
     return svgWrap(o, lg('sk', [[0, '#26235e'], [0.35, '#a23f7e'], [0.55, '#ff8a3d'], [0.64, '#ffd27a']]) + lg('wt', [[0, '#ff9a55'], [0.25, '#9a3f6e'], [1, '#1f1d4d']]));
   },
-  campus(s) {
-    const r = mul(s + 9);
+  campus(_s) {
     let o = `<rect width="600" height="400" fill="url(#sk)"/><rect y="300" width="600" height="100" fill="#5fae5a"/>`;
     o += `<rect x="130" y="170" width="340" height="140" fill="#b5523b"/>${poly([[120, 170], [300, 120], [480, 170]], '#5b3a3a')}<rect x="262" y="90" width="76" height="120" fill="#c1604a"/>${poly([[252, 92], [300, 48], [348, 92]], '#5b3a3a')}<circle cx="300" cy="135" r="13" fill="#f6e7b0" stroke="#7a3a2a" stroke-width="3"/>`;
     for (let i = 0; i < 9; i++) { const x = 148 + i * 36; if (x > 250 && x < 340) continue; o += `<rect x="${x}" y="196" width="16" height="30" rx="8" fill="#f9dfa0"/><rect x="${x}" y="254" width="16" height="30" rx="8" fill="#f9dfa0"/>`; }
@@ -122,7 +121,7 @@ const ART: Record<ArtKind, (seed: number) => string> = {
     items.sort((a, b) => a[1] - b[1]).forEach((a) => (o += cube(...a)));
     return svgWrap(o, lg('bg', [[0, '#0a1a44'], [1, '#050b22']]));
   },
-  phones(s) {
+  phones(_s) {
     let o = `<rect width="600" height="400" fill="url(#bg)"/>`;
     ([[150, 40, -6], [320, 22, 5]] as [number, number, number][]).forEach(([x, y, rot], i) => {
       o += `<g transform="rotate(${rot} ${x + 70} ${y + 170})"><rect x="${x}" y="${y}" width="140" height="300" rx="26" fill="#0a0a14" stroke="#4b4b70" stroke-width="3"/><rect x="${x + 8}" y="${y + 8}" width="124" height="284" rx="20" fill="url(#sc${i})"/><circle cx="${x + 70}" cy="${y + 80}" r="26" fill="#fff" opacity=".9"/><rect x="${x + 24}" y="${y + 130}" width="92" height="10" rx="5" fill="#fff" opacity=".8"/><rect x="${x + 24}" y="${y + 152}" width="62" height="8" rx="4" fill="#fff" opacity=".5"/><path d="M${x + 22} ${y + 250} l22 -34 l20 18 l24 -44 l22 36" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/></g>`;
@@ -138,7 +137,7 @@ const ART: Record<ArtKind, (seed: number) => string> = {
     o += `<rect x="440" y="330" width="130" height="24" rx="6" fill="#ffd36b" transform="rotate(-8 500 340)"/>`;
     return svgWrap(o);
   },
-  rays(s) {
+  rays(_s) {
     let o = `<rect width="600" height="400" fill="#06080e"/>`;
     for (let i = -6; i <= 6; i++) o += `<line x1="300" y1="200" x2="${300 + i * 110}" y2="${i % 2 ? 0 : 400}" stroke="#2a6bff" stroke-opacity=".5"/>`;
     for (let k = 1; k < 7; k++) { const w = (30 * k * k) / 2 + 20, h = w * 0.6; o += `<rect x="${300 - w}" y="${200 - h}" width="${w * 2}" height="${h * 2}" fill="none" stroke="#38bdf8" stroke-opacity="${0.5 - k * 0.05}"/>`; }

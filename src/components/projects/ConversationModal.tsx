@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { X, Send, Loader2, ArrowLeft } from 'lucide-react';
+import { X, Send, Loader2 } from 'lucide-react';
 import { fetchConversation, sendMessage, markMessageRead } from '@/lib/api';
 import type { Message, Profile } from '@/lib/types';
 import { Avatar } from '@/components/ui/Avatar';

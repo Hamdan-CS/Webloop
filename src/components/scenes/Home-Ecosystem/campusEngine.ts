@@ -95,7 +95,7 @@ function maskTextures() {
     cols.forEach((col, i) => {
       if (!col) return;
       x.fillStyle = col; x.beginPath();
-      REGIONS[i].poly.forEach(([px, py], k) => { const X = (px / IMG_W) * 320, Y = (py / IMG_H) * 180; k ? x.lineTo(X, Y) : x.moveTo(X, Y); });
+      REGIONS[i].poly.forEach(([px, py], k) => { const X = (px / IMG_W) * 320, Y = (py / IMG_H) * 180; if (k) x.lineTo(X, Y); else x.moveTo(X, Y); });
       x.closePath(); x.fill();
     });
     const t = new THREE.CanvasTexture(c);
