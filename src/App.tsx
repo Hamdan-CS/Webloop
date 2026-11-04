@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { AuthPromptProvider } from '@/components/auth/AuthPrompt';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
-import { ThemeProvider } from '@/components/theme/ThemeProvider';
+import { DesignProvider } from '@/design-system/DesignProvider';
 import { FloatingPanelProvider, PanelBadgeSync, FloatingPanel } from '@/components/FloatingPanel';
 import { Navbar } from '@/components/navigation/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -93,7 +93,7 @@ function ScrollToTop() {
 function App() {
   return (
     <BrowserRouter>
-      <ThemeProvider>
+      <DesignProvider>
         <AuthProvider>
           <AuthPromptProvider>
           <FloatingPanelProvider>
@@ -133,7 +133,7 @@ function App() {
           </FloatingPanelProvider>
           </AuthPromptProvider>
         </AuthProvider>
-      </ThemeProvider>
+      </DesignProvider>
     </BrowserRouter>
   );
 }

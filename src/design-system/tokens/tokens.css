@@ -1,0 +1,234 @@
+/* ============================================================
+   DESIGN TOKENS — CSS variables
+   Single source of truth for every color, surface, shadow and
+   glass value in the app. Extracted from the old src/index.css
+   (THEME SYSTEM block) during the design-system migration —
+   values are unchanged, only the location moved.
+
+   :root/.dark hold the dark (default) theme; .light overrides
+   the same variables. tailwind.config.js reads the --slate-*,
+   --ink-*, --accent-*, --signal-* variables directly, so Tailwind
+   color classes (bg-ink-900, text-slate-300, text-accent-400...)
+   stay theme-aware automatically. Everything else (--panel,
+   --glass-line, --hr-*, generic --text/--muted aliases, etc.) is
+   consumed directly as var(--x) by component CSS.
+
+   See design-system/tokens/colors.ts, shadows.ts, radius.ts and
+   typography.ts for the same values exposed as typed JS/TS for
+   code that needs a token outside of CSS (canvas/WebGL scenes,
+   GSAP tweens, chart colors). Keep both in sync when editing.
+   ============================================================ */
+
+:root,
+.dark {
+  /* Base surfaces */
+  --ink-950: 7 10 18;
+  --ink-900: 11 15 26;
+  --ink-850: 15 20 36;
+  --ink-800: 20 26 46;
+  --ink-700: 28 36 64;
+  --ink-600: 40 49 86;
+  --ink-500: 58 68 118;
+  --ink-400: 91 104 150;
+
+  /* Text scale (slate) */
+  --slate-50: 248 250 252;
+  --slate-100: 241 245 249;
+  --slate-200: 226 232 240;
+  --slate-300: 203 213 225;
+  --slate-400: 148 163 184;
+  --slate-500: 100 116 139;
+  --slate-600: 71 85 105;
+  --slate-700: 51 65 85;
+  --slate-800: 30 41 59;
+  --slate-900: 15 23 42;
+
+  /* Strong text (maps to Tailwind "white") */
+  --content-strong: 255 255 255;
+
+  /* Accent — cyan */
+  --accent-50: 236 254 255;
+  --accent-100: 207 250 254;
+  --accent-200: 165 243 252;
+  --accent-300: 103 232 249;
+  --accent-400: 34 211 238;
+  --accent-500: 6 182 212;
+  --accent-600: 8 145 178;
+  --accent-700: 14 116 144;
+  --accent-800: 21 94 117;
+  --accent-900: 22 78 99;
+
+  /* Signal colors */
+  --signal-green: 52 211 153;
+  --signal-amber: 251 191 36;
+  --signal-rose: 251 113 133;
+  --signal-violet: 167 139 250;
+
+  /* Background decorations */
+  --body-bg: #070a12;
+  --body-radial: rgba(34, 211, 238, 0.10);
+  --body-radial-fade: rgba(7, 10, 18, 0);
+  --grid-line: rgba(91, 104, 150, 0.04);
+  --radial-glow-color: rgba(34, 211, 238, 0.18);
+  --grid-faint-line: rgba(91, 104, 150, 0.06);
+
+  /* Shadows */
+  --glow-border: rgba(34, 211, 238, 0.18);
+  --glow-spread: rgba(34, 211, 238, 0.35);
+  --card-inner: rgba(255, 255, 255, 0.04);
+  --card-shadow: rgba(0, 0, 0, 0.6);
+
+  /* Particle-stage halo — one hue (accent cyan), restrained: a soft light source, not a decoration */
+  --particle-glow-core: rgba(34, 211, 238, 0.30);
+  --particle-glow-edge: rgba(34, 211, 238, 0);
+  --particle-glow-blur: 56px;
+  --particle-glow-blend: screen;
+
+  /* Borders / overlays used via white/N opacity in components */
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-soft: rgba(255, 255, 255, 0.10);
+  --surface-overlay: rgba(255, 255, 255, 0.05);
+  --surface-overlay-strong: rgba(255, 255, 255, 0.03);
+
+  /* Scrollbar */
+  --scroll-thumb: rgba(91, 104, 150, 0.25);
+  --scroll-thumb-hover: rgba(91, 104, 150, 0.4);
+
+  /* Header — glass-nav tokens matching the approved reference, kept global
+     (not scoped) so the site header matches on every page, not just "/". */
+  --hdr-bg: rgba(5, 10, 19, 0.72); --hdr-ink: #eaf2fc; --hdr-muted: #7f92ab; --hdr-line: rgba(140, 190, 255, 0.14);
+  --hdr-accent: #22d3ee; --hdr-accent-ink: #02222b; --hdr-chip: rgba(255, 255, 255, 0.06);
+  --hdr-btn-grad: #22d3ee;
+
+  /* ============================================================
+     GLASS DESIGN SYSTEM — ported from the approved HTML reference
+     (webloop-motion-demo.html). Site-wide: every page, not just "/".
+     ============================================================ */
+  --cyan: #22d3ee; --blue: #3b82f6; --violet: #8b5cf6;
+  --panel: rgba(15, 26, 44, 0.72); --panel-solid: #0e1a2e; --panel-2: rgba(255, 255, 255, 0.04);
+  --glass-line: rgba(140, 190, 255, 0.14); --glass-line-2: rgba(140, 190, 255, 0.26);
+  --glass-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6); --glass-shadow-lg: 0 40px 80px -30px rgba(0, 0, 0, 0.8);
+  --slab: linear-gradient(160deg, rgba(26, 44, 72, 0.82), rgba(12, 22, 40, 0.9));
+  --slab-edge: rgba(120, 200, 255, 0.28); --slab-side: #0c2036;
+  --heat-0: rgba(255, 255, 255, 0.06); --heat-1: #0e5a63; --heat-2: #12929a; --heat-3: #1fc8c0; --heat-4: #5ff0d6;
+  --glass-chip: rgba(255, 255, 255, 0.06); --glass-chip-line: rgba(255, 255, 255, 0.1);
+  --ok-bg: rgba(52, 211, 153, 0.14); --ok-fg: #5eead4;
+  --warn-bg: rgba(245, 158, 11, 0.16); --warn-fg: #fbbf24;
+  --vio-bg: rgba(139, 92, 246, 0.2); --vio-fg: #c4b5fd;
+  --inf-a: #22d3ee; --inf-b: #3b82f6; --inf-c: #a78bfa;
+  /* generic aliases so reference-ported CSS blocks can use the demo's own var names */
+  --text: #eaf2fc; --text-2: #b4c3d8; --muted: #7f92ab; --accent: var(--cyan); --accent-text: #2ee6f5; --link: #5fd8f0;
+  --line: var(--glass-line); --line-2: var(--glass-line-2); --ok: #34d399; --warn: #f59e0b;
+  --shadow: var(--glass-shadow); --shadow-lg: var(--glass-shadow-lg);
+  --chip: var(--glass-chip); --chip-line: var(--glass-chip-line);
+  --h0: var(--heat-0); --h1: var(--heat-1); --h2: var(--heat-2); --h3: var(--heat-3); --h4: var(--heat-4);
+  --btn: linear-gradient(135deg, #22d3ee, #0ea5e9); --btn-text: #02222b;
+  /* REVISION-section slab refinement (the reference's final, authoritative glass values) */
+  --slab: linear-gradient(180deg, rgba(255, 255, 255, .13), rgba(255, 255, 255, 0) 18%), linear-gradient(158deg, rgba(38, 78, 128, .58), rgba(7, 18, 38, .82) 62%, rgba(10, 26, 50, .78));
+  --slab-edge: rgba(150, 215, 255, .38); --slab-side: #0a1d33;
+  --edge-a: rgba(140, 220, 255, .62); --edge-b: rgba(40, 100, 170, .26); --spec: rgba(255, 255, 255, .2); --spec-b: rgba(110, 200, 255, .16);
+}
+
+.light {
+  /* --cyan/--blue/--violet are universal constants in the reference (declared
+     once in :root, never re-themed) — keep them identical to .dark. The
+     per-theme "safe contrast" colour is --accent/--accent-text/--link below. */
+  --cyan: #22d3ee; --blue: #3b82f6; --violet: #8b5cf6;
+  --hdr-bg: rgba(237, 242, 249, 0.86); --hdr-ink: #050e26; --hdr-muted: #3f5375; --hdr-line: rgba(16, 48, 105, 0.2);
+  --hdr-accent: #0679ab; --hdr-accent-ink: #fff; --hdr-chip: rgba(16, 56, 140, 0.09);
+  --hdr-btn-grad: #0a6c8f;
+
+  --panel: rgba(255, 255, 255, 0.92); --panel-solid: #ffffff; --panel-2: rgba(16, 48, 110, 0.065);
+  --glass-line: rgba(16, 48, 105, 0.2); --glass-line-2: rgba(16, 48, 105, 0.34);
+  --glass-shadow: 0 12px 30px -14px rgba(12, 40, 100, .38), 0 1px 0 rgba(255, 255, 255, .9) inset;
+  --glass-shadow-lg: 0 44px 70px -32px rgba(12, 50, 130, .5);
+  --heat-0: rgba(16, 48, 105, 0.1); --heat-1: #9ad3ee; --heat-2: #46b3e3; --heat-3: #1689cb; --heat-4: #0a5aa6;
+  --glass-chip: rgba(16, 56, 140, 0.09); --glass-chip-line: rgba(16, 56, 140, 0.16);
+  --ok-bg: #d9f7ea; --ok-fg: #056846;
+  --warn-bg: #fdecc8; --warn-fg: #8a5000;
+  --vio-bg: #e8e0ff; --vio-fg: #5b3bc4;
+  --inf-a: #0679ab; --inf-b: #1b4fd8; --inf-c: #7c3aed;
+  --text: #050e26; --text-2: #1b2b49; --muted: #3f5375; --accent: #0679ab; --accent-text: #0588c8; --link: #0662b4;
+  --line: var(--glass-line); --line-2: var(--glass-line-2); --ok: #34d399; --warn: #f59e0b;
+  --shadow: var(--glass-shadow); --shadow-lg: var(--glass-shadow-lg);
+  --chip: var(--glass-chip); --chip-line: var(--glass-chip-line);
+  --h0: var(--heat-0); --h1: var(--heat-1); --h2: var(--heat-2); --h3: var(--heat-3); --h4: var(--heat-4);
+  --btn: linear-gradient(135deg, #0897c2, #1b4fd8); --btn-text: #fff;
+  /* 21: slab refinement (deeper contrast, premium glass) — final/authoritative over the earlier REVISION pass */
+  --slab: linear-gradient(180deg, rgba(255, 255, 255, .92), rgba(255, 255, 255, .28) 22%), linear-gradient(158deg, rgba(170, 205, 248, .74), rgba(225, 238, 255, .5) 55%, rgba(140, 186, 240, .72));
+  --slab-edge: rgba(60, 125, 225, .55); --slab-side: #86aee6;
+  --edge-a: rgba(255, 255, 255, .95); --edge-b: rgba(60, 120, 225, .55); --spec: rgba(255, 255, 255, .9); --spec-b: rgba(90, 170, 255, .3);
+  /* Base surfaces — warm off-white with subtle blue. ink-900/850 step apart (not both pure
+     white) so a resting surface and a raised one still read as two tones with no border. */
+  --ink-950: 246 248 252;
+  --ink-900: 250 251 254;
+  --ink-850: 255 255 255;
+  --ink-800: 238 242 249;
+  --ink-700: 226 232 244;
+  --ink-600: 203 213 232;
+  --ink-500: 148 163 192;
+  --ink-400: 100 116 139;
+
+  /* Text scale — inverted for light bg */
+  --slate-50: 15 23 42;
+  --slate-100: 30 41 59;
+  --slate-200: 51 65 85;
+  --slate-300: 71 85 105;
+  --slate-400: 100 116 139;
+  --slate-500: 71 85 105;
+  --slate-600: 51 65 85;
+  --slate-700: 30 41 59;
+  --slate-800: 15 23 42;
+  --slate-900: 2 6 23;
+
+  /* Strong text */
+  --content-strong: 15 23 42;
+
+  /* Accent — deeper teal for readable contrast on light backgrounds */
+  --accent-50: 236 254 255;
+  --accent-100: 204 251 240;
+  --accent-200: 13 100 115;
+  --accent-300: 14 116 144;
+  --accent-400: 8 145 178;
+  --accent-500: 14 116 144;
+  --accent-600: 14 116 144;
+  --accent-700: 13 90 108;
+  --accent-800: 21 94 117;
+  --accent-900: 22 78 99;
+
+  /* Signal colors — deep enough that small badge text clears 4.5:1 on a light ground */
+  --signal-green: 3 122 86;
+  --signal-amber: 161 98 7;
+  --signal-rose: 190 18 60;
+  --signal-violet: 109 40 217;
+
+  /* Background decorations */
+  --body-bg: #edf2f9;
+  --body-radial: rgba(8, 150, 220, 0.08);
+  --body-radial-fade: rgba(237, 242, 249, 0);
+  --grid-line: rgba(100, 116, 139, 0.06);
+  --radial-glow-color: rgba(14, 116, 144, 0.10);
+  --grid-faint-line: rgba(100, 116, 139, 0.07);
+
+  /* Shadows */
+  --glow-border: rgba(14, 116, 144, 0.20);
+  --glow-spread: rgba(14, 116, 144, 0.25);
+  --card-inner: rgba(255, 255, 255, 0.8);
+  --card-shadow: rgba(15, 23, 42, 0.08);
+
+  /* Particle-stage halo — one hue, normal blend so it reads as a soft wash (not a wash-out) on a light canvas */
+  --particle-glow-core: rgba(8, 145, 178, 0.22);
+  --particle-glow-edge: rgba(8, 145, 178, 0);
+  --particle-glow-blur: 64px;
+  --particle-glow-blend: normal;
+
+  /* Borders / overlays — dark on light */
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-soft: rgba(15, 23, 42, 0.12);
+  --surface-overlay: rgba(15, 23, 42, 0.04);
+  --surface-overlay-strong: rgba(15, 23, 42, 0.025);
+
+  /* Scrollbar */
+  --scroll-thumb: rgba(100, 116, 139, 0.25);
+  --scroll-thumb-hover: rgba(100, 116, 139, 0.4);
+}

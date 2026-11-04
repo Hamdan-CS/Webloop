@@ -1,0 +1,54 @@
+/* ============================================================
+   VISUAL PRESETS — layered on top of the dark/light theme via
+   [data-preset] on <html>. Each preset overrides the SHARED,
+   global surface classes defined in src/index.css's
+   `@layer components` block (.surface, .surface-raised, .chip,
+   .btn-primary, .btn-secondary) so switching a preset changes
+   every page that uses those shared primitives.
+
+   Page-specific bespoke CSS (home-redesign, scenes/*, how-it-works,
+   etc.) is NOT retargeted here yet — see DESIGN-SYSTEM.md
+   "Known limitations" for the migration path.
+   ============================================================ */
+
+html[data-preset="glass"] .surface {
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  background: color-mix(in srgb, var(--panel-2) 70%, transparent 30%);
+  border-color: color-mix(in srgb, var(--glass-line-2) 80%, transparent);
+}
+html[data-preset="glass"] .surface-raised {
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  background: color-mix(in srgb, var(--panel) 85%, transparent 15%);
+  box-shadow: var(--glass-shadow-lg);
+  border-color: color-mix(in srgb, var(--cyan) 20%, var(--glass-line-2));
+}
+html[data-preset="glass"] .chip {
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--glass-chip) 70%, transparent 30%);
+}
+html[data-preset="glass"] .btn-primary {
+  box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--cyan) 80%, transparent);
+}
+
+html[data-preset="minimal"] .surface,
+html[data-preset="minimal"] .surface-raised {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: rgb(var(--ink-900));
+  border-color: rgb(var(--ink-700));
+  box-shadow: none;
+  border-radius: 10px;
+}
+html[data-preset="minimal"] .chip {
+  border-radius: 6px;
+  background: rgb(var(--ink-800));
+}
+html[data-preset="minimal"] .btn {
+  border-radius: 8px;
+}
+html[data-preset="minimal"] .btn-primary {
+  background: rgb(var(--accent-500));
+  box-shadow: none;
+}

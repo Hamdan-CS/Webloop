@@ -5,7 +5,7 @@ import { GraduationCap, Landmark, Briefcase, Box, Users, ArrowUpRight, X } from 
 import { ENTITIES, REGIONS, restView, viewRect, type EntityDef, type View } from './campusData';
 import { createCampusEngine, type CampusHandle, type PinLayout } from './campusEngine';
 import { supportsWebGL, prefersReducedMotion } from '@/components/contributions/webgl';
-import { useTheme } from '@/components/theme/ThemeProvider';
+import { useTheme } from '@/design-system/components/ThemeProvider';
 import './campus.css';
 
 const ENTITY_ICON: Record<EntityDef['k'], React.ReactNode> = {
