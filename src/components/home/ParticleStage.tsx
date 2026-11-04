@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { startParticleStage } from './particleEngine';
-import { INF_PATH } from '@/components/layout/Wordmark';
+import { INF_PATH } from '@/components/navigation/Wordmark';
 
 /**
  * Fixed full-screen particle canvas + its HTML overlay (loop labels, the

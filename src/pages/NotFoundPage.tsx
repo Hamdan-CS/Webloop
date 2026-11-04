@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Compass, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/shared/ui/Button';
 
 export function NotFoundPage() {
   return (

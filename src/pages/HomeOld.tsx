@@ -11,16 +11,16 @@ import {
   Trophy,
   Star,
 } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/shared/ui/Button';
+import { Badge } from '@/components/shared/ui/Badge';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { ParticleStage } from '@/components/home/ParticleStage';
-import { Reveal } from '@/components/ui/Reveal';
-import { fetchFeaturedProjects, fetchPortfolioGallery } from '@/lib/api';
-import type { Project, PortfolioItem } from '@/lib/types';
-import { Avatar } from '@/components/ui/Avatar';
-import { useAuth } from '@/components/auth/AuthContext';
-import { getDashboardPath } from '@/lib/roles';
+import { Reveal } from '@/components/shared/ui/Reveal';
+import { fetchFeaturedProjects, fetchPortfolioGallery } from '@/services/api';
+import type { Project, PortfolioItem } from '@/types';
+import { Avatar } from '@/components/shared/ui/Avatar';
+import { useAuth } from '@/contexts/AuthContext';
+import { getDashboardPath } from '@/utils/roles';
 
 export function HomePage() {
   const { user, profile } = useAuth();

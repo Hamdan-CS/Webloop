@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthContext';
-import { getDashboardPath } from '@/lib/roles';
+import { useAuth } from '@/contexts/AuthContext';
+import { getDashboardPath } from '@/utils/roles';
 
 interface GuestOnlyRouteProps {
   children: React.ReactNode;

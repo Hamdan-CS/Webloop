@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { X, Send, Loader2 } from 'lucide-react';
-import { fetchConversation, sendMessage, markMessageRead } from '@/lib/api';
-import type { Message, Profile } from '@/lib/types';
-import { Avatar } from '@/components/ui/Avatar';
-import { Button } from '@/components/ui/Button';
-import { relativeDate } from '@/lib/labels';
-import { cn } from '@/lib/utils';
+import { fetchConversation, sendMessage, markMessageRead } from '@/services/api';
+import type { Message, Profile } from '@/types';
+import { Avatar } from '@/components/shared/ui/Avatar';
+import { Button } from '@/components/shared/ui/Button';
+import { relativeDate } from '@/utils/labels';
+import { cn } from '@/utils/cn';
 
 interface Props {
   myProfile: Profile;

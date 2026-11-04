@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2, AlertCircle, ArrowRight, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthContext';
-import { Button } from '@/components/ui/Button';
-import { GoogleIcon } from '@/components/ui/GoogleIcon';
-import { getDashboardPath } from '@/lib/roles';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/shared/ui/Button';
+import { GoogleIcon } from '@/components/shared/ui/GoogleIcon';
+import { getDashboardPath } from '@/utils/roles';
 
 export function SignInPage() {
   const { signIn, signInWithGoogle } = useAuth();

@@ -7,7 +7,7 @@ import { ArrowRight, Star, Users } from 'lucide-react';
 import { PROJECTS, BY_ID, projectOwnerName, projectOwnerRole, personOf, STATUS_LABEL, COMPANIES, type DemoProject } from '@/data/homeDemo';
 import { art, logoArt } from '@/data/homeArt';
 import { IllustratedAvatar } from '../shared/IllustratedAvatar';
-import { Reveal } from '@/components/ui/Reveal';
+import { Reveal } from '@/components/shared/ui/Reveal';
 
 const FAN = [BY_ID.skillsync, BY_ID.pixel, BY_ID.studyflow];
 const FAN_IDS = new Set(FAN.map((p) => p.id));

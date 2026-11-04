@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { fetchProfileProjects } from '@/lib/api';
-import type { Project } from '@/lib/types';
+import { fetchProfileProjects } from '@/services/api';
+import type { Project } from '@/types';
 
 /** Resolves which of the signed-in profile's projects should show a task management panel. */
 export function useTasks(profileId: string | undefined) {

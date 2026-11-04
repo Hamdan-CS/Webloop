@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Inbox, ArrowRight, Clock, CheckCircle2, XCircle, Briefcase } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthContext';
-import { fetchMyApplications } from '@/lib/api';
-import type { Application } from '@/lib/types';
-import { statusLabel } from '@/lib/labels';
-import { cn } from '@/lib/utils';
-import type { ProjectStatus } from '@/lib/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { fetchMyApplications } from '@/services/api';
+import type { Application } from '@/types';
+import { statusLabel } from '@/utils/labels';
+import { cn } from '@/utils/cn';
+import type { ProjectStatus } from '@/types';
 
 const appBadge: Record<Application['status'], string> = { pending: 'rb-prog', accepted: 'rb-rec', declined: 'rb-bad' };
 const FILTERS = ['all', 'pending', 'accepted', 'declined'] as const;

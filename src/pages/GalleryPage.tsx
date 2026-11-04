@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Images } from 'lucide-react';
-import { fetchPortfolioGallery } from '@/lib/api';
-import type { PortfolioItem } from '@/lib/types';
+import { fetchPortfolioGallery } from '@/services/api';
+import type { PortfolioItem } from '@/types';
 import { WorkCard } from '@/components/gallery/WorkCard';
 import { WorkDetail, StudentDetail } from '@/components/gallery/GalleryOverlays';
 

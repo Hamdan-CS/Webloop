@@ -2,14 +2,14 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-ro
 import { lazy, Suspense, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { AuthPromptProvider } from '@/components/auth/AuthPrompt';
-import { AuthProvider, useAuth } from '@/components/auth/AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { FloatingPanelProvider, PanelBadgeSync, FloatingPanel } from '@/components/FloatingPanel';
-import { Navbar } from '@/components/layout/Navbar';
+import { Navbar } from '@/components/navigation/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { RoleRoute } from '@/components/auth/RoleRoute';
 import { GuestOnlyRoute } from '@/components/auth/GuestOnlyRoute';
-import { GlobalTip } from '@/components/ui/GlobalTip';
+import { GlobalTip } from '@/components/shared/ui/GlobalTip';
 
 // Route-level code splitting: each page ships as its own chunk instead of
 // one ~1.3MB bundle, so a visitor only downloads the page they land on.

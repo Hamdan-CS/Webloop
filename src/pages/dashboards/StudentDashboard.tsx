@@ -4,20 +4,20 @@ import {
   Users, GitBranch, Inbox, Plus, Sparkles, Star, ArrowRight, Briefcase, FolderGit2,
   ClipboardList, CheckCircle2, Clock, MessageSquare, FileText, Pencil, UserCircle2,
 } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useFloatingPanel } from '@/components/FloatingPanel';
 import {
   fetchProfileProjects, fetchProfilePortfolio, fetchProfileStats, fetchProjectApplicationCount,
   fetchAssignedTasks, fetchMyApplications, fetchInboxMessages,
-} from '@/lib/api';
-import type { Application, Message, PortfolioItem, Project, Task } from '@/lib/types';
-import { Avatar } from '@/components/ui/Avatar';
-import { Rating, NoRating } from '@/components/ui/Rating';
+} from '@/services/api';
+import type { Application, Message, PortfolioItem, Project, Task } from '@/types';
+import { Avatar } from '@/components/shared/ui/Avatar';
+import { Rating, NoRating } from '@/components/shared/ui/Rating';
 import { ProjectCard } from '@/components/projects/ProjectCard';
-import { Button } from '@/components/ui/Button';
-import { statusLabel, relativeDate } from '@/lib/labels';
+import { Button } from '@/components/shared/ui/Button';
+import { statusLabel, relativeDate } from '@/utils/labels';
 import { MyTasksPanel } from '@/components/projects/MyTasksPanel';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 type Tab = 'ov' | 'pj' | 'tk' | 'rq';
 type TaskView = 'all' | 'todo' | 'submitted' | 'approved' | 'changes';

@@ -3,7 +3,7 @@ import { useContributionData } from './useContributionData';
 import { ContributionGrid2D } from './ContributionGrid2D';
 import { DayDetailPanel } from './DayDetailPanel';
 import { Legend } from './Legend';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 import type { GridSize, GridView } from './types';
 
 interface ContributionGridProps {

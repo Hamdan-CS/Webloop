@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Users, Star } from 'lucide-react';
-import type { Project, ProjectStatus } from '@/lib/types';
-import { Avatar } from '@/components/ui/Avatar';
-import { statusLabel, projectTypeLabel } from '@/lib/labels';
-import { cn } from '@/lib/utils';
+import type { Project, ProjectStatus } from '@/types';
+import { Avatar } from '@/components/shared/ui/Avatar';
+import { statusLabel, projectTypeLabel } from '@/utils/labels';
+import { cn } from '@/utils/cn';
 
 interface ProjectCardProps {
   project: Project;

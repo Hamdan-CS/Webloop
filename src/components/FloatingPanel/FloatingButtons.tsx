@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { Bell } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useFloatingPanel } from './FloatingPanelContext';
-import { supabase } from '@/lib/supabase';
-import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/utils/cn';
 
 /** Keeps the unread / pending counts live (realtime). Renders nothing. */
 export function PanelBadgeSync() {

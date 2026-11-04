@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Search } from 'lucide-react';
-import { fetchCompanies, fetchCompanyProjectSummaries, type CompanyProjectSummary } from '@/lib/api';
-import type { Profile } from '@/lib/types';
+import { fetchCompanies, fetchCompanyProjectSummaries, type CompanyProjectSummary } from '@/services/api';
+import type { Profile } from '@/types';
 import { CompanyCard } from '@/components/companies/CompanyCard';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/shared/ui/Select';
 import { CompaniesCityScene } from '@/components/scenes/Companies-City/CompaniesCityScene';
 
 type Sort = 'new' | 'az';

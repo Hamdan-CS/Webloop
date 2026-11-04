@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { X, Loader2, AlertCircle, Save } from 'lucide-react';
-import { updateProject } from '@/lib/api';
-import type { Project } from '@/lib/types';
-import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
+import { updateProject } from '@/services/api';
+import type { Project } from '@/types';
+import { Button } from '@/components/shared/ui/Button';
+import { Select } from '@/components/shared/ui/Select';
 
 const CATEGORIES = ['Web App', 'Mobile App', 'Backend / Infra', 'Developer Tool', 'Game / Engine', 'ML', 'CLI'];
 const PROJECT_TYPES = [

@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
-import { fetchUnreadMessageCount, fetchPendingReviewCount } from '@/lib/api';
-import type { Profile } from '@/lib/types';
+import { supabase } from '@/integrations/supabase/client';
+import { fetchUnreadMessageCount, fetchPendingReviewCount } from '@/services/api';
+import type { Profile } from '@/types';
 
 interface AuthContextValue {
   session: Session | null;

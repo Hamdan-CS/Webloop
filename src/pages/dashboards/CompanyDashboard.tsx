@@ -13,20 +13,20 @@ import {
   FolderGit2,
   Star,
 } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useFloatingPanel } from '@/components/FloatingPanel';
 import {
   fetchProfileProjects,
   fetchProfileStats,
   fetchProjectApplicationCount,
-} from '@/lib/api';
-import type { Project } from '@/lib/types';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
-import { Rating, NoRating } from '@/components/ui/Rating';
+} from '@/services/api';
+import type { Project } from '@/types';
+import { Avatar } from '@/components/shared/ui/Avatar';
+import { Badge } from '@/components/shared/ui/Badge';
+import { Rating, NoRating } from '@/components/shared/ui/Rating';
 import { ProjectCard } from '@/components/projects/ProjectCard';
-import { Button } from '@/components/ui/Button';
-import { statusLabel, statusTone } from '@/lib/labels';
+import { Button } from '@/components/shared/ui/Button';
+import { statusLabel, statusTone } from '@/utils/labels';
 
 export function CompanyDashboard() {
   const { profile, unreadMessages, pendingReviews } = useAuth();

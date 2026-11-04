@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import type { ContributionTask, DailyContribution } from '@/components/contributions/types';
 
 export async function fetchDailyContributions(studentId: string, days = 365): Promise<DailyContribution[]> {

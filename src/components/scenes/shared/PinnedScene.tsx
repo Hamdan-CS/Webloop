@@ -1,6 +1,6 @@
 import { type ReactNode, type RefObject, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 import type { ProgressListener } from './useScrollEngine';
 
 export interface SceneStep {

@@ -2,8 +2,8 @@ import { Loader2, AlertCircle, ListChecks } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTasks } from '@/hooks/useTasks';
 import { TaskManagementPanel } from '@/components/projects/TaskManagementPanel';
-import { Badge } from '@/components/ui/Badge';
-import { statusLabel, statusTone } from '@/lib/labels';
+import { Badge } from '@/components/shared/ui/Badge';
+import { statusLabel, statusTone } from '@/utils/labels';
 
 interface Props {
   profileId: string;

@@ -15,12 +15,12 @@ import {
 import {
   fetchProjectTasks,
   fetchProjectMembers,
-} from '@/lib/api';
-import type { Project, ProjectMember, Task, TaskSubmission, TaskStatus, SubmissionStatus } from '@/lib/types';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
-import { Rating, NoRating } from '@/components/ui/Rating';
-import { relativeDate } from '@/lib/labels';
+} from '@/services/api';
+import type { Project, ProjectMember, Task, TaskSubmission, TaskStatus, SubmissionStatus } from '@/types';
+import { Avatar } from '@/components/shared/ui/Avatar';
+import { Badge } from '@/components/shared/ui/Badge';
+import { Rating, NoRating } from '@/components/shared/ui/Rating';
+import { relativeDate } from '@/utils/labels';
 
 const LIFECYCLE_STEPS: { key: string; label: string }[] = [
   { key: 'draft', label: 'Draft' },

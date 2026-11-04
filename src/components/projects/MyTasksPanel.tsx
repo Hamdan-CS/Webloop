@@ -7,13 +7,13 @@ import {
   Star,
   ClipboardList,
 } from 'lucide-react';
-import { fetchAssignedTasks, createSubmission, reportCannotComplete } from '@/lib/api';
-import type { Task } from '@/lib/types';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { relativeDate } from '@/lib/labels';
+import { fetchAssignedTasks, createSubmission, reportCannotComplete } from '@/services/api';
+import type { Task } from '@/types';
+import { Badge } from '@/components/shared/ui/Badge';
+import { Button } from '@/components/shared/ui/Button';
+import { relativeDate } from '@/utils/labels';
 import { Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 const statusBadge: Record<string, { tone: 'default' | 'accent' | 'green' | 'amber' | 'rose'; label: string }> = {
   open: { tone: 'default', label: 'Open' },

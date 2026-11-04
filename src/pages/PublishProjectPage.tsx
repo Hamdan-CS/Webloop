@@ -4,14 +4,14 @@ import {
   ArrowLeft, ArrowRight, Check, Loader2, AlertCircle, Plus, X, Sparkles,
   GraduationCap, Building2, Landmark, GitFork,
 } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthContext';
-import { createProject } from '@/lib/api';
-import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/contexts/AuthContext';
+import { createProject } from '@/services/api';
+import { Button } from '@/components/shared/ui/Button';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { art, type ArtKind } from '@/data/homeArt';
-import { compensationLabel, projectTypeLabel } from '@/lib/labels';
-import type { Compensation, Difficulty, Project, ProjectType } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { compensationLabel, projectTypeLabel } from '@/utils/labels';
+import type { Compensation, Difficulty, Project, ProjectType } from '@/types';
+import { cn } from '@/utils/cn';
 
 const CATEGORIES = ['Web App', 'Mobile App', 'Backend / Infra', 'Developer Tool', 'Game / Engine', 'ML', 'CLI'];
 const CATEGORY_ART: Record<string, ArtKind> = {

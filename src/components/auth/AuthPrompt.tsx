@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Lock } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/shared/ui/Button';
 
 interface AuthPromptOptions {
   title: string;

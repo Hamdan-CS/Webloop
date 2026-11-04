@@ -12,10 +12,10 @@ import {
   Globe,
   User,
 } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthContext';
-import { updateProfile, fetchProfileProjects, fetchProfileContributions, fetchProfileStats } from '@/lib/api';
-import { uploadProfileImage } from '@/lib/storage';
-import { getDashboardPath } from '@/lib/roles';
+import { useAuth } from '@/contexts/AuthContext';
+import { updateProfile, fetchProfileProjects, fetchProfileContributions, fetchProfileStats } from '@/services/api';
+import { uploadProfileImage } from '@/services/storage';
+import { getDashboardPath } from '@/utils/roles';
 import './BuildProfilePage.css';
 
 const EDUCATION_LEVELS = ['Undergraduate', 'Graduate', 'Postgraduate', 'Other'];

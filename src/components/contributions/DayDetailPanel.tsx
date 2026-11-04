@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { X, Clock, ExternalLink, Building2 } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
-import { Rating } from '@/components/ui/Rating';
-import { relativeDate } from '@/lib/labels';
+import { Badge } from '@/components/shared/ui/Badge';
+import { Rating } from '@/components/shared/ui/Rating';
+import { relativeDate } from '@/utils/labels';
 import { ratingSteps, tileGrey } from './palette';
 import { formatDayLabel } from './grid-layout';
 import type { ContributionTask, DayCell } from './types';

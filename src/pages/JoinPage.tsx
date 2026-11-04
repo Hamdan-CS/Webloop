@@ -15,11 +15,11 @@ import {
   EyeOff,
   Laptop,
 } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthContext';
-import { Button } from '@/components/ui/Button';
-import { GoogleIcon } from '@/components/ui/GoogleIcon';
-import { cn } from '@/lib/utils';
-import { getDashboardPath } from '@/lib/roles';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/shared/ui/Button';
+import { GoogleIcon } from '@/components/shared/ui/GoogleIcon';
+import { cn } from '@/utils/cn';
+import { getDashboardPath } from '@/utils/roles';
 
 type Role = 'student' | 'company' | 'university';
 

@@ -6,7 +6,7 @@
  * visible. Real DOM + SVG + a small rAF loop for the line curves and a
  * subtle pointer-parallax sway — the same technique as the reference. */
 import { useEffect, useRef, useState } from 'react';
-import { fetchFeaturedProjects } from '@/lib/api';
+import { fetchFeaturedProjects } from '@/services/api';
 import { DEMO_TEAM, DEMO_PROJECTS, type ShowcaseMember, type ShowcaseProject } from '../shared/demoData';
 import { PersonAvatar } from '../shared/PersonAvatar';
 

@@ -1,14 +1,14 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Menu, X, LogOut, User, LayoutDashboard, FileText } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/Button';
-import { Wordmark } from '@/components/layout/Wordmark';
-import { Avatar } from '@/components/ui/Avatar';
-import { useAuth } from '@/components/auth/AuthContext';
+import { cn } from '@/utils/cn';
+import { Button } from '@/components/shared/ui/Button';
+import { Wordmark } from '@/components/navigation/Wordmark';
+import { Avatar } from '@/components/shared/ui/Avatar';
+import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { NotificationBell } from '@/components/FloatingPanel';
-import { getDashboardPath, getDashboardLabel } from '@/lib/roles';
+import { getDashboardPath, getDashboardLabel } from '@/utils/roles';
 
 const navItems = [
   { to: '/explore', label: 'Explore Projects' },

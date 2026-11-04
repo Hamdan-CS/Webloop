@@ -41,18 +41,18 @@ import {
   updateApplicationStatus,
   acceptApplicationAndAddMember,
   sendMessage,
-} from '@/lib/api';
-import type { Application, PortfolioItem, Profile, Project, Review, ProjectStatus } from '@/lib/types';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
-import { Rating, NoRating } from '@/components/ui/Rating';
+} from '@/services/api';
+import type { Application, PortfolioItem, Profile, Project, Review, ProjectStatus } from '@/types';
+import { Avatar } from '@/components/shared/ui/Avatar';
+import { Badge } from '@/components/shared/ui/Badge';
+import { Rating, NoRating } from '@/components/shared/ui/Rating';
 import { ProjectCard } from '@/components/projects/ProjectCard';
-import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
+import { Button } from '@/components/shared/ui/Button';
+import { Select } from '@/components/shared/ui/Select';
 import { useAuthPrompt } from '@/components/auth/AuthPrompt';
-import { useAuth } from '@/components/auth/AuthContext';
-import { creatorTypeLabel, relativeDate, statusLabel, statusTone } from '@/lib/labels';
-import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { creatorTypeLabel, relativeDate, statusLabel, statusTone } from '@/utils/labels';
+import { cn } from '@/utils/cn';
 
 const ContributionGrid = lazy(() =>
   import('@/components/contributions').then((m) => ({ default: m.ContributionGrid })),

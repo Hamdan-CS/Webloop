@@ -1,4 +1,4 @@
-import type { Compensation, CreatorType, Difficulty, ProjectStatus, ProjectType } from '@/lib/types';
+import type { Compensation, CreatorType, Difficulty, ProjectStatus, ProjectType } from '@/types';
 
 export const statusLabel: Record<ProjectStatus, string> = {
   draft: 'Draft',

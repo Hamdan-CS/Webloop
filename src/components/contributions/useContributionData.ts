@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchDailyContributions, fetchDailyContributionTasks } from '@/lib/contributions';
+import { fetchDailyContributions, fetchDailyContributionTasks } from '@/services/contributions';
 import type { ContributionTask, DayCell } from './types';
 
 interface DetailState {

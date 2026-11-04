@@ -1,9 +1,9 @@
-import { useTilt } from '@/lib/useTilt';
+import { useTilt } from '@/hooks/useTilt';
 import { ArrowUpRight } from 'lucide-react';
-import type { PortfolioItem } from '@/lib/types';
-import { Avatar } from '@/components/ui/Avatar';
+import type { PortfolioItem } from '@/types';
+import { Avatar } from '@/components/shared/ui/Avatar';
 import { MiniHeat } from './MiniHeat';
-import { hashS } from '@/lib/heat';
+import { hashS } from '@/utils/heat';
 
 export const CATCOL: Record<string, string> = {
   'Web App': '#3b82f6',

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { useFloatingPanel } from './FloatingPanelContext';
-import { useAuth } from '@/components/auth/AuthContext';
-import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/utils/cn';
 import { MessagesTab } from './MessagesTab';
 import { TasksTab } from './TasksTab';
 

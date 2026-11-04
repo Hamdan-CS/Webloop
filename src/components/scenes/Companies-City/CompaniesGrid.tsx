@@ -6,7 +6,7 @@ import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { COMPANIES, personOf, companyProjectCount } from '@/data/homeDemo';
 import { logoArt } from '@/data/homeArt';
 import { IllustratedAvatar } from '../shared/IllustratedAvatar';
-import { Reveal } from '@/components/ui/Reveal';
+import { Reveal } from '@/components/shared/ui/Reveal';
 
 export function CompaniesGrid({ hoveredId, onHover, onOpen }: { hoveredId?: string | null; onHover?: (id: string | null) => void; onOpen?: (handle: string) => void } = {}) {
   return (

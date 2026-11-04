@@ -22,15 +22,15 @@ import {
   Eye,
   GitCommit,
 } from 'lucide-react';
-import { fetchProjectBySlug, fetchProfileStats, fetchProfileContributions, createApplication, checkExistingApplication, fetchProjectApplicationsDetailed, fetchProjectMembers, updateMemberRole, fetchProjectTasks } from '@/lib/api';
-import type { Project, Application, ProjectMember, Task } from '@/lib/types';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
-import { Rating, NoRating } from '@/components/ui/Rating';
+import { fetchProjectBySlug, fetchProfileStats, fetchProfileContributions, createApplication, checkExistingApplication, fetchProjectApplicationsDetailed, fetchProjectMembers, updateMemberRole, fetchProjectTasks } from '@/services/api';
+import type { Project, Application, ProjectMember, Task } from '@/types';
+import { Avatar } from '@/components/shared/ui/Avatar';
+import { Badge } from '@/components/shared/ui/Badge';
+import { Button } from '@/components/shared/ui/Button';
+import { Select } from '@/components/shared/ui/Select';
+import { Rating, NoRating } from '@/components/shared/ui/Rating';
 import { useAuthPrompt } from '@/components/auth/AuthPrompt';
-import { useAuth } from '@/components/auth/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { ConversationModal } from '@/components/projects/ConversationModal';
 import { EditProjectModal } from '@/components/projects/EditProjectModal';
 import { ProjectProgressDashboard } from '@/components/projects/ProjectProgressDashboard';
@@ -42,7 +42,7 @@ import {
   compensationLabel,
   difficultyLabel,
   creatorTypeLabel,
-} from '@/lib/labels';
+} from '@/utils/labels';
 
 const ContributionGrid = lazy(() =>
   import('@/components/contributions').then((m) => ({ default: m.ContributionGrid })),

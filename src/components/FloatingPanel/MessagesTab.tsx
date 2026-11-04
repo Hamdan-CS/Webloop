@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2, Send, ArrowLeft, Plus, Inbox, AlertCircle } from 'lucide-react';
 import { useMessages, type Conversation } from '@/hooks/useMessages';
-import { fetchConversation, fetchProfileProjects, fetchProjectMembers } from '@/lib/api';
-import type { Message, Profile, Project } from '@/lib/types';
-import { Avatar } from '@/components/ui/Avatar';
-import { relativeDate } from '@/lib/labels';
-import { cn } from '@/lib/utils';
+import { fetchConversation, fetchProfileProjects, fetchProjectMembers } from '@/services/api';
+import type { Message, Profile, Project } from '@/types';
+import { Avatar } from '@/components/shared/ui/Avatar';
+import { relativeDate } from '@/utils/labels';
+import { cn } from '@/utils/cn';
 
 interface Props {
   profileId: string;

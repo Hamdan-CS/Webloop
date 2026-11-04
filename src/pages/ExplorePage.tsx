@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, X, Loader2 } from 'lucide-react';
-import { fetchProjects, type ProjectQuery } from '@/lib/api';
-import type { Project } from '@/lib/types';
+import { fetchProjects, type ProjectQuery } from '@/services/api';
+import type { Project } from '@/types';
 import { ProjectCard } from '@/components/projects/ProjectCard';
-import { Select } from '@/components/ui/Select';
-import { cn } from '@/lib/utils';
-import { statusLabel, statusTone } from '@/lib/labels';
-import { Badge } from '@/components/ui/Badge';
+import { Select } from '@/components/shared/ui/Select';
+import { cn } from '@/utils/cn';
+import { statusLabel, statusTone } from '@/utils/labels';
+import { Badge } from '@/components/shared/ui/Badge';
 
 const CATEGORIES = ['Web App', 'Mobile App', 'Backend / Infra', 'Developer Tool', 'Game / Engine', 'ML', 'CLI'];
 const TYPES = [

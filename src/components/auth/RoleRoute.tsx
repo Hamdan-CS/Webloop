@@ -1,8 +1,8 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthContext';
-import { getDashboardPath } from '@/lib/roles';
-import type { CreatorType } from '@/lib/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { getDashboardPath } from '@/utils/roles';
+import type { CreatorType } from '@/types';
 
 interface RoleRouteProps {
   allowed: CreatorType[];

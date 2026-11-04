@@ -19,15 +19,15 @@ import {
   createTask,
   deleteTask,
   reviewSubmission,
-} from '@/lib/api';
-import { supabase } from '@/lib/supabase';
-import type { ProjectMember, Task, TaskStatus, TaskSubmission } from '@/lib/types';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/components/auth/AuthContext';
+} from '@/services/api';
+import { supabase } from '@/integrations/supabase/client';
+import type { ProjectMember, Task, TaskStatus, TaskSubmission } from '@/types';
+import { Avatar } from '@/components/shared/ui/Avatar';
+import { Badge } from '@/components/shared/ui/Badge';
+import { Button } from '@/components/shared/ui/Button';
+import { Select } from '@/components/shared/ui/Select';
+import { cn } from '@/utils/cn';
+import { useAuth } from '@/contexts/AuthContext';
 
 const statusBadge: Record<TaskStatus, { tone: 'default' | 'accent' | 'green' | 'amber' | 'rose'; label: string }> = {
   open: { tone: 'default', label: 'Open' },

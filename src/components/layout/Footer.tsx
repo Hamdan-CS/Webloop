@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Github, Linkedin } from 'lucide-react';
-import { Wordmark } from '@/components/layout/Wordmark';
-import { useAuth } from '@/components/auth/AuthContext';
+import { Wordmark } from '@/components/navigation/Wordmark';
+import { useAuth } from '@/contexts/AuthContext';
 
 const columns = [
   {

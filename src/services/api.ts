@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import type {
   Application,
   Message,
@@ -13,7 +13,7 @@ import type {
   TaskSize,
   TaskStatus,
   TaskSubmission,
-} from '@/lib/types';
+} from '@/types';
 
 export interface ProjectQuery {
   type?: string;

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { buildColumns, formatDayLabel } from './grid-layout';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 import type { DayCell } from './types';
 
 interface Props {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { fetchInboxMessages, markMessageRead, sendMessage } from '@/lib/api';
-import type { Message, Profile } from '@/lib/types';
+import { supabase } from '@/integrations/supabase/client';
+import { fetchInboxMessages, markMessageRead, sendMessage } from '@/services/api';
+import type { Message, Profile } from '@/types';
 
 export interface Conversation {
   other: Profile;

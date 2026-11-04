@@ -1,4 +1,4 @@
-import type { TaskSize, TaskStatus } from '@/lib/types';
+import type { TaskSize, TaskStatus } from '@/types';
 
 export interface DailyContribution {
   day: string;

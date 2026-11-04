@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertCircle, Save, CheckCircle2, X, Plus } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthContext';
-import { updateProfile } from '@/lib/api';
-import { Button } from '@/components/ui/Button';
-import { Avatar } from '@/components/ui/Avatar';
-import { Select } from '@/components/ui/Select';
+import { useAuth } from '@/contexts/AuthContext';
+import { updateProfile } from '@/services/api';
+import { Button } from '@/components/shared/ui/Button';
+import { Avatar } from '@/components/shared/ui/Avatar';
+import { Select } from '@/components/shared/ui/Select';
 
 const EXPERIENCE_LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Senior', 'Lead'];
 const AVAILABILITY_OPTIONS = ['Full-time', 'Part-time', 'Weekends only', 'Currently unavailable'];

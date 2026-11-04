@@ -1,5 +1,5 @@
-import type { CreatorType } from '@/lib/types';
-import type { Profile } from '@/lib/types';
+import type { CreatorType } from '@/types';
+import type { Profile } from '@/types';
 
 export function getDashboardPath(role: CreatorType): string {
   switch (role) {

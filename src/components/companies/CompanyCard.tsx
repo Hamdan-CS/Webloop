@@ -1,7 +1,7 @@
 import { ArrowRight, CheckCircle2, Globe } from 'lucide-react';
-import type { Profile } from '@/lib/types';
-import type { CompanyProjectSummary } from '@/lib/api';
-import { Avatar } from '@/components/ui/Avatar';
+import type { Profile } from '@/types';
+import type { CompanyProjectSummary } from '@/services/api';
+import { Avatar } from '@/components/shared/ui/Avatar';
 
 interface Props {
   company: Profile;

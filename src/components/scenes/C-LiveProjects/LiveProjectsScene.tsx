@@ -7,11 +7,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight, ExternalLink, Users } from 'lucide-react';
-import { fetchFeaturedProjects } from '@/lib/api';
-import type { Project } from '@/lib/types';
-import { Badge } from '@/components/ui/Badge';
-import { Avatar } from '@/components/ui/Avatar';
-import { statusLabel, statusTone, projectTypeLabel } from '@/lib/labels';
+import { fetchFeaturedProjects } from '@/services/api';
+import type { Project } from '@/types';
+import { Badge } from '@/components/shared/ui/Badge';
+import { Avatar } from '@/components/shared/ui/Avatar';
+import { statusLabel, statusTone, projectTypeLabel } from '@/utils/labels';
 
 export function LiveProjectsScene() {
   const navigate = useNavigate();

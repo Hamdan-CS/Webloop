@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, X } from 'lucide-react';
-import type { PortfolioItem } from '@/lib/types';
-import { Avatar } from '@/components/ui/Avatar';
+import type { PortfolioItem } from '@/types';
+import { Avatar } from '@/components/shared/ui/Avatar';
 import { MiniHeat } from './MiniHeat';
 import { catColor } from './WorkCard';
-import { hashS } from '@/lib/heat';
+import { hashS } from '@/utils/heat';
 
 function Shell({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
   useEffect(() => {
