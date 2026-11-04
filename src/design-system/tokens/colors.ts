@@ -53,3 +53,24 @@ export type DesignTheme = 'dark' | 'light';
 export function getColors(theme: DesignTheme) {
   return theme === 'dark' ? darkColors : lightColors;
 }
+
+/**
+ * Portfolio/project category palette — shared by WorkCard (gallery) and
+ * anywhere else a project category needs a consistent color. Theme-
+ * invariant by design (these color-code a category, not light/dark state).
+ */
+export const categoryColors: Record<string, string> = {
+  'Web App': '#3b82f6',
+  ML: '#2563eb',
+  'Game / Engine': '#8b5cf6',
+  'Backend / Infra': '#10b981',
+  'Mobile App': '#ec4899',
+  'Design / UI': '#f59e0b',
+};
+export const categoryColorDefault = '#3b82f6';
+
+/** Small badge accents (banner "Hiring"/"New" chips) — theme-invariant. */
+export const badgeAccentColors = {
+  hiring: '#10b981',
+  new: '#ec4899',
+} as const;

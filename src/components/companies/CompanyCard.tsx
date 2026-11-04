@@ -2,6 +2,7 @@ import { ArrowRight, CheckCircle2, Globe } from 'lucide-react';
 import type { Profile } from '@/types';
 import type { CompanyProjectSummary } from '@/services/api';
 import { Avatar } from '@/components/shared/ui/Avatar';
+import { badgeAccentColors } from '@/design-system/tokens/colors';
 
 interface Props {
   company: Profile;
@@ -11,7 +12,7 @@ interface Props {
   onOpen: (handle: string) => void;
 }
 
-const badgeBg = (b: string) => (b === 'Hiring' ? '#10b981' : b === 'New' ? '#ec4899' : undefined);
+const badgeBg = (b: string) => (b === 'Hiring' ? badgeAccentColors.hiring : b === 'New' ? badgeAccentColors.new : undefined);
 
 export function CompanyCard({ company: c, summary, glow, onHover, onOpen }: Props) {
   const hue = c.accent_hue ?? 200;

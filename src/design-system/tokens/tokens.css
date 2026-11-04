@@ -105,6 +105,10 @@
      (webloop-motion-demo.html). Site-wide: every page, not just "/".
      ============================================================ */
   --cyan: #22d3ee; --blue: #3b82f6; --violet: #8b5cf6;
+  /* Wordmark gradient end stop — distinct from --blue, kept as its own
+     token (theme-invariant, like --cyan/--blue/--violet above) since the
+     two values aren't interchangeable. */
+  --wordmark-accent: #2563eb;
   --panel: rgba(15, 26, 44, 0.72); --panel-solid: #0e1a2e; --panel-2: rgba(255, 255, 255, 0.04);
   --glass-line: rgba(140, 190, 255, 0.14); --glass-line-2: rgba(140, 190, 255, 0.26);
   --glass-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6); --glass-shadow-lg: 0 40px 80px -30px rgba(0, 0, 0, 0.8);

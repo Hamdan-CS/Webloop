@@ -97,9 +97,9 @@ export function ProjectShowcaseScene() {
           <div className="ly chart" ref={chartRef} aria-hidden="true" style={{ transformStyle: 'preserve-3d' }}>
             <h4 style={{ fontSize: 13, marginBottom: 10 }}>Emissions, last 6 months</h4>
             <svg viewBox="0 0 220 110" width="100%">
-              <defs><linearGradient id="showcase-chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#22d3ee" stopOpacity=".45" /><stop offset="1" stopColor="#22d3ee" stopOpacity="0" /></linearGradient></defs>
+              <defs><linearGradient id="showcase-chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--cyan)" stopOpacity=".45" /><stop offset="1" stopColor="var(--cyan)" stopOpacity="0" /></linearGradient></defs>
               <path d="M0 20 L40 32 L80 28 L120 55 L160 62 L220 88 L220 110 L0 110Z" fill="url(#showcase-chart-fill)" />
-              <path d="M0 20 L40 32 L80 28 L120 55 L160 62 L220 88" fill="none" stroke="#22d3ee" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M0 20 L40 32 L80 28 L120 55 L160 62 L220 88" fill="none" stroke="var(--cyan)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
 

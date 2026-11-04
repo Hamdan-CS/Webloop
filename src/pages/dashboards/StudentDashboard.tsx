@@ -156,7 +156,7 @@ export function StudentDashboard() {
               <div className="donut-wrap">
                 <button type="button" className="donut" aria-label="Your progress. Open tasks" onClick={() => goTasks('all')}>
                   <svg viewBox="0 0 120 120">
-                    <defs><linearGradient id="sdg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#22d3ee" /><stop offset="1" stopColor="#3b82f6" /></linearGradient></defs>
+                    <defs><linearGradient id="sdg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--cyan)" /><stop offset="1" stopColor="var(--blue)" /></linearGradient></defs>
                     <circle className="bg" cx="60" cy="60" r="50" />
                     <circle className="fg" cx="60" cy="60" r="50" style={{ stroke: 'url(#sdg)', strokeDashoffset: 314 * (1 - pct / 100) }} />
                   </svg>

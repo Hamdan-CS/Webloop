@@ -15,7 +15,7 @@ const DASH_PROJECT = PROJECTS[0]; // Carbon Ledger — same demo project as the 
 type Area = 'Frontend' | 'Backend' | 'Design' | 'QA';
 type Status = 'todo' | 'prog' | 'done';
 const AREAS: Area[] = ['Frontend', 'Backend', 'Design', 'QA'];
-const AREA_COLOR: Record<Area, string> = { Frontend: '#3b82f6', Backend: '#06b6d4', Design: '#a78bfa', QA: '#f59e0b' };
+const AREA_COLOR: Record<Area, string> = { Frontend: 'var(--blue)', Backend: 'rgb(var(--accent-500))', Design: 'rgb(var(--signal-violet))', QA: '#f59e0b' };
 const AREA_OWNER_KEY: Record<Area, string> = { Frontend: 'alex', Backend: 'maya', Design: 'daniel', QA: 'noah' }; // matches the prototype's WHO map
 
 interface Task { id: number; t: string; area: Area; st: Status }
@@ -178,7 +178,7 @@ export function LiveDashboardScene() {
                     <div className="donut-wrap">
                       <button type="button" className="donut" aria-label="Project progress. Open tasks" onClick={() => setTab('tk')}>
                         <svg viewBox="0 0 120 120">
-                          <defs><linearGradient id="dg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#22d3ee" /><stop offset="1" stopColor="#3b82f6" /></linearGradient></defs>
+                          <defs><linearGradient id="dg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--cyan)" /><stop offset="1" stopColor="var(--blue)" /></linearGradient></defs>
                           <circle className="bg" cx="60" cy="60" r="50" />
                           <circle ref={donutRef} className="fg" cx="60" cy="60" r="50" style={{ strokeDashoffset: 314 }} />
                         </svg>

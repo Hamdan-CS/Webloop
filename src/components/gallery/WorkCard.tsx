@@ -4,16 +4,9 @@ import type { PortfolioItem } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
 import { MiniHeat } from './MiniHeat';
 import { hashS } from '@/utils/heat';
+import { categoryColors, categoryColorDefault } from '@/design-system/tokens/colors';
 
-export const CATCOL: Record<string, string> = {
-  'Web App': '#3b82f6',
-  ML: '#2563eb',
-  'Game / Engine': '#8b5cf6',
-  'Backend / Infra': '#10b981',
-  'Mobile App': '#ec4899',
-  'Design / UI': '#f59e0b',
-};
-export const catColor = (c: string | null | undefined) => CATCOL[c ?? ''] ?? '#3b82f6';
+export const catColor = (c: string | null | undefined) => categoryColors[c ?? ''] ?? categoryColorDefault;
 
 interface Props {
   item: PortfolioItem;

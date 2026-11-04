@@ -30,7 +30,7 @@ function useFeaturedProject() {
       if (!active || !p) return;
       setProject({
         id: p.id, name: p.title, category: p.category ?? 'Project', desc: p.summary,
-        stack: (p.skills ?? []).map((s) => s.name), status: p.status, cols: ['#0e7490', '#22d3ee'],
+        stack: (p.skills ?? []).map((s) => s.name), status: p.status, cols: ['rgb(var(--accent-700))', 'var(--cyan)'],
         stats: '', demo: false, team: [],
       });
     }).catch(() => {});
@@ -191,7 +191,7 @@ export function TeamFormationScene() {
           </svg>
 
           <div className="team-core" ref={coreRef}>
-            <div className="art" style={{ background: 'linear-gradient(135deg, #0e7490, #22d3ee)', width: '100%', height: 130, borderRadius: 12 }} />
+            <div className="art" style={{ background: 'linear-gradient(135deg, rgb(var(--accent-700)), var(--cyan))', width: '100%', height: 130, borderRadius: 12 }} />
             <b>{project.name}</b>
             <small>{project.category}</small>
             <div className="need">
