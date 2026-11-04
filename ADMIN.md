@@ -22,14 +22,18 @@ VITE_SUPABASE_ANON_KEY=...
 
 ## Structure
 
+See [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) for the full folder layout and [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md) for how theming/visual presets work. Summary:
+
 - `src/pages/` — one component per route, wired up in [App.tsx](src/App.tsx).
-- `src/components/auth/` — `AuthContext` (Supabase session/profile state), `AuthPrompt` (modal that prompts sign-in for gated actions), `RoleRoute` (guards dashboard routes by `creator_type`).
+- `src/contexts/AuthContext.tsx` — Supabase session/profile state. `src/components/auth/` holds `AuthPrompt` (modal that prompts sign-in for gated actions) and `RoleRoute`/`GuestOnlyRoute` (route guards by `creator_type`).
 - `src/components/projects/` — project card/detail/task/application UI shared across pages.
-- `src/components/layout/` — `Navbar`, `Footer`.
-- `src/components/ui/` — small presentational primitives (`Avatar`, `Badge`, `Button`, `Rating`, `Select` — a custom-styled listbox used instead of a native `<select>`, since the native option popup can't be themed to match the dark UI).
-- `src/lib/api.ts` — all Supabase queries (profiles, projects, applications, tasks/submissions, messages, reviews). Pages call these instead of touching `supabase` directly.
-- `src/lib/types.ts` — shared domain types (`Profile`, `Project`, `Task`, `TaskSubmission`, `Message`, `Review`, etc.) mirroring the Postgres schema.
-- `src/lib/supabase.ts` — Supabase client, built from the `VITE_SUPABASE_*` env vars.
+- `src/components/navigation/` — `Navbar`, `Wordmark`. `src/components/layout/` — `Footer`.
+- `src/components/shared/ui/` — small presentational primitives (`Avatar`, `Badge`, `Button`, `Rating`, `Select` — a custom-styled listbox used instead of a native `<select>`, since the native option popup can't be themed to match the dark UI).
+- `src/design-system/` — centralized theme/preset/background/animation system; see [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md).
+- `src/services/api.ts` — all Supabase queries (profiles, projects, applications, tasks/submissions, messages, reviews). Pages call these instead of touching `supabase` directly. `src/services/storage.ts` (profile image uploads) and `src/services/contributions.ts` (contribution-grid RPCs) are also here.
+- `src/types/index.ts` — shared domain types (`Profile`, `Project`, `Task`, `TaskSubmission`, `Message`, `Review`, etc.) mirroring the Postgres schema.
+- `src/integrations/supabase/client.ts` — Supabase client, built from the `VITE_SUPABASE_*` env vars.
+- `src/utils/` — `roles.ts`, `labels.ts`, `heat.ts`, `cn.ts` (pure helpers, no React/Supabase dependency).
 - `supabase/migrations/` — numbered SQL migrations; the source of truth for the schema, RLS policies, and grants (applied directly against the hosted Supabase project, not run locally).
 - Import alias: `@/` → `src/` (see [vite.config.ts](vite.config.ts)).
 
