@@ -85,7 +85,7 @@ export function ExplorePage() {
       {!loading && fan.length >= 3 && (
         <div className="ex-hero">
           <div className="sec-hd">
-            <h1 className="font-display text-3xl sm:text-4xl font-bold text-white">Explore Projects</h1>
+            <h1 className="ex-hero-h1">Explore <span className="hl">Projects</span></h1>
             <p className="lead mt-2.5">
               Discover student ideas, company opportunities, and university programs — all open to browse.
             </p>

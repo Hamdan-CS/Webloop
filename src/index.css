@@ -1186,6 +1186,13 @@ html.light .home-redesign .hr-btn.primary { background: #0a6c8f; color: #fff; }
 .pill:hover { border-color: var(--line-2); color: var(--text); }
 .pill.on { background: color-mix(in srgb, var(--cyan) 16%, transparent); border-color: color-mix(in srgb, var(--cyan) 60%, transparent); color: var(--text); }
 .ex-hero { display: grid; grid-template-columns: minmax(300px, .9fr) minmax(0, 1.1fr); gap: 40px; align-items: center; margin-bottom: 40px; }
+/* Matches the bold-word + italic-accent page-header pattern used by
+   .co-hero-h2 (Companies) and .gal-title (Student Work gallery) — Explore
+   previously used a plain Tailwind text-3xl/font-bold heading with no
+   accent word, which read as a different, smaller, plainer style next to
+   its sibling pages. Sized down slightly from those (clamp 32-48 vs.
+   32-60) since this column shares width with the fan-card art. */
+.ex-hero-h1 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: clamp(32px, 3.6vw, 48px); line-height: 1.08; letter-spacing: -.025em; color: var(--text); }
 .fan { position: relative; height: 340px; perspective: 1600px; }
 .fan .fp { position: absolute; top: 30px; border-radius: 20px; overflow: hidden; background: var(--panel-solid); border: 1px solid var(--line-2); box-shadow: var(--shadow-lg); transition: transform .6s var(--ease); background-size: cover; background-position: center; }
 .fan .f0 { left: 0; width: 30%; height: 250px; transform: rotateY(32deg) translateZ(-60px); opacity: .8; }
