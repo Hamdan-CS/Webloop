@@ -1,7 +1,9 @@
 /**
- * Font stacks — mirrors `fontFamily` in tailwind.config.js. Change a
- * family in both places (Tailwind needs the literal array for its
- * `font-sans`/`font-display`/`font-serif`/`font-mono` utilities to work).
+ * Font stacks — mirrors `fontFamily` in tailwind.config.js, and the
+ * --font-sans/--font-display/--font-accent/--font-mono CSS variables in
+ * tokens/tokens.css (used by plain CSS that can't reach a Tailwind
+ * utility class, e.g. index.css's bespoke per-page rules). Change a
+ * family in all three places.
  */
 export const fontFamily = {
   sans: ['Figtree', 'ui-sans-serif', 'system-ui', 'sans-serif'],

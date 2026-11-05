@@ -238,7 +238,7 @@ h1.playing .ph.on { opacity: 1; }
 .how-page { position: relative; z-index: 2; max-width: 1240px; margin: 0 auto; padding: 0 32px; }
 .how-intro { min-height: 92vh; min-height: 92svh; display: flex; flex-direction: column; justify-content: center; }
 .how-intro h1 {
-  margin: 0; font-family: Figtree, sans-serif; font-size: clamp(38px, 5.6vw, 70px); font-weight: 800;
+  margin: 0; font-family: var(--font-display); font-size: clamp(38px, 5.6vw, 70px); font-weight: 800;
   letter-spacing: -0.03em; line-height: 1.04; max-width: 12ch; color: rgb(var(--content-strong));
 }
 .how-intro p { margin: 20px 0 0; font-size: 18px; line-height: 1.6; color: rgb(var(--slate-400)); max-width: 40ch; }
@@ -253,7 +253,7 @@ h1.playing .ph.on { opacity: 1; }
 }
 .how-step.on .how-n { background: rgb(var(--accent-500)); color: rgb(var(--ink-950)); }
 .how-step h2 {
-  margin: 18px 0 0; font-family: Figtree, sans-serif; font-size: 32px; font-weight: 700;
+  margin: 18px 0 0; font-family: var(--font-display); font-size: 32px; font-weight: 700;
   letter-spacing: -0.02em; line-height: 1.14; color: rgb(var(--content-strong));
 }
 .how-step p { margin: 12px 0 0; font-size: 17px; line-height: 1.65; color: rgb(var(--slate-400)); }
@@ -283,8 +283,11 @@ h1.playing .ph.on { opacity: 1; }
 .home-redesign {
   --hr-bg: #f4f8fd; --hr-ink: #0b1630; --hr-muted: #5f7090; --hr-line: rgba(25, 60, 115, 0.12);
   --hr-accent: #0891b2; --hr-accent-ink: #fff; --hr-card: #ffffff; --hr-chip: rgba(255, 255, 255, 0.82);
-  --hr-sans: 'Figtree', system-ui, sans-serif;
-  --hr-mono: 'Figtree', system-ui, sans-serif;
+  --hr-sans: var(--font-sans);
+  /* Not an actual monospace — the approved reference styles these eyebrow/
+     caption labels in the body sans, just uppercased and tracked out. Kept
+     as its own alias (rather than renamed) so that intent stays visible. */
+  --hr-mono: var(--font-sans);
   background: var(--hr-bg); color: var(--hr-ink); font-family: var(--hr-sans);
   transition: background .5s, color .5s;
 }
@@ -374,17 +377,17 @@ html.light .home-redesign .hr-btn.primary { background: #0a6c8f; color: #fff; }
   transition: transform .35s cubic-bezier(.2,.7,.2,1), background .45s, border-color .45s;
 }
 .site-header.hdr-hide { transform: translateY(-100%); }
-.site-header .hdr-logo { font-family: Figtree, system-ui, sans-serif; font-weight: 700; font-size: 22px; letter-spacing: -.03em; color: var(--hdr-ink); }
-.site-header .hdr-link { font-family: Figtree, system-ui, sans-serif; font-size: 14.5px; font-weight: 500; color: var(--hdr-muted); transition: color .2s; }
+.site-header .hdr-logo { font-family: var(--font-sans); font-weight: 700; font-size: 22px; letter-spacing: -.03em; color: var(--hdr-ink); }
+.site-header .hdr-link { font-family: var(--font-sans); font-size: 14.5px; font-weight: 600; letter-spacing: -.01em; color: var(--hdr-muted); transition: color .2s; }
 .site-header .hdr-link:hover, .site-header .hdr-link.active { color: var(--hdr-ink); }
 .site-header .hdr-theme {
-  font: 500 13px Figtree, sans-serif; color: var(--hdr-ink); background: var(--hdr-chip);
+  font: 500 13px var(--font-sans); color: var(--hdr-ink); background: var(--hdr-chip);
   border: 1px solid var(--hdr-line); border-radius: 999px; width: 36px; height: 36px;
   display: inline-flex; align-items: center; justify-content: center; transition: border-color .2s;
 }
 .site-header .hdr-theme:hover { border-color: var(--hdr-accent); }
 .site-header .hdr-primary {
-  font: 600 14px Figtree, sans-serif; border-radius: 999px; padding: 10px 18px;
+  font: 600 14px var(--font-sans); letter-spacing: -.01em; border-radius: 999px; padding: 10px 18px;
   background: var(--hdr-btn-grad); color: var(--hdr-accent-ink); border: 1px solid transparent;
   transition: transform .18s cubic-bezier(.2,.7,.2,1);
 }
@@ -1374,7 +1377,7 @@ html[data-hdr="hidden"] .toolbar { top: 0; }
 .pf .pf-card { border-radius: 20px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 .pf .pf-head { border-radius: 24px; }
 .pf .pf-banner-fade { position: absolute; inset: 0; background: linear-gradient(to top, rgba(8, 16, 34, .28), transparent 70%); }
-.pf .pf-name { font-family: inherit; font-size: clamp(26px, 3.2vw, 40px); font-weight: 800; letter-spacing: -.025em; line-height: 1.1; color: var(--text); }
+.pf .pf-name { font-family: var(--font-display); font-size: clamp(26px, 3.2vw, 40px); font-weight: 800; letter-spacing: -.025em; line-height: 1.1; color: var(--text); }
 .pf .pf-bio { font-size: 15px; line-height: 1.65; color: var(--text-2); max-width: 64ch; }
 .pf .pf-h4 { font-size: 13px; font-weight: 600; color: var(--text-2); letter-spacing: 0; text-transform: none; display: flex; align-items: baseline; gap: 8px; }
 .pf .pf-h4 small { font-size: 11.5px; font-weight: 500; color: var(--muted); }
@@ -1611,8 +1614,21 @@ a.app-title:hover{color:var(--accent)}
 .app-side .sd-link{display:inline-flex;align-items:center;gap:4px;font-size:13px}
 @media(max-width:560px){.app-row{flex-wrap:wrap}.app-side{flex-direction:row;align-items:center;width:100%;justify-content:space-between}}
 
-/* --- type system: Bricolage Grotesque (display) + Figtree (body) + Instrument Serif italic (accent) --- */
-:root { --font-display: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif; --font-accent: 'Instrument Serif', Georgia, serif; }
+/* Base heading/paragraph text-wrap + display-font default. Font tokens
+   (--font-display, --font-accent, --font-sans, --font-mono) live in
+   design-system/tokens/tokens.css — the single source of truth, not here.
+   Bricolage Grotesque is a variable font with an optical-size axis: with
+   the browser default (font-optical-sizing: auto) it ties that axis to
+   the element's rendered font-size, so the SAME face morphs toward its
+   plain/"text" end at smaller headings (page titles, dialog titles) and
+   only shows its distinctive display character at hero scale — which is
+   exactly why the hero reads as "the brand font" while a smaller page
+   title using the same font-family looked generic. Pinning opsz to its
+   display-end value keeps that character at every heading size. Applies
+   to both bare h1/h2 tags and anything using the font-display utility
+   class (modal/section titles, h3s, etc.) so it's one rule, not a
+   per-component fix. */
+h1, h2, .font-display { font-variation-settings: 'opsz' 96; }
 h1, h2 { font-family: var(--font-display); text-wrap: balance; }
 p { text-wrap: pretty; }
 ::selection { background: rgb(var(--accent-400) / .35); }

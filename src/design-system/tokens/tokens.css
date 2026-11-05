@@ -19,6 +19,20 @@
    GSAP tweens, chart colors). Keep both in sync when editing.
    ============================================================ */
 
+:root {
+  /* ------------------------------------------------------------
+     TYPOGRAPHY — font stacks. Theme-invariant (same in dark and
+     light), so these live in a plain :root block rather than the
+     .dark/.light pair below. Mirrors fontFamily in
+     tailwind.config.js and tokens/typography.ts — keep all three
+     in sync when changing a face.
+     ------------------------------------------------------------ */
+  --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, sans-serif;
+  --font-accent: 'Instrument Serif', Georgia, serif;
+  --font-mono: ui-monospace, Menlo, Consolas, monospace;
+}
+
 :root,
 .dark {
   /* Base surfaces */
