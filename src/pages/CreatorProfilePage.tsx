@@ -49,6 +49,7 @@ import { Rating, NoRating } from '@/components/shared/ui/Rating';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { Button } from '@/components/shared/ui/Button';
 import { Select } from '@/components/shared/ui/Select';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { useAuthPrompt } from '@/components/auth/AuthPrompt';
 import { useAuth } from '@/contexts/AuthContext';
 import { creatorTypeLabel, relativeDate, statusLabel, statusTone } from '@/utils/labels';
@@ -220,7 +221,7 @@ export function CreatorProfilePage() {
   if (loading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
-        <Loader2 size={28} className="animate-spin text-accent-400" />
+        <LoopLoader size={28} />
       </div>
     );
   }

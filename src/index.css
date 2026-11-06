@@ -82,7 +82,8 @@
     @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-[background-color,border-color,color,box-shadow,transform] duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-primary {
-    @apply btn text-ink-950 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98];
+    @apply btn hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98];
+    color: rgb(var(--btn-accent-text));
     background: linear-gradient(135deg, var(--cyan), #0ea5e9);
     box-shadow: 0 8px 22px -10px color-mix(in srgb, var(--cyan) 70%, transparent);
   }
@@ -215,6 +216,14 @@ h1.playing .ph.on { opacity: 1; }
 .light .core-inf .spark, .light .wm-inf .spark { stroke: rgb(var(--accent-100)); }
 @keyframes wm-spark { to { stroke-dashoffset: -100; } }
 @media (prefers-reduced-motion: reduce) { .wm-inf .spark, .core-inf .spark { animation: none; opacity: 0; } .stage-core .verb { animation: none; } }
+
+/* Default loading indicator — a small infinity loop with a travelling spark, no text */
+.loop-loader { display: block; overflow: visible; }
+.loop-loader path { fill: none; stroke-linecap: round; }
+.loop-loader-track { stroke: rgb(var(--content-strong) / .12); stroke-width: 3; }
+.loop-loader-spark { stroke-width: 4.2; stroke-dasharray: 22 78; animation: loop-loader-spin 1.3s linear infinite; }
+@keyframes loop-loader-spin { to { stroke-dashoffset: -100; } }
+@media (prefers-reduced-motion: reduce) { .loop-loader-spark { animation-duration: 2.6s; } }
 
 /* Home sections sit above the fixed canvas and stay transparent so particles show through */
 .home-page { position: relative; z-index: 2; }
@@ -686,8 +695,15 @@ html.light .home-redesign .hr-btn.primary { background: #0a6c8f; color: #fff; }
 .ref-icon-btn:hover { border-color: var(--accent); background: var(--chip); }
 
 /* ---- A. Project Stack ---- */
-.stack-grid { display: grid; grid-template-columns: minmax(300px, .64fr) minmax(0, 2.2fr) minmax(210px, .42fr); gap: 8px; min-height: 640px; align-items: center; }
-.stack-copy { display: flex; flex-direction: column; gap: 20px; padding-right: 12px; }
+/* `.stack-stage` is `height: 100%` of this row, but a `scale()`-transformed
+   child doesn't shrink its *layout* footprint (only how it paints) — so with
+   just `min-height`, an auto-sized grid row grows to fit the stack's full
+   unscaled size, which can run well past the viewport while the section is
+   pinned (unlike a normal scrolling section, a pinned section's overflow
+   past the viewport bottom isn't reachable by scrolling). A definite `height`
+   breaks that circular growth, same pattern as `.inf-view` below. */
+.stack-grid { display: grid; grid-template-columns: minmax(300px, .64fr) minmax(0, 2.2fr) minmax(210px, .42fr); gap: 8px; height: min(900px, calc(100vh - var(--nav-h, 80px) - 16px)); min-height: 560px; align-items: center; }
+.stack-copy { display: flex; flex-direction: column; gap: 20px; padding-right: 12px; align-self: start; padding-top: clamp(24px, 6vh, 96px); }
 .ref-steps { list-style: none; margin-top: 6px; display: flex; flex-direction: column; gap: 2px; position: relative; }
 .ref-steps::before { content: ""; position: absolute; left: 17px; top: 20px; bottom: 20px; width: 1px; background: var(--line-2); }
 .ref-step { display: flex; align-items: center; gap: 16px; padding: 5px 0; text-align: left; color: var(--text-2); font-weight: 500; transition: color .3s; cursor: pointer; background: none; border: 0; width: 100%; font: inherit; }
@@ -699,9 +715,9 @@ html.light .home-redesign .hr-btn.primary { background: #0a6c8f; color: #fff; }
 .ref-mouse::after { content: ""; position: absolute; left: 50%; top: 6px; width: 2px; height: 6px; border-radius: 2px; background: var(--muted); transform: translateX(-50%); animation: ref-wheel 1.8s infinite; }
 @keyframes ref-wheel { 0% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, 10px); } }
 
-.stack-stage { position: relative; height: 100%; min-height: 560px; display: grid; place-items: center; perspective: 2400px; perspective-origin: 48% 30%; overflow: visible; }
+.stack-stage { position: relative; height: 100%; min-height: 560px; display: grid; place-items: start center; perspective: 2400px; perspective-origin: 48% 30%; overflow: visible; }
 .stack-floor { position: absolute; left: 50%; bottom: 2%; width: 92%; height: 26%; transform: translateX(-50%); background: radial-gradient(closest-side, color-mix(in srgb, var(--cyan) 20%, transparent), transparent); filter: blur(24px); opacity: .7; pointer-events: none; }
-.stack-fit { transform-style: preserve-3d; width: 860px; transform-origin: 50% 50%; transform: scale(var(--fit, 1)); }
+.stack-fit { transform-style: preserve-3d; width: 860px; transform-origin: 50% 0; transform: scale(var(--fit, 1)); }
 .stack-cam { transform-style: preserve-3d; transition: transform .55s cubic-bezier(.2, .8, .2, 1); }
 .stack-stage.drag .stack-cam { transition: none; }
 .ref-stack { position: relative; transform-style: preserve-3d; transform: rotateX(23deg) rotateY(-18deg) rotateZ(1.2deg); display: flex; flex-direction: column; gap: 20px; --th: 26px; }
@@ -1429,7 +1445,6 @@ html[data-hdr="hidden"] .toolbar { top: 0; }
 .pf [class*="bg-ink-850"], .pf [class*="bg-ink-950/"] { background-color: var(--panel-solid); }
 .pf .hover\:text-white:hover { color: var(--text); }
 .pf input, .pf textarea { color: var(--text); }
-.light .pf [class*="bg-white/"], .light .pf [class*="bg-ink-900/"] { background-color: #fff; }
 .pf .pf-banner-fade { pointer-events: none; }
 
 /* ---- Student dashboard (tabbed workspace) — scoped under .sd ---- */

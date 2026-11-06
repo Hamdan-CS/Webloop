@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut, User, LayoutDashboard, FileText } from 'lucide-react';
+import { Menu, X, LogOut, User, LayoutDashboard, FileText, Mail, FolderKanban } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/shared/ui/Button';
@@ -23,7 +23,7 @@ export function Navbar() {
   const [hidden, setHidden] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, pendingInvites } = useAuth();
   const visibleNavItems = navItems.filter((item) => item.to !== '/how-it-works' || !user);
 
   useEffect(() => {
@@ -97,7 +97,9 @@ export function Navbar() {
                   <div className="hdr-menu animate-fade-in-up">
                     <MenuItem icon={<LayoutDashboard size={15} />} label={profile ? getDashboardLabel(profile.creator_type) : 'Dashboard'} onClick={() => { setMenuOpen(false); navigate(profile ? getDashboardPath(profile.creator_type) : '/'); }} />
                     <MenuItem icon={<User size={15} />} label="My Profile" onClick={() => { setMenuOpen(false); navigate(`/creators/${profile?.handle}`); }} />
+                    <MenuItem icon={<FolderKanban size={15} />} label="My Projects" onClick={() => { setMenuOpen(false); navigate('/my-projects'); }} />
                     <MenuItem icon={<FileText size={15} />} label="My Applications" onClick={() => { setMenuOpen(false); navigate('/my-applications'); }} />
+                    <MenuItem icon={<Mail size={15} />} label="My Invitations" count={pendingInvites} onClick={() => { setMenuOpen(false); navigate('/my-invitations'); }} />
                     <div className="hdr-menu-sep" />
                     <MenuItem icon={<LogOut size={15} />} label="Sign Out" onClick={handleSignOut} danger />
                   </div>

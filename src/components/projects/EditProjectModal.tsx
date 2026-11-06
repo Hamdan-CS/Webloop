@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { X, Loader2, AlertCircle, Save } from 'lucide-react';
 import { updateProject } from '@/services/api';
-import type { Project } from '@/types';
+import type { Compensation, Project, ProjectType } from '@/types';
 import { Button } from '@/components/shared/ui/Button';
 import { Select } from '@/components/shared/ui/Select';
+import { useAuth } from '@/contexts/AuthContext';
+import { ALLOWED_PROJECT_TYPES, ALLOWED_COMPENSATIONS } from '@/utils/roles';
 
 const CATEGORIES = ['Web App', 'Mobile App', 'Backend / Infra', 'Developer Tool', 'Game / Engine', 'ML', 'CLI'];
 const PROJECT_TYPES = [
@@ -37,6 +39,11 @@ interface Props {
 }
 
 export function EditProjectModal({ project, onClose, onSaved }: Props) {
+  const { profile } = useAuth();
+  const allowedTypes = profile ? ALLOWED_PROJECT_TYPES[profile.creator_type] : (['student', 'company', 'university', 'open_source'] as ProjectType[]);
+  const allowedComps = profile ? ALLOWED_COMPENSATIONS[profile.creator_type] : (['paid', 'unpaid_educational', 'open_source'] as Compensation[]);
+  const projectTypeOptions = PROJECT_TYPES.filter((t) => allowedTypes.includes(t.value as ProjectType));
+  const compensationOptions = COMPENSATIONS.filter((c) => allowedComps.includes(c.value as Compensation));
   const [form, setForm] = useState({
     title: project.title,
     summary: project.summary,
@@ -123,9 +130,9 @@ export function EditProjectModal({ project, onClose, onSaved }: Props) {
 
           <div className="grid sm:grid-cols-2 gap-4">
             <Select label="Category" value={form.category} onChange={(v) => set('category', v)} options={CATEGORIES.map((c) => ({ value: c, label: c }))} />
-            <Select label="Project type" value={form.project_type} onChange={(v) => set('project_type', v)} options={PROJECT_TYPES} />
+            <Select label="Project type" value={form.project_type} onChange={(v) => set('project_type', v)} options={projectTypeOptions} />
             <Select label="Difficulty" value={form.difficulty} onChange={(v) => set('difficulty', v)} options={DIFFICULTIES} />
-            <Select label="Compensation" value={form.compensation} onChange={(v) => set('compensation', v)} options={COMPENSATIONS} />
+            <Select label="Compensation" value={form.compensation} onChange={(v) => set('compensation', v)} options={compensationOptions} />
             <Select label="Status" value={form.status} onChange={(v) => set('status', v)} options={STATUSES} />
           </div>
 

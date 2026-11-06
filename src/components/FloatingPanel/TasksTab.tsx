@@ -1,5 +1,6 @@
-import { Loader2, AlertCircle, ListChecks } from 'lucide-react';
+import { AlertCircle, ListChecks } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { useTasks } from '@/hooks/useTasks';
 import { TaskManagementPanel } from '@/components/projects/TaskManagementPanel';
 import { Badge } from '@/components/shared/ui/Badge';
@@ -15,7 +16,7 @@ export function TasksTab({ profileId }: Props) {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 size={22} className="animate-spin text-accent-400" />
+        <LoopLoader size={22} />
       </div>
     );
   }

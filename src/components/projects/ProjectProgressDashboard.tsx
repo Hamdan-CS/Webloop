@@ -1,24 +1,33 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowRight,
   ListChecks,
   GitBranch,
   CheckCircle2,
   Users,
-  Loader2,
   Star,
   ExternalLink,
   Clock,
   FileText,
+  UserPlus,
+  X,
+  Loader2,
+  AlertCircle,
+  Mail,
+  Rocket,
 } from 'lucide-react';
 import {
   fetchProjectTasks,
   fetchProjectMembers,
+  fetchProjectApplicationsDetailed,
+  fetchProjectInvitations,
+  inviteUserToProject,
 } from '@/services/api';
-import type { Project, ProjectMember, Task, TaskSubmission, TaskStatus, SubmissionStatus } from '@/types';
+import type { Application, Invitation, Project, ProjectMember, Task, TaskSubmission, TaskStatus, SubmissionStatus } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
 import { Badge } from '@/components/shared/ui/Badge';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { Rating, NoRating } from '@/components/shared/ui/Rating';
 import { relativeDate } from '@/utils/labels';
 
@@ -52,25 +61,43 @@ interface Props {
   isOwner: boolean;
 }
 
+type DashTab = 'overview' | 'tasks' | 'team' | 'activity';
+const DASH_TABS: { key: DashTab; label: string }[] = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'tasks', label: 'Tasks' },
+  { key: 'team', label: 'Team' },
+  { key: 'activity', label: 'Activity' },
+];
+
+type ActivityItem = { id: string; at: string; icon: React.ReactNode; text: string };
+
 export function ProjectProgressDashboard({ project, isOwner }: Props) {
+  const [dashTab, setDashTab] = useState<DashTab>('overview');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [members, setMembers] = useState<ProjectMember[]>([]);
+  const [pendingApps, setPendingApps] = useState<Application[]>([]);
+  const [invites, setInvites] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showInvite, setShowInvite] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [t, m] = await Promise.all([
+      const [t, m, apps, inv] = await Promise.all([
         fetchProjectTasks(project.id),
         fetchProjectMembers(project.id),
+        isOwner ? fetchProjectApplicationsDetailed(project.id) : Promise.resolve([]),
+        isOwner ? fetchProjectInvitations(project.id) : Promise.resolve([]),
       ]);
       setTasks(t);
       setMembers(m);
+      setPendingApps(apps.filter((a) => a.status === 'pending'));
+      setInvites(inv);
     } catch {
       // ignore
     }
     setLoading(false);
-  }, [project.id]);
+  }, [project.id, isOwner]);
 
   useEffect(() => {
     loadData();
@@ -79,23 +106,21 @@ export function ProjectProgressDashboard({ project, isOwner }: Props) {
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <Loader2 size={24} className="animate-spin text-accent-400" />
+        <LoopLoader size={24} />
       </div>
     );
   }
 
-  // Compute real totals from task data
   const totalTasks = tasks.length;
   const assignedTasks = tasks.filter((t) => t.assignee_id !== null).length;
   const inProgressTasks = tasks.filter((t) => t.status === 'in_progress' || t.status === 'submitted' || t.status === 'changes_requested').length;
   const approvedTasks = tasks.filter((t) => t.status === 'approved').length;
+  const completionPct = totalTasks > 0 ? Math.round((approvedTasks / totalTasks) * 100) : 0;
 
-  // All submissions across all tasks
   const allSubmissions: (TaskSubmission & { task: Task })[] = tasks.flatMap((t) =>
     (t.submissions ?? []).map((s) => ({ ...s, task: t })),
   );
 
-  // Approved contributions per member (based on approved submissions)
   const approvedByMember = new Map<string, TaskSubmission[]>();
   for (const sub of allSubmissions) {
     if (sub.status === 'approved') {
@@ -105,212 +130,340 @@ export function ProjectProgressDashboard({ project, isOwner }: Props) {
     }
   }
 
-  // Lifecycle: find index of current status
   const currentIdx = LIFECYCLE_STEPS.findIndex((s) => s.key === project.status);
 
+  const activity: ActivityItem[] = [
+    ...members.map((m): ActivityItem => ({
+      id: `m-${m.id}`,
+      at: m.joined_at,
+      icon: <Users size={13} />,
+      text: `${m.profile?.display_name ?? 'Someone'} joined the team`,
+    })),
+    ...allSubmissions.map((s): ActivityItem => ({
+      id: `s-${s.id}`,
+      at: s.created_at,
+      icon: <GitBranch size={13} />,
+      text: `${s.submitter?.display_name ?? 'Someone'} submitted evidence for "${s.task.title}"`,
+    })),
+    ...tasks.filter((t) => t.status === 'approved').map((t): ActivityItem => ({
+      id: `t-${t.id}`,
+      at: t.updated_at,
+      icon: <CheckCircle2 size={13} />,
+      text: `"${t.title}" was approved`,
+    })),
+  ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 20);
+
   return (
-    <div className="space-y-6">
-      {/* Section 1: Lifecycle */}
-      <div>
-        <h3 className="label-overline mb-3">Project lifecycle</h3>
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          {LIFECYCLE_STEPS.map((s, i) => (
-            <span key={s.key} className="flex items-center gap-2">
-              <span
-                className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
-                  i === currentIdx
-                    ? 'bg-accent-500 text-ink-950'
-                    : i < currentIdx
-                    ? 'bg-signal-green/20 text-signal-green'
-                    : 'bg-white/5 text-slate-500'
-                }`}
-              >
-                {s.label}
-              </span>
-              {i < LIFECYCLE_STEPS.length - 1 && <ArrowRight size={12} className="text-slate-600" />}
-            </span>
-          ))}
-        </div>
+    <div>
+      <div className="pd-tabs" role="tablist" style={{ marginTop: 0 }}>
+        {DASH_TABS.map((t) => (
+          <button key={t.key} type="button" role="tab" aria-selected={dashTab === t.key} className={dashTab === t.key ? 'on' : ''} onClick={() => setDashTab(t.key)}>
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {/* Section 2: Task summary + list */}
-      <div>
-        <h3 className="label-overline mb-3">Tasks</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard label="Total tasks" value={totalTasks} />
-          <StatCard label="Assigned" value={assignedTasks} />
-          <StatCard label="In progress" value={inProgressTasks} />
-          <StatCard label="Approved" value={approvedTasks} />
-        </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={dashTab}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          className="mt-5 space-y-6"
+        >
+          {dashTab === 'overview' && (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <StatCard label="Completion" value={`${completionPct}%`} />
+                <StatCard label="Total tasks" value={totalTasks} />
+                <StatCard label="Team" value={members.length} />
+                <StatCard label="In progress" value={inProgressTasks} />
+              </div>
 
-        {totalTasks > 0 ? (
-          <div className="mt-4 space-y-2">
-            {tasks.map((task) => (
-              <TaskListRow key={task.id} task={task} />
-            ))}
-          </div>
-        ) : (
-          <div className="mt-4 rounded-xl border border-white/8 bg-white/[0.02] px-4 py-6 text-center">
-            <ListChecks size={24} className="mx-auto text-slate-600" />
-            <p className="mt-2 text-xs text-slate-500">
-              {isOwner ? 'No tasks yet. Create tasks from your dashboard to track team work.' : 'No tasks have been created for this project yet.'}
-            </p>
-          </div>
-        )}
-      </div>
+              <div>
+                <h3 className="label-overline mb-3">Project lifecycle</h3>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  {LIFECYCLE_STEPS.map((s, i) => (
+                    <span key={s.key} className="flex items-center gap-2">
+                      <span
+                        className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+                          i === currentIdx
+                            ? 'bg-accent-500 text-ink-950'
+                            : i < currentIdx
+                            ? 'bg-signal-green/20 text-signal-green'
+                            : 'bg-white/5 text-slate-500'
+                        }`}
+                      >
+                        {s.label}
+                      </span>
+                      {i < LIFECYCLE_STEPS.length - 1 && <span className="text-slate-600">→</span>}
+                    </span>
+                  ))}
+                </div>
+              </div>
 
-      {/* Section 3: Submitted evidence */}
-      <div>
-        <h3 className="label-overline mb-3">Submitted evidence</h3>
-        {allSubmissions.length > 0 ? (
-          <div className="space-y-2">
-            {allSubmissions.map((sub) => {
-              const sb = submissionStatusBadge[sub.status] ?? submissionStatusBadge.pending;
-              return (
-                <div key={sub.id} className="rounded-xl border border-white/8 bg-white/[0.02] p-3.5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1 space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <Avatar src={sub.submitter?.avatar_url} name={sub.submitter?.display_name ?? ''} size="xs" />
-                        <Link to={`/creators/${sub.submitter?.handle}`} className="truncate text-xs font-medium text-white hover:text-accent-300 transition-colors">
-                          {sub.submitter?.display_name ?? 'Unknown'}
-                        </Link>
+              <div>
+                <h3 className="label-overline mb-3">Recent activity</h3>
+                {activity.length > 0 ? (
+                  <div className="space-y-2">
+                    {activity.slice(0, 5).map((item) => <ActivityRow key={item.id} item={item} />)}
+                  </div>
+                ) : (
+                  <EmptyState icon={<Rocket size={22} />} text="Nothing's happened here yet — invite your team and create some tasks to get started." />
+                )}
+              </div>
+            </>
+          )}
+
+          {dashTab === 'tasks' && (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <StatCard label="Total tasks" value={totalTasks} />
+                <StatCard label="Assigned" value={assignedTasks} />
+                <StatCard label="In progress" value={inProgressTasks} />
+                <StatCard label="Approved" value={approvedTasks} />
+              </div>
+
+              {totalTasks > 0 ? (
+                <div className="space-y-2">
+                  {tasks.map((task) => <TaskListRow key={task.id} task={task} />)}
+                </div>
+              ) : (
+                <EmptyState icon={<ListChecks size={22} />} text={isOwner ? 'No tasks yet. Create tasks from your dashboard to track team work.' : 'No tasks have been created for this project yet.'} />
+              )}
+
+              <div>
+                <h3 className="label-overline mb-3">Submitted evidence</h3>
+                {allSubmissions.length > 0 ? (
+                  <div className="space-y-2">
+                    {allSubmissions.map((sub) => <SubmissionRow key={sub.id} sub={sub} />)}
+                  </div>
+                ) : (
+                  <EmptyState icon={<GitBranch size={22} />} text="No evidence submissions yet." />
+                )}
+              </div>
+            </>
+          )}
+
+          {dashTab === 'team' && (
+            <>
+              {isOwner && (
+                <div className="flex items-center justify-between">
+                  <h3 className="label-overline">Invite a teammate</h3>
+                  <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowInvite(true)}>
+                    <UserPlus size={14} /> Invite
+                  </button>
+                </div>
+              )}
+
+              {isOwner && invites.length > 0 && (
+                <div>
+                  <h3 className="label-overline mb-3">Sent invitations</h3>
+                  <div className="space-y-2">
+                    {invites.map((inv) => (
+                      <div key={inv.id} className="rounded-xl border border-white/8 bg-white/[0.02] p-3 flex items-center justify-between gap-3">
+                        <span className="inline-flex items-center gap-2 text-sm text-white"><Mail size={13} className="text-slate-500" /> {inv.invitee_email}</span>
+                        <Badge tone={inv.status === 'accepted' ? 'green' : inv.status === 'declined' ? 'rose' : 'amber'}>
+                          {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
+                        </Badge>
                       </div>
-                      <p className="text-xs text-slate-400">
-                        Task: <span className="text-slate-300">{sub.task.title}</span>
-                      </p>
-                      {sub.evidence_url && (
-                        <a href={sub.evidence_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-accent-300 hover:text-accent-200 transition-colors">
-                          <ExternalLink size={11} /> View evidence
-                        </a>
-                      )}
-                      {sub.notes && (
-                        <p className="text-xs text-slate-500 line-clamp-2">{sub.notes}</p>
-                      )}
-                      {sub.reviewer_feedback && (
-                        <div className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-400">
-                          <span className="text-slate-500">Owner feedback: </span>{sub.reviewer_feedback}
-                          {sub.rating !== null && sub.rating !== undefined && (
-                            <span className="ml-2 inline-flex items-center gap-0.5 text-signal-amber">
-                              <Star size={10} fill="currentColor" /> {sub.rating}/5
-                            </span>
-                          )}
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {isOwner && pendingApps.length > 0 && (
+                <div>
+                  <h3 className="label-overline mb-3">Pending join requests ({pendingApps.length})</h3>
+                  <div className="space-y-2">
+                    {pendingApps.map((a) => (
+                      <div key={a.id} className="rounded-xl border border-signal-amber/20 bg-signal-amber/5 p-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar src={a.applicant?.avatar_url} name={a.applicant?.display_name ?? ''} size="sm" />
+                          <div className="min-w-0 flex-1">
+                            <Link to={`/creators/${a.applicant?.handle}`} className="truncate text-xs font-medium text-white hover:text-accent-300">
+                              {a.applicant?.display_name}
+                            </Link>
+                            <p className="text-[10px] text-slate-500">{a.role_title ?? 'General application'}</p>
+                          </div>
+                          <Badge tone="amber">Pending</Badge>
                         </div>
-                      )}
-                    </div>
-                    <Badge tone={sb.tone}>{sb.label}</Badge>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-white/8 bg-white/[0.02] px-4 py-6 text-center">
-            <GitBranch size={24} className="mx-auto text-slate-600" />
-            <p className="mt-2 text-xs text-slate-500">No evidence submissions yet.</p>
-          </div>
-        )}
-      </div>
-
-      {/* Section 4: Verified contributions */}
-      <div>
-        <h3 className="label-overline mb-3">Verified contributions</h3>
-        {approvedByMember.size > 0 ? (
-          <div className="space-y-2">
-            {Array.from(approvedByMember.entries()).map(([memberId, subs]) => {
-              const member = members.find((m) => m.profile_id === memberId);
-              const profile = member?.profile;
-              const ratings = subs.filter((s) => s.rating !== null && s.rating !== undefined);
-              const avgRating = ratings.length > 0 ? ratings.reduce((sum, s) => sum + (s.rating ?? 0), 0) / ratings.length : null;
-              return (
-                <div key={memberId} className="rounded-xl border border-white/8 bg-white/[0.02] p-3.5">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Avatar src={profile?.avatar_url} name={profile?.display_name ?? ''} size="sm" />
-                      <div className="min-w-0">
-                        <Link to={`/creators/${profile?.handle}`} className="truncate text-sm font-medium text-white hover:text-accent-300 transition-colors">
-                          {profile?.display_name ?? 'Unknown member'}
-                        </Link>
-                        <p className="text-xs text-slate-500">{subs.length} approved contribution{subs.length !== 1 ? 's' : ''}</p>
                       </div>
-                    </div>
-                    {avgRating !== null ? (
-                      <Rating value={avgRating} count={ratings.length} />
-                    ) : (
-                      <NoRating label="Not rated yet" />
-                    )}
+                    ))}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-white/8 bg-white/[0.02] px-4 py-6 text-center">
-            <CheckCircle2 size={24} className="mx-auto text-slate-600" />
-            <p className="mt-2 text-xs text-slate-500">No approved contributions yet.</p>
-          </div>
-        )}
-      </div>
+              )}
 
-      {/* Section 5: Team overview */}
-      <div>
-        <h3 className="label-overline mb-3">Team overview</h3>
-        {members.length > 0 ? (
-          <div className="space-y-2">
-            {members.map((m) => {
-              const memberTasks = tasks.filter((t) => t.assignee_id === m.profile_id);
-              const memberApproved = memberTasks.filter((t) => t.status === 'approved').length;
-              const memberInProgress = memberTasks.filter((t) => t.status === 'in_progress' || t.status === 'submitted' || t.status === 'changes_requested').length;
-              const progress = memberTasks.length > 0 ? Math.round((memberApproved / memberTasks.length) * 100) : 0;
-              return (
-                <div key={m.id} className="rounded-xl border border-white/8 bg-white/[0.02] p-3.5">
-                  <div className="flex items-center gap-3">
-                    <Link to={`/creators/${m.profile?.handle}`} className="shrink-0">
-                      <Avatar src={m.profile?.avatar_url} name={m.profile?.display_name ?? ''} size="sm" />
-                    </Link>
-                    <div className="min-w-0 flex-1">
-                      <Link to={`/creators/${m.profile?.handle}`} className="truncate text-sm font-medium text-white hover:text-accent-300 transition-colors">
-                        {m.profile?.display_name}
-                      </Link>
-                      <p className="text-xs text-slate-500">{m.role ?? 'Team member'}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-xs font-medium text-slate-300">
-                        {memberTasks.length} task{memberTasks.length !== 1 ? 's' : ''}
-                      </p>
-                      <p className="text-[11px] text-slate-500">
-                        {memberApproved} approved · {memberInProgress} active
-                      </p>
-                    </div>
+              <div>
+                <h3 className="label-overline mb-3">Team overview</h3>
+                {members.length > 0 ? (
+                  <div className="space-y-2">
+                    {members.map((m) => <MemberRow key={m.id} member={m} tasks={tasks} />)}
                   </div>
-                  {memberTasks.length > 0 && (
-                    <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
-                      <div
-                        className="h-full rounded-full bg-signal-green transition-[width] duration-500"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                ) : (
+                  <EmptyState icon={<Users size={22} />} text="No accepted team members yet." />
+                )}
+              </div>
+
+              <div>
+                <h3 className="label-overline mb-3">Verified contributions</h3>
+                {approvedByMember.size > 0 ? (
+                  <div className="space-y-2">
+                    {Array.from(approvedByMember.entries()).map(([memberId, subs]) => (
+                      <ContributionRow key={memberId} member={members.find((m) => m.profile_id === memberId)} subs={subs} />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState icon={<CheckCircle2 size={22} />} text="No approved contributions yet." />
+                )}
+              </div>
+            </>
+          )}
+
+          {dashTab === 'activity' && (
+            activity.length > 0 ? (
+              <div className="space-y-2">
+                {activity.map((item) => <ActivityRow key={item.id} item={item} />)}
+              </div>
+            ) : (
+              <EmptyState icon={<Rocket size={22} />} text="No activity yet — once tasks move and people join, it'll show up here." />
+            )
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      {showInvite && (
+        <InviteModal
+          projectId={project.id}
+          onClose={() => setShowInvite(false)}
+          onInvited={(inv) => { setInvites((prev) => [inv, ...prev.filter((i) => i.invitee_email !== inv.invitee_email)]); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function InviteModal({ projectId, onClose, onInvited }: { projectId: string; onClose: () => void; onInvited: (inv: Invitation) => void }) {
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+
+  const submit = async () => {
+    if (!email.trim()) { setError('Enter an email address.'); return; }
+    setLoading(true);
+    setError(null);
+    try {
+      const inv = await inviteUserToProject(projectId, email.trim(), role.trim() || null, message.trim() || null);
+      onInvited(inv);
+      setSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send invitation');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/80 backdrop-blur-sm animate-fade-in-up">
+      <div className="surface-raised w-full max-w-md p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-xl font-bold text-white">Invite a teammate</h2>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:text-white hover:bg-white/5 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        {sent ? (
+          <div className="py-6 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-signal-green/15 text-signal-green">
+              <CheckCircle2 size={28} />
+            </div>
+            <h3 className="mt-4 font-display text-lg font-semibold text-white">Invitation sent!</h3>
+            <p className="mt-2 text-sm text-slate-400">They'll see it on their "My Invitations" page and can accept or decline.</p>
+            <button type="button" className="btn btn-primary mt-5" onClick={onClose}>Done</button>
           </div>
         ) : (
-          <div className="rounded-xl border border-white/8 bg-white/[0.02] px-4 py-6 text-center">
-            <Users size={24} className="mx-auto text-slate-600" />
-            <p className="mt-2 text-xs text-slate-500">No accepted team members yet.</p>
-          </div>
+          <>
+            <p className="text-sm text-slate-400 mb-4">If this email has a WebLoop account, they'll receive an invitation to join this project.</p>
+            <label className="block mb-3">
+              <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">Email</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="teammate@example.com"
+                className="w-full rounded-lg border border-white/10 bg-ink-900/60 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-accent-400/40 focus:bg-ink-900 transition-colors"
+              />
+            </label>
+            <label className="block mb-3">
+              <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">Role (optional)</span>
+              <input
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                placeholder="e.g. Frontend Engineer"
+                className="w-full rounded-lg border border-white/10 bg-ink-900/60 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-accent-400/40 focus:bg-ink-900 transition-colors"
+              />
+            </label>
+            <label className="block mb-4">
+              <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">Message (optional)</span>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={3}
+                placeholder="Say a bit about why you're inviting them"
+                className="w-full rounded-lg border border-white/10 bg-ink-900/60 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-accent-400/40 focus:bg-ink-900 transition-colors resize-y"
+              />
+            </label>
+            {error && (
+              <div className="flex items-start gap-2 rounded-lg border border-signal-rose/30 bg-signal-rose/10 px-3 py-2.5 text-sm text-signal-rose mb-4">
+                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button type="button" className="btn btn-primary flex-1" disabled={loading} onClick={submit}>
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={15} />}
+                {loading ? 'Sending…' : 'Send invite'}
+              </button>
+              <button type="button" className="btn btn-ghost px-5" onClick={onClose}>Cancel</button>
+            </div>
+          </>
         )}
       </div>
     </div>
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-xl border border-white/8 bg-white/[0.02] px-3.5 py-3">
       <p className="font-display text-xl font-bold text-white">{value}</p>
       <p className="text-[11px] text-slate-500 mt-0.5">{label}</p>
+    </div>
+  );
+}
+
+function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="rounded-xl border border-white/8 bg-white/[0.02] px-4 py-6 text-center">
+      <span className="mx-auto flex h-10 w-10 items-center justify-center text-slate-600">{icon}</span>
+      <p className="mt-2 text-xs text-slate-500">{text}</p>
+    </div>
+  );
+}
+
+function ActivityRow({ item }: { item: ActivityItem }) {
+  return (
+    <div className="flex items-start gap-2.5 rounded-xl border border-white/8 bg-white/[0.02] p-3">
+      <span className="mt-0.5 text-accent-300 shrink-0">{item.icon}</span>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs text-slate-300">{item.text}</p>
+        <p className="text-[10px] text-slate-600 mt-0.5">{relativeDate(item.at)}</p>
+      </div>
     </div>
   );
 }
@@ -342,6 +495,101 @@ function TaskListRow({ task }: { task: Task }) {
           </div>
         </div>
         <Badge tone={sb.tone}>{sb.label}</Badge>
+      </div>
+    </div>
+  );
+}
+
+function SubmissionRow({ sub }: { sub: TaskSubmission & { task: Task } }) {
+  const sb = submissionStatusBadge[sub.status] ?? submissionStatusBadge.pending;
+  return (
+    <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3.5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="flex items-center gap-2">
+            <Avatar src={sub.submitter?.avatar_url} name={sub.submitter?.display_name ?? ''} size="xs" />
+            <Link to={`/creators/${sub.submitter?.handle}`} className="truncate text-xs font-medium text-white hover:text-accent-300 transition-colors">
+              {sub.submitter?.display_name ?? 'Unknown'}
+            </Link>
+          </div>
+          <p className="text-xs text-slate-400">
+            Task: <span className="text-slate-300">{sub.task.title}</span>
+          </p>
+          {sub.evidence_url && (
+            <a href={sub.evidence_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-accent-300 hover:text-accent-200 transition-colors">
+              <ExternalLink size={11} /> View evidence
+            </a>
+          )}
+          {sub.notes && <p className="text-xs text-slate-500 line-clamp-2">{sub.notes}</p>}
+          {sub.reviewer_feedback && (
+            <div className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-slate-400">
+              <span className="text-slate-500">Owner feedback: </span>{sub.reviewer_feedback}
+              {sub.rating !== null && sub.rating !== undefined && (
+                <span className="ml-2 inline-flex items-center gap-0.5 text-signal-amber">
+                  <Star size={10} fill="currentColor" /> {sub.rating}/5
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        <Badge tone={sb.tone}>{sb.label}</Badge>
+      </div>
+    </div>
+  );
+}
+
+function MemberRow({ member, tasks }: { member: ProjectMember; tasks: Task[] }) {
+  const memberTasks = tasks.filter((t) => t.assignee_id === member.profile_id);
+  const memberApproved = memberTasks.filter((t) => t.status === 'approved').length;
+  const memberInProgress = memberTasks.filter((t) => ['in_progress', 'submitted', 'changes_requested'].includes(t.status)).length;
+  const progress = memberTasks.length > 0 ? Math.round((memberApproved / memberTasks.length) * 100) : 0;
+  return (
+    <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3.5">
+      <div className="flex items-center gap-3">
+        <Link to={`/creators/${member.profile?.handle}`} className="shrink-0">
+          <Avatar src={member.profile?.avatar_url} name={member.profile?.display_name ?? ''} size="sm" />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <Link to={`/creators/${member.profile?.handle}`} className="truncate text-sm font-medium text-white hover:text-accent-300 transition-colors">
+            {member.profile?.display_name}
+          </Link>
+          <p className="text-xs text-slate-500">{member.role ?? 'Team member'}</p>
+        </div>
+        <div className="text-right shrink-0">
+          <p className="text-xs font-medium text-slate-300">
+            {memberTasks.length} task{memberTasks.length !== 1 ? 's' : ''}
+          </p>
+          <p className="text-[11px] text-slate-500">
+            {memberApproved} approved · {memberInProgress} active
+          </p>
+        </div>
+      </div>
+      {memberTasks.length > 0 && (
+        <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+          <div className="h-full rounded-full bg-signal-green transition-[width] duration-500" style={{ width: `${progress}%` }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ContributionRow({ member, subs }: { member: ProjectMember | undefined; subs: TaskSubmission[] }) {
+  const profile = member?.profile;
+  const ratings = subs.filter((s) => s.rating !== null && s.rating !== undefined);
+  const avgRating = ratings.length > 0 ? ratings.reduce((sum, s) => sum + (s.rating ?? 0), 0) / ratings.length : null;
+  return (
+    <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3.5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Avatar src={profile?.avatar_url} name={profile?.display_name ?? ''} size="sm" />
+          <div className="min-w-0">
+            <Link to={`/creators/${profile?.handle}`} className="truncate text-sm font-medium text-white hover:text-accent-300 transition-colors">
+              {profile?.display_name ?? 'Unknown member'}
+            </Link>
+            <p className="text-xs text-slate-500">{subs.length} approved contribution{subs.length !== 1 ? 's' : ''}</p>
+          </div>
+        </div>
+        {avgRating !== null ? <Rating value={avgRating} count={ratings.length} /> : <NoRating label="Not rated yet" />}
       </div>
     </div>
   );

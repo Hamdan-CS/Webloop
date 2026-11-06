@@ -1,9 +1,10 @@
 import { lazy, Suspense, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { CompaniesCityScene } from '@/components/scenes/Companies-City/CompaniesCityScene';
 import { CompaniesGrid } from '@/components/scenes/Companies-City/CompaniesGrid';
 import { COMPANIES } from '@/data/homeDemo';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 
 const EcosystemScene = lazy(() => import('@/components/scenes/Home-Ecosystem/EcosystemScene'));
 const ProjectStackScene = lazy(() => import('@/components/scenes/A-ProjectStack/ProjectStackScene'));
@@ -14,7 +15,7 @@ const ExplorePreview = lazy(() => import('@/components/scenes/H-ExplorePreview/E
 function SceneLoading() {
   return (
     <div className="flex h-[50vh] items-center justify-center">
-      <Loader2 size={24} className="animate-spin" style={{ color: 'var(--hr-accent)' }} />
+      <LoopLoader size={24} />
     </div>
   );
 }

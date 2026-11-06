@@ -13,6 +13,7 @@ import {
   Send,
   User,
 } from 'lucide-react';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import {
   fetchProjectTasks,
   fetchProjectMembers,
@@ -141,7 +142,7 @@ export function TaskManagementPanel({ projectId, profileId }: Props) {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 size={24} className="animate-spin text-accent-400" />
+        <LoopLoader size={24} />
       </div>
     );
   }

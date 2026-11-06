@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Inbox, ArrowRight, Clock, CheckCircle2, XCircle, Briefcase } from 'lucide-react';
+import { Inbox, ArrowRight, Clock, CheckCircle2, XCircle, Briefcase } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { fetchMyApplications } from '@/services/api';
 import type { Application } from '@/types';
 import { statusLabel } from '@/utils/labels';
@@ -51,7 +52,7 @@ export function MyApplicationsPage() {
 
       {loading ? (
         <div className="flex h-[40vh] items-center justify-center">
-          <Loader2 size={28} className="animate-spin text-accent-400" />
+          <LoopLoader size={28} />
         </div>
       ) : apps.length === 0 ? (
         <div className="surface pf-card app-empty">

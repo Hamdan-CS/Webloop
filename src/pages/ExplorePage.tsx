@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, X, Loader2 } from 'lucide-react';
+import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { fetchProjects, type ProjectQuery } from '@/services/api';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import type { Project } from '@/types';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { Select } from '@/components/shared/ui/Select';
@@ -221,7 +222,7 @@ export function ExplorePage() {
       {/* Main grid */}
       {loading ? (
         <div className="flex h-[70vh] items-center justify-center">
-          <Loader2 size={28} className="animate-spin text-accent-400" />
+          <LoopLoader size={28} />
         </div>
       ) : error ? (
         <div className="surface p-10 text-center">

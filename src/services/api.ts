@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type {
   Application,
+  Invitation,
   Message,
   PortfolioItem,
   Profile,
@@ -585,11 +586,29 @@ export async function fetchProjectApplicationsDetailed(projectId: string): Promi
   return (data ?? []) as unknown as Application[];
 }
 
+/**
+ * No `reply_to` embed here on purpose: `messages.reply_to_id` is a self-referencing FK,
+ * and PostgREST can't resolve it by constraint name (schema-cache limitation on self-joins)
+ * — embedding it by column name instead returns the relationship in the wrong direction
+ * (the messages that quote this one, not the message this one quotes). A quoted message is
+ * always part of the same conversation fetch anyway, so callers resolve `reply_to_id` to its
+ * message client-side (see `ConversationThread`'s `messagesById` lookup) instead.
+ */
+const MESSAGE_SELECT = `
+  *,
+  sender:profiles!messages_sender_id_fkey(*),
+  recipient:profiles!messages_recipient_id_fkey(*),
+  project:projects!messages_project_id_fkey(title, slug, owner_id),
+  task:tasks!messages_task_id_fkey(id, title, status, assignee_id, due_date, assignee:profiles!tasks_assignee_id_fkey(display_name, avatar_url))
+`;
+
 export async function sendMessage(
   senderId: string,
   recipientId: string,
   body: string,
   projectId?: string,
+  taskId?: string | null,
+  replyToId?: string | null,
 ): Promise<Message> {
   const { data, error } = await supabase
     .from('messages')
@@ -598,8 +617,10 @@ export async function sendMessage(
       recipient_id: recipientId,
       project_id: projectId ?? null,
       body,
+      task_id: taskId ?? null,
+      reply_to_id: replyToId ?? null,
     })
-    .select('*')
+    .select(MESSAGE_SELECT)
     .single();
   if (error) throw error;
   return data as unknown as Message;
@@ -608,12 +629,7 @@ export async function sendMessage(
 export async function fetchInboxMessages(profileId: string): Promise<Message[]> {
   const { data, error } = await supabase
     .from('messages')
-    .select(`
-      *,
-      sender:profiles!messages_sender_id_fkey(*),
-      recipient:profiles!messages_recipient_id_fkey(*),
-      project:projects!messages_project_id_fkey(title, slug)
-    `)
+    .select(MESSAGE_SELECT)
     .or(`recipient_id.eq.${profileId},sender_id.eq.${profileId}`)
     .order('created_at', { ascending: false });
   if (error) throw error;
@@ -707,17 +723,52 @@ export async function fetchConversation(
 ): Promise<Message[]> {
   let q = supabase
     .from('messages')
-    .select(`
-      *,
-      sender:profiles!messages_sender_id_fkey(*),
-      recipient:profiles!messages_recipient_id_fkey(*),
-      project:projects!messages_project_id_fkey(title, slug)
-    `)
+    .select(MESSAGE_SELECT)
     .or(`and(sender_id.eq.${profileId},recipient_id.eq.${otherProfileId}),and(sender_id.eq.${otherProfileId},recipient_id.eq.${profileId})`);
   if (projectId) q = q.eq('project_id', projectId);
   const { data, error } = await q.order('created_at', { ascending: true });
   if (error) throw error;
   return (data ?? []) as unknown as Message[];
+}
+
+/** For chat UIs that only know a projectId (not the full Project) — used to decide
+ * whether the signed-in viewer can "Add Task" from a conversation. */
+export async function fetchProjectOwnerId(projectId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('owner_id')
+    .eq('id', projectId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return (data as { owner_id: string }).owner_id;
+}
+
+/**
+ * Creates a task and posts it as a reference-card message in the conversation with its
+ * assignee, in one call. The task is always assigned to `assigneeId` (the other party in
+ * the chat) — mirrors `createTask`'s existing auto-`in_progress`-on-assign behavior.
+ */
+export async function createTaskFromMessage(
+  projectId: string,
+  createdBy: string,
+  assigneeId: string,
+  input: {
+    title: string;
+    description?: string;
+    acceptance_criteria?: string;
+    due_date?: string | null;
+  },
+  note?: string,
+): Promise<{ task: Task; message: Message }> {
+  const task = await createTask(projectId, createdBy, { ...input, assignee_id: assigneeId });
+  const message = await sendMessage(
+    createdBy,
+    assigneeId,
+    note?.trim() || `Created a task: ${task.title}`,
+    projectId,
+    task.id,
+  );
+  return { task, message };
 }
 
 export async function acceptApplicationAndAddMember(
@@ -900,4 +951,104 @@ export async function reviewSubmission(
     : 'rejected';
 
   await updateTask(taskId, { status: taskStatus });
+}
+
+// ============================================================
+// Invitations: owner invites a specific person by email to join their project
+// ============================================================
+
+const INVITE_ERROR_MESSAGES: Record<string, string> = {
+  USER_NOT_FOUND: "No WebLoop account found for this email.",
+  NOT_PROJECT_OWNER: "Only the project owner can invite teammates.",
+  CANNOT_INVITE_SELF: "You can't invite yourself.",
+};
+
+function inviteErrorMessage(err: unknown): string {
+  // Supabase/Postgrest errors are plain objects with a `message` field, not
+  // `instanceof Error` — fall back to that before stringifying the whole object.
+  const raw = err instanceof Error
+    ? err.message
+    : typeof err === 'object' && err !== null && 'message' in err && typeof (err as { message: unknown }).message === 'string'
+      ? (err as { message: string }).message
+      : String(err);
+  for (const code of Object.keys(INVITE_ERROR_MESSAGES)) {
+    if (raw.includes(code)) return INVITE_ERROR_MESSAGES[code];
+  }
+  return raw || 'Failed to send invitation';
+}
+
+export async function inviteUserToProject(
+  projectId: string,
+  email: string,
+  roleTitle: string | null,
+  message: string | null,
+): Promise<Invitation> {
+  const { data, error } = await supabase.rpc('invite_user_by_email', {
+    p_project_id: projectId,
+    p_email: email,
+    p_role_title: roleTitle,
+    p_message: message,
+  });
+  if (error) throw new Error(inviteErrorMessage(error));
+  return data as unknown as Invitation;
+}
+
+export async function fetchMyInvitations(profileId: string): Promise<Invitation[]> {
+  const { data, error } = await supabase
+    .from('invitations')
+    .select(`
+      *,
+      project:projects!invitations_project_id_fkey(title, slug, status),
+      inviter:profiles!invitations_inviter_id_fkey(*)
+    `)
+    .eq('invitee_id', profileId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as Invitation[];
+}
+
+export async function fetchProjectInvitations(projectId: string): Promise<Invitation[]> {
+  const { data, error } = await supabase
+    .from('invitations')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as Invitation[];
+}
+
+export async function respondToInvite(
+  inviteId: string,
+  status: 'accepted' | 'declined',
+): Promise<void> {
+  const { error } = await supabase
+    .from('invitations')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', inviteId);
+  if (error) throw error;
+}
+
+/**
+ * Accepting an invite must also add the invitee to `project_members`, but that
+ * table's RLS only lets the project owner write to it — so this runs server-side
+ * via a SECURITY DEFINER function instead of two separate client-side writes.
+ */
+export async function acceptInvite(inviteId: string): Promise<void> {
+  const { error } = await supabase.rpc('accept_invite', { p_invite_id: inviteId });
+  if (error) throw error;
+}
+
+export async function cancelInvite(inviteId: string): Promise<void> {
+  const { error } = await supabase.from('invitations').delete().eq('id', inviteId);
+  if (error) throw error;
+}
+
+export async function fetchPendingInviteCount(profileId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('invitations')
+    .select('id', { count: 'exact', head: true })
+    .eq('invitee_id', profileId)
+    .eq('status', 'pending');
+  if (error) return 0;
+  return count ?? 0;
 }

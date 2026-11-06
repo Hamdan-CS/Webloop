@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -22,12 +22,13 @@ import {
   Eye,
   GitCommit,
 } from 'lucide-react';
-import { fetchProjectBySlug, fetchProfileStats, fetchProfileContributions, createApplication, checkExistingApplication, fetchProjectApplicationsDetailed, fetchProjectMembers, updateMemberRole, fetchProjectTasks } from '@/services/api';
-import type { Project, Application, ProjectMember, Task } from '@/types';
+import { fetchProjectBySlug, fetchProfileStats, createApplication, checkExistingApplication, fetchProjectMembers, updateMemberRole, fetchProjectTasks } from '@/services/api';
+import type { Project, ProjectMember, Task } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
 import { Badge } from '@/components/shared/ui/Badge';
 import { Button } from '@/components/shared/ui/Button';
 import { Select } from '@/components/shared/ui/Select';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { Rating, NoRating } from '@/components/shared/ui/Rating';
 import { useAuthPrompt } from '@/components/auth/AuthPrompt';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,10 +45,6 @@ import {
   creatorTypeLabel,
 } from '@/utils/labels';
 
-const ContributionGrid = lazy(() =>
-  import('@/components/contributions').then((m) => ({ default: m.ContributionGrid })),
-);
-
 export function ProjectDetailPage() {
   const { slug } = useParams();
   const [project, setProject] = useState<Project | null>(null);
@@ -62,7 +59,6 @@ export function ProjectDetailPage() {
   const [applyError, setApplyError] = useState<string | null>(null);
   const [applySuccess, setApplySuccess] = useState(false);
   const [alreadyApplied, setAlreadyApplied] = useState(false);
-  const [pendingApps, setPendingApps] = useState<Application[]>([]);
   const [teamMembers, setTeamMembers] = useState<ProjectMember[]>([]);
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -83,13 +79,10 @@ export function ProjectDetailPage() {
         if (user && profile) {
           checkExistingApplication(p.id, profile.id).then(setAlreadyApplied);
         }
-        // Load team members and pending applications for enhanced view
+        // Load team members for the Team tab
         fetchProjectMembers(p.id).then(setTeamMembers).catch(() => {});
         fetchProjectTasks(p.id).then(setTasks).catch(() => setTasks([]));
         try { setStarred(localStorage.getItem(`wl-star-${p.id}`) === '1'); } catch { /* storage unavailable */ }
-        fetchProjectApplicationsDetailed(p.id).then((apps) => {
-          setPendingApps(apps.filter((a) => a.status === 'pending'));
-        }).catch(() => {});
       }
       setLoading(false);
     });
@@ -110,7 +103,7 @@ export function ProjectDetailPage() {
         transition={{ duration: 0.2 }}
         className="flex h-[60vh] items-center justify-center"
       >
-        <Loader2 size={28} className="animate-spin text-accent-400" />
+        <LoopLoader size={28} />
       </motion.div>
     );
   }
@@ -370,7 +363,7 @@ export function ProjectDetailPage() {
           {tab === 'tm' && (
             <>
           {/* Team members */}
-          {(teamMembers.length > 0 || pendingApps.length > 0) && (
+          {teamMembers.length > 0 && (
             <Section title="Team members">
               {teamMembers.length > 0 && (
                 <ul className="space-y-2">
@@ -429,30 +422,6 @@ export function ProjectDetailPage() {
                     </li>
                   ))}
                 </ul>
-              )}
-              {pendingApps.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Pending join requests ({pendingApps.length})</p>
-                  <ul className="space-y-2">
-                    {pendingApps.map((a) => (
-                      <li key={a.id} className="rounded-xl border border-signal-amber/20 bg-signal-amber/5 p-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar src={a.applicant?.avatar_url} name={a.applicant?.display_name ?? ''} size="sm" />
-                          <div className="min-w-0 flex-1">
-                            <Link to={`/creators/${a.applicant?.handle}`} className="truncate text-xs font-medium text-white hover:text-accent-300">
-                              {a.applicant?.display_name}
-                            </Link>
-                            <p className="text-[10px] text-slate-500">{a.role_title ?? 'General application'}</p>
-                          </div>
-                          <Badge tone="amber">Pending</Badge>
-                        </div>
-                        {a.applicant && a.applicant.creator_type !== 'company' && a.applicant.creator_type !== 'university' && (
-                          <ApplicantContributionSummary profileId={a.applicant.id} handle={a.applicant.handle} />
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
               )}
             </Section>
           )}
@@ -678,34 +647,6 @@ function MetaRow({ icon, label, value }: { icon: React.ReactNode; label: string;
         {icon} {label}
       </span>
       <span className="text-sm font-medium text-slate-200 text-right">{value}</span>
-    </div>
-  );
-}
-
-/** Mini contribution grid + totals for one applicant, shown inside their card in the join-requests list. */
-function ApplicantContributionSummary({ profileId, handle }: { profileId: string; handle?: string }) {
-  const [stats, setStats] = useState<{ avg: number; count: number; approved: number } | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([fetchProfileStats(profileId), fetchProfileContributions(profileId)]).then(([st, ctr]) => {
-      if (!cancelled) setStats({ avg: st.avg_rating, count: st.review_count, approved: ctr.approved });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [profileId]);
-
-  return (
-    <div className="mt-2.5 flex items-center gap-3">
-      <Suspense fallback={<div className="skeleton h-8 w-32 rounded" />}>
-        <ContributionGrid studentId={profileId} size="mini" profileHandle={handle} />
-      </Suspense>
-      {stats && (
-        <span className="text-[11px] text-slate-500">
-          {stats.approved} task{stats.approved === 1 ? '' : 's'} · {stats.count > 0 ? `${stats.avg.toFixed(1)} avg rating` : 'not rated'}
-        </span>
-      )}
     </div>
   );
 }

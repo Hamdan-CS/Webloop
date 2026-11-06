@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { fetchCompanies, fetchCompanyProjectSummaries, type CompanyProjectSummary } from '@/services/api';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import type { Profile } from '@/types';
 import { CompanyCard } from '@/components/companies/CompanyCard';
 import { Select } from '@/components/shared/ui/Select';
@@ -43,7 +44,7 @@ export function CompaniesPage() {
 
       {loading ? (
         <div className="flex h-[40vh] items-center justify-center">
-          <Loader2 size={28} className="animate-spin text-accent-400" />
+          <LoopLoader size={28} />
         </div>
       ) : (
         <>

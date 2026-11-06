@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { lazy, Suspense, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
 import { AuthPromptProvider } from '@/components/auth/AuthPrompt';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { DesignProvider } from '@/design-system/DesignProvider';
 import { FloatingPanelProvider, PanelBadgeSync, FloatingPanel } from '@/components/FloatingPanel';
@@ -20,10 +20,14 @@ const CompaniesPage = lazy(() => import('@/pages/CompaniesPage').then((m) => ({ 
 const HowItWorksPage = lazy(() => import('@/pages/HowItWorksPage').then((m) => ({ default: m.HowItWorksPage })));
 const JoinPage = lazy(() => import('@/pages/JoinPage').then((m) => ({ default: m.JoinPage })));
 const SignInPage = lazy(() => import('@/pages/SignInPage').then((m) => ({ default: m.SignInPage })));
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })));
 const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })));
 const CreatorProfilePage = lazy(() => import('@/pages/CreatorProfilePage').then((m) => ({ default: m.CreatorProfilePage })));
 const PublishProjectPage = lazy(() => import('@/pages/PublishProjectPage').then((m) => ({ default: m.PublishProjectPage })));
 const MyApplicationsPage = lazy(() => import('@/pages/MyApplicationsPage').then((m) => ({ default: m.MyApplicationsPage })));
+const MyInvitationsPage = lazy(() => import('@/pages/MyInvitationsPage').then((m) => ({ default: m.MyInvitationsPage })));
+const MyProjectsPage = lazy(() => import('@/pages/MyProjectsPage').then((m) => ({ default: m.MyProjectsPage })));
 const EditProfilePage = lazy(() => import('@/pages/EditProfilePage').then((m) => ({ default: m.EditProfilePage })));
 const BuildProfilePage = lazy(() => import('@/pages/BuildProfilePage').then((m) => ({ default: m.BuildProfilePage })));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
@@ -34,7 +38,7 @@ const UniversityDashboard = lazy(() => import('@/pages/dashboards/UniversityDash
 function RouteLoading() {
   return (
     <div className="flex h-[60vh] items-center justify-center">
-      <Loader2 size={24} className="animate-spin" style={{ color: 'var(--hr-accent)' }} />
+      <LoopLoader size={24} />
     </div>
   );
 }
@@ -112,10 +116,14 @@ function App() {
                   <Route path="/how-it-works" element={<GuestOnlyRoute><HowItWorksPage /></GuestOnlyRoute>} />
                   <Route path="/join" element={<JoinPage />} />
                   <Route path="/signin" element={<SignInPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/projects/:slug" element={<ProjectDetailPage />} />
                   <Route path="/creators/:handle" element={<CreatorProfilePage />} />
                   <Route path="/publish" element={<PublishProjectPage />} />
                   <Route path="/my-applications" element={<MyApplicationsPage />} />
+                  <Route path="/my-invitations" element={<MyInvitationsPage />} />
+                  <Route path="/my-projects" element={<MyProjectsPage />} />
                   <Route path="/settings" element={<EditProfilePage />} />
                   <Route path="/build-profile" element={<BuildProfilePage />} />
                   <Route path="/dashboard/student" element={<RoleRoute allowed={['student', 'team']}><StudentDashboard /></RoleRoute>} />

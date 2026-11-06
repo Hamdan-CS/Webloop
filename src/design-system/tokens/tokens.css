@@ -31,6 +31,11 @@
   --font-display: 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, sans-serif;
   --font-accent: 'Instrument Serif', Georgia, serif;
   --font-mono: ui-monospace, Menlo, Consolas, monospace;
+
+  /* Always-dark text for buttons on the light cyan .btn-primary gradient — theme-invariant
+     on purpose: --ink-950 itself gets redefined to a near-white shade under .light (it's
+     reused there as a background token), which would otherwise wash out this button's text. */
+  --btn-accent-text: 7 10 18;
 }
 
 :root,

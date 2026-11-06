@@ -117,32 +117,70 @@ export function ProjectStackScene() {
       if (i === cur) return;
       cur = i;
       setActiveStep(i);
+      // The left step list previously only followed `activeStep` through a
+      // React re-render, which can land a frame or more after this: GSAP's
+      // scrub keeps calling this during its own easing, well past when the
+      // user stops scrolling, so under rapid updates the left list could
+      // visibly lag behind the right-side label panel below, which updates
+      // its `.on` class imperatively (right here) and never waits on React.
+      // Toggle the left list the same, synchronous way so both move together.
+      stepRefs.current.forEach((el, k) => el?.classList.toggle('on', k === i));
       labels.forEach((l, k) => l.classList.toggle('on', k === i));
       sws.forEach((s, k) => s.querySelector('.slab')?.classList.toggle('focus', k === i));
       camTo(i);
+      // The labels float next to their card, and the stack keeps rotating as
+      // the user scrolls (and layers keep revealing), so each card's on-screen
+      // position shifts a little every time the active stage changes — re-sync
+      // the labels to match, every time, not just once.
+      placeLabels();
     }
 
-    function placeLabels(tl?: gsap.core.Timeline) {
+    function placeLabels() {
       if (window.innerWidth <= 1180 || !labelWrapRef.current || !sws.length) return;
-      const p = tl?.progress();
-      tl?.progress(1, true);
       const wrapRect = labelWrapRef.current.getBoundingClientRect();
       sws.forEach((s, i) => {
         const r = s.getBoundingClientRect();
         if (labels[i]) labels[i].style.top = `${r.top + r.height / 2 - wrapRect.top}px`;
       });
-      if (tl && p !== undefined) tl.progress(p, true);
     }
 
-    function layout() {
+    function layout(measure?: () => { height: number; width: number } | null) {
       const wide = window.innerWidth > 900;
       fit.style.setProperty('--fit', '1');
       fit.style.height = '';
-      const r = stack.getBoundingClientRect();
+      const r = (measure && measure()) || stack.getBoundingClientRect();
       const aH = wide ? stage.clientHeight - 8 : 1e5;
       const aW = stage.clientWidth;
       const fitS = clamp(Math.min((aH / r.height) * 0.97, (aW / r.width) * (wide ? 0.9 : 0.78)), 0.28, 1.35);
       fit.style.setProperty('--fit', fitS.toFixed(3));
+    }
+
+    // layout() must size the stack from its TRUE fully-settled geometry, not
+    // its live mid-scroll state — at mount only stage 0 is revealed (others
+    // are autoAlpha:0 per the entry tween below), and mid-scrub the stack's
+    // rotateX/rotateY tween is always easing, never settled. Measuring the
+    // live (mostly-collapsed) bounding box undercounts the stack's true
+    // height once all 5 layers are revealed, which is why layers 4
+    // (Contributions) and 5 (Final Result) used to render past the bottom of
+    // the stage. Force every layer to its final target, and the stack to its
+    // END rotation (rotateX:23, rotateY:-18 below) — the only one of the
+    // sweep's two ends that's ever actually reached while all 5 layers are
+    // simultaneously visible, since the entry tweens and the rotation tween
+    // run across the same timeline and finish together — measure, then
+    // restore, synchronously, so nothing visibly flashes.
+    function measureSettledStack() {
+      if (!sws.length) return null;
+      const savedLayers = sws.map((s) => ({ y: gsap.getProperty(s, 'y'), z: gsap.getProperty(s, 'z'), rotationX: gsap.getProperty(s, 'rotationX'), autoAlpha: gsap.getProperty(s, 'autoAlpha') }));
+      const savedStackRot = { rotationX: gsap.getProperty(stack, 'rotationX'), rotationY: gsap.getProperty(stack, 'rotationY') };
+
+      sws.forEach((s, i) => gsap.set(s, { y: 0, z: i * 28, rotationX: 0, autoAlpha: 1 }));
+      gsap.set(stack, { rotationX: 23, rotationY: -18 });
+      const r1 = stack.getBoundingClientRect();
+
+      sws.forEach((s, i) => gsap.set(s, savedLayers[i]));
+      gsap.set(stack, savedStackRot);
+
+      return { height: r1.height, width: r1.width };
     }
 
     let st: ScrollTrigger | undefined;
@@ -161,12 +199,18 @@ export function ProjectStackScene() {
         trigger: section, start: 'top top', end: '+=230%', pin: true, scrub: 0.9, animation: tl, anticipatePin: 1,
         onUpdate: (self) => setActive(clamp(Math.ceil(self.progress * 4 - 0.001), 0, 4)),
       });
-      layout(); placeLabels(tl); setActive(0);
+      layout(measureSettledStack);
+      setActive(0);
       goToRef.current = (i: number) => {
         const y = st!.start + (st!.end - st!.start) * (i / 4) + (i ? 4 : 0);
         window.scrollTo({ top: y, behavior: 'smooth' });
       };
-      const onResize = () => { layout(); placeLabels(tl); ScrollTrigger.refresh(); };
+      const onResize = () => {
+        layout(measureSettledStack);
+        camTo(Math.max(cur, 0));
+        placeLabels();
+        ScrollTrigger.refresh();
+      };
       window.addEventListener('resize', onResize);
       return () => { window.removeEventListener('resize', onResize); goToRef.current = null; };
     });
@@ -188,6 +232,19 @@ export function ProjectStackScene() {
       window.addEventListener('resize', onResize);
       return () => { window.removeEventListener('resize', onResize); goToRef.current = null; };
     });
+
+    // This section's pin distance is measured once, at mount, against the
+    // page's layout at that instant — but other lazily-loaded sections on
+    // this page (the hero above included) can still be settling their own
+    // height a moment later, which leaves this pin's start/end calculated
+    // against a page that hasn't reached its final height yet (symptom: a
+    // gap above the pinned stage, or the last stages landing past the pin's
+    // end, inside the next section). Refresh once things have had a beat to
+    // settle, and again on window 'load' as a fallback for slower
+    // connections where images/fonts are still arriving.
+    let refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 600);
+    const onLoad = () => { clearTimeout(refreshTimer); refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 600); };
+    if (document.readyState !== 'complete') window.addEventListener('load', onLoad, { once: true });
 
     // real bounded drag-rotation (mouse + touch)
     let drag: { x: number; y: number; px: number; py: number; moved: number; mouse: boolean } | null = null;
@@ -226,6 +283,8 @@ export function ProjectStackScene() {
     return () => {
       mm.revert();
       st?.kill();
+      clearTimeout(refreshTimer);
+      window.removeEventListener('load', onLoad);
       stage.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);

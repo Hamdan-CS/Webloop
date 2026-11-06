@@ -89,6 +89,9 @@ export function SignInPage() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              <p className="fine" style={{ textAlign: 'right', marginTop: 8 }}>
+                <Link to="/forgot-password" className="link-accent">Forgot password?</Link>
+              </p>
             </div>
 
             {error && (

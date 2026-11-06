@@ -158,6 +158,21 @@ export interface Application {
   project?: { title: string; slug: string; status: string };
 }
 
+export interface Invitation {
+  id: string;
+  project_id: string;
+  inviter_id: string;
+  invitee_email: string;
+  invitee_id: string | null;
+  role_title: string | null;
+  message: string | null;
+  status: 'pending' | 'accepted' | 'declined';
+  created_at: string;
+  updated_at: string;
+  inviter?: Profile;
+  project?: { title: string; slug: string; status: string };
+}
+
 export type TaskStatus = 'open' | 'in_progress' | 'submitted' | 'approved' | 'changes_requested' | 'rejected';
 export type SubmissionStatus = 'pending' | 'approved' | 'changes_requested' | 'not_completed' | 'rejected';
 export type TaskSize = 'small' | 'medium' | 'large';
@@ -195,6 +210,15 @@ export interface TaskSubmission {
   submitter?: Profile;
 }
 
+export interface MessageTaskRef {
+  id: string;
+  title: string;
+  status: TaskStatus;
+  assignee_id: string | null;
+  due_date: string | null;
+  assignee?: { display_name: string; avatar_url: string | null } | null;
+}
+
 export interface Message {
   id: string;
   sender_id: string;
@@ -203,7 +227,13 @@ export interface Message {
   body: string;
   is_read: boolean;
   created_at: string;
+  task_id: string | null;
+  /** The message being quoted, if any. Not embedded by the API (self-referencing FK —
+   * see the comment on MESSAGE_SELECT in services/api.ts); resolve it client-side by
+   * looking this id up in the same conversation's already-fetched messages. */
+  reply_to_id: string | null;
   sender?: Profile;
   recipient?: Profile;
-  project?: { title: string; slug: string } | null;
+  project?: { title: string; slug: string; owner_id?: string } | null;
+  task?: MessageTaskRef | null;
 }

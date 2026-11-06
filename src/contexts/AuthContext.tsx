@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchUnreadMessageCount, fetchPendingReviewCount } from '@/services/api';
+import { fetchUnreadMessageCount, fetchPendingReviewCount, fetchPendingInviteCount } from '@/services/api';
 import type { Profile } from '@/types';
 
 interface AuthContextValue {
@@ -13,9 +13,12 @@ interface AuthContextValue {
   authEvent: string | null;
   unreadMessages: number;
   pendingReviews: number;
+  pendingInvites: number;
   signUp: (email: string, password: string, displayName: string, creatorType: string) => Promise<{ error: string | null; profile: Profile | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null; profile: Profile | null }>;
   signInWithGoogle: () => Promise<{ error: string | null }>;
+  resetPasswordForEmail: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   refreshCounts: () => Promise<void>;
@@ -37,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authEvent, setAuthEvent] = useState<string | null>(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [pendingReviews, setPendingReviews] = useState(0);
+  const [pendingInvites, setPendingInvites] = useState(0);
 
   const loadProfile = useCallback(async (uid: string): Promise<Profile | null> => {
     const { data, error } = await supabase.rpc('get_profile_by_user_id', { user_uid: uid });
@@ -51,12 +55,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loadCounts = useCallback(async (profileId: string) => {
-    const [unread, pending] = await Promise.all([
+    const [unread, pending, invites] = await Promise.all([
       fetchUnreadMessageCount(profileId),
       fetchPendingReviewCount(profileId),
+      fetchPendingInviteCount(profileId),
     ]);
     setUnreadMessages(unread);
     setPendingReviews(pending);
+    setPendingInvites(invites);
   }, []);
 
   useEffect(() => {
@@ -86,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(null);
           setUnreadMessages(0);
           setPendingReviews(0);
+          setPendingInvites(0);
         }
         setLoading(false);
       })();
@@ -142,16 +149,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null };
   }, []);
 
+  const resetPasswordForEmail = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return { error: error?.message ?? null };
+  }, []);
+
+  const updatePassword = useCallback(async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    return { error: error?.message ?? null };
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setProfile(null);
     setUnreadMessages(0);
     setPendingReviews(0);
+    setPendingInvites(0);
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ session, user, profile, loading, authEvent, unreadMessages, pendingReviews, signUp, signIn, signInWithGoogle, signOut, refreshProfile, refreshCounts }}
+      value={{ session, user, profile, loading, authEvent, unreadMessages, pendingReviews, pendingInvites, signUp, signIn, signInWithGoogle, resetPasswordForEmail, updatePassword, signOut, refreshProfile, refreshCounts }}
     >
       {children}
     </AuthContext.Provider>

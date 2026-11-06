@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Images } from 'lucide-react';
+import { Images } from 'lucide-react';
 import { fetchPortfolioGallery } from '@/services/api';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import type { PortfolioItem } from '@/types';
 import { WorkCard } from '@/components/gallery/WorkCard';
 import { WorkDetail, StudentDetail } from '@/components/gallery/GalleryOverlays';
@@ -53,7 +54,7 @@ export function GalleryPage() {
 
       {loading ? (
         <div className="flex h-[40vh] items-center justify-center">
-          <Loader2 size={28} className="animate-spin text-accent-400" />
+          <LoopLoader size={28} />
         </div>
       ) : items.length === 0 ? (
         <div className="gal-empty">

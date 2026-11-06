@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDashboardPath } from '@/utils/roles';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 
 interface GuestOnlyRouteProps {
   children: React.ReactNode;
@@ -13,7 +13,7 @@ export function GuestOnlyRoute({ children }: GuestOnlyRouteProps) {
   if (loading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
-        <Loader2 size={28} className="animate-spin text-accent-400" />
+        <LoopLoader size={28} />
       </div>
     );
   }

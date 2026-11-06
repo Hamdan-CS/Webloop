@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertCircle, Save, CheckCircle2, X, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { updateProfile } from '@/services/api';
 import { Button } from '@/components/shared/ui/Button';
 import { Avatar } from '@/components/shared/ui/Avatar';
@@ -56,7 +57,7 @@ export function EditProfilePage() {
   if (authLoading) {
     return (
       <div className="container-page py-20 text-center">
-        <Loader2 size={24} className="mx-auto animate-spin text-accent-400" />
+        <LoopLoader size={24} className="mx-auto" />
       </div>
     );
   }

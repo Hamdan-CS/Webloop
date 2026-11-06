@@ -11,6 +11,7 @@ import { fetchAssignedTasks, createSubmission, reportCannotComplete } from '@/se
 import type { Task } from '@/types';
 import { Badge } from '@/components/shared/ui/Badge';
 import { Button } from '@/components/shared/ui/Button';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { relativeDate } from '@/utils/labels';
 import { Link } from 'react-router-dom';
 import { cn } from '@/utils/cn';
@@ -82,7 +83,7 @@ export function MyTasksPanel({ profileId, filter, onTasks }: Props) {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 size={24} className="animate-spin text-accent-400" />
+        <LoopLoader size={24} />
       </div>
     );
   }

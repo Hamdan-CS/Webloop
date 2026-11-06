@@ -1,15 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, ArrowRight, Check, Loader2, AlertCircle, Plus, X, Sparkles,
   GraduationCap, Building2, Landmark, GitFork,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { createProject } from '@/services/api';
+import { createProject, inviteUserToProject } from '@/services/api';
 import { Button } from '@/components/shared/ui/Button';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { art, type ArtKind } from '@/data/homeArt';
 import { compensationLabel, projectTypeLabel } from '@/utils/labels';
+import { ALLOWED_PROJECT_TYPES, ALLOWED_COMPENSATIONS } from '@/utils/roles';
 import type { Compensation, Difficulty, Project, ProjectType } from '@/types';
 import { cn } from '@/utils/cn';
 
@@ -67,6 +68,9 @@ export function PublishProjectPage() {
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState('');
   const [roles, setRoles] = useState<{ title: string; description: string }[]>([{ title: '', description: '' }]);
+  const [invites, setInvites] = useState<string[]>(['']);
+  const [inviteResults, setInviteResults] = useState<{ email: string; ok: boolean; error?: string }[]>([]);
+  const [publishedProject, setPublishedProject] = useState<Project | null>(null);
   const [form, setForm] = useState<Form>({
     title: '', summary: '', overview: '', problem: '', target_users: '',
     category: 'Web App', difficulty: 'intermediate', project_type: 'student',
@@ -111,6 +115,26 @@ export function PublishProjectPage() {
     skills: skills.map((s, i) => ({ id: `s${i}`, project_id: 'draft', name: s, category: null })),
   }) as Project, [form, skills, profile, personal]);
 
+  const allowedTypes = profile ? ALLOWED_PROJECT_TYPES[profile.creator_type] : ALLOWED_PROJECT_TYPES.student;
+  const allowedComps = profile ? ALLOWED_COMPENSATIONS[profile.creator_type] : ALLOWED_COMPENSATIONS.student;
+
+  // Keep the selected project type / compensation valid for this account's creator_type
+  // (e.g. a student account can't publish a Company/University project or offer "Paid").
+  useEffect(() => {
+    if (!profile) return;
+    setForm((f) => {
+      const typeOk = allowedTypes.includes(f.project_type as ProjectType);
+      const compOk = allowedComps.includes(f.compensation as Compensation);
+      if (typeOk && compOk) return f;
+      return {
+        ...f,
+        project_type: typeOk ? f.project_type : allowedTypes[0],
+        compensation: compOk ? f.compensation : allowedComps[0],
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.creator_type]);
+
   if (!user || !profile) {
     return (
       <div className="container-page py-20 text-center">
@@ -135,6 +159,9 @@ export function PublishProjectPage() {
   const removeRole = (i: number) => setRoles(roles.filter((_, idx) => idx !== i));
   const setRole = (i: number, key: 'title' | 'description', value: string) =>
     setRoles(roles.map((r, idx) => (idx === i ? { ...r, [key]: value } : r)));
+  const addInvite = () => setInvites([...invites, '']);
+  const removeInvite = (i: number) => setInvites(invites.filter((_, idx) => idx !== i));
+  const setInvite = (i: number, value: string) => setInvites(invites.map((e, idx) => (idx === i ? value : e)));
 
   const basicsOk = !!form.title.trim() && !!form.summary.trim();
   const goNext = () => {
@@ -179,6 +206,23 @@ export function PublishProjectPage() {
         skills,
         validRoles.map((r) => ({ title: r.title.trim(), description: r.description.trim() || undefined })),
       );
+
+      const validInvites = Array.from(new Set(invites.map((e) => e.trim()).filter(Boolean)));
+      if (validInvites.length > 0) {
+        const results = await Promise.all(validInvites.map(async (email) => {
+          try {
+            await inviteUserToProject(project.id, email, null, null);
+            return { email, ok: true };
+          } catch (err) {
+            return { email, ok: false, error: err instanceof Error ? err.message : 'Failed to invite' };
+          }
+        }));
+        setInviteResults(results);
+        if (results.some((r) => !r.ok)) {
+          setPublishedProject(project);
+          return;
+        }
+      }
       navigate(`/projects/${project.slug}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to publish project');
@@ -252,7 +296,7 @@ export function PublishProjectPage() {
                 <StepHead n="Step 2" title="Type & level" sub="Help the right contributors find you." />
                 <div className="pub-lbl">Project type</div>
                 <div className="pub-types">
-                  {PROJECT_TYPES.map((t) => (
+                  {PROJECT_TYPES.filter((t) => allowedTypes.includes(t.value as ProjectType)).map((t) => (
                     <button type="button" key={t.value} className={cn('pub-type', form.project_type === t.value && 'on')} onClick={() => set('project_type', t.value)}>
                       <t.icon size={18} />
                       <b>{t.label}</b>
@@ -275,7 +319,7 @@ export function PublishProjectPage() {
                 <div className="pub-lbl">Difficulty</div>
                 <Seg value={form.difficulty} options={DIFFICULTIES} onChange={(v) => set('difficulty', v)} />
                 <div className="pub-lbl">Compensation</div>
-                <Seg value={form.compensation} options={COMPENSATIONS} onChange={(v) => set('compensation', v)} />
+                <Seg value={form.compensation} options={COMPENSATIONS.filter((c) => allowedComps.includes(c.value as Compensation))} onChange={(v) => set('compensation', v)} />
                 <div className="pub-lbl">Visibility</div>
                 <Seg value={form.status} options={STATUSES} onChange={(v) => set('status', v)} />
                 <div className="pub-toggles">
@@ -318,6 +362,17 @@ export function PublishProjectPage() {
                   </div>
                   <button type="button" className="sd-link" onClick={addRole}><Plus size={13} /> Add another role</button>
                 </PField>}
+                {!personal && <PField label="Invite teammates" hint="Add their email — sent once you publish">
+                  <div className="pub-roles">
+                    {invites.map((email, i) => (
+                      <div key={i} className="pub-role">
+                        <input type="email" className="pub-in" value={email} onChange={(e) => setInvite(i, e.target.value)} placeholder="teammate@example.com" {...fp('invites')} />
+                        {invites.length > 1 && <button type="button" className="pub-x" aria-label="Remove invite" onClick={() => removeInvite(i)}><X size={15} /></button>}
+                      </div>
+                    ))}
+                  </div>
+                  <button type="button" className="sd-link" onClick={addInvite}><Plus size={13} /> Add another invite</button>
+                </PField>}
                 <PField label="Cover image URL" hint="Optional — we generate one if empty">
                   <input className="pub-in" value={form.cover_image_url} onChange={(e) => set('cover_image_url', e.target.value)} placeholder="https://…" {...fp('cover')} />
                 </PField>
@@ -346,6 +401,19 @@ export function PublishProjectPage() {
                   ))}
                 </ul>
                 {form.status === 'draft' && <div className="pub-note">This will be saved as a draft — only you can see it until you change its visibility.</div>}
+                {publishedProject && inviteResults.length > 0 && (
+                  <div className="pub-note">
+                    <p>Your project was published. Here's how the invites went:</p>
+                    <ul className="pub-checks" style={{ marginTop: 8 }}>
+                      {inviteResults.map((r) => (
+                        <li key={r.email} className={r.ok ? 'ok' : ''}>
+                          <span className="pub-ck">{r.ok ? <Check size={12} /> : null}</span>
+                          <span>{r.email}{!r.ok && ` — ${r.error}`}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 {error && (
                   <div className="pub-err"><AlertCircle size={16} /><span>{error}</span></div>
                 )}
@@ -359,7 +427,11 @@ export function PublishProjectPage() {
             ) : (
               <Link to="/explore" className="btn btn-ghost">Cancel</Link>
             )}
-            {step < 3 ? (
+            {publishedProject ? (
+              <button type="button" className="btn btn-primary" onClick={() => navigate(`/projects/${publishedProject.slug}`)}>
+                Go to project <ArrowRight size={15} />
+              </button>
+            ) : step < 3 ? (
               <button type="button" className="btn btn-primary" onClick={goNext}>Continue <ArrowRight size={15} /></button>
             ) : (
               <button type="button" className="btn btn-primary" disabled={loading} onClick={publish}>
