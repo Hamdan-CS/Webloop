@@ -6,7 +6,7 @@ import type { DayCell } from './types';
 interface Props {
   cells: DayCell[];
   mini?: boolean;
-  onSelectDay?: (date: string) => void;
+  onSelectDay?: (date: string, rect: DOMRect) => void;
   selectedDate?: string | null;
   profileHandle?: string;
 }
@@ -57,7 +57,7 @@ export function ContributionGrid2D({ cells, mini = false, onSelectDay, selectedD
                 type="button"
                 role="gridcell"
                 aria-label={title}
-                onClick={() => onSelectDay?.(cell.date)}
+                onClick={(e) => onSelectDay?.(cell.date, e.currentTarget.getBoundingClientRect())}
                 className={cn(
                   'rounded-[3px] cursor-crosshair transition-transform hover:scale-125 focus-visible:scale-125 focus-visible:ring-2 focus-visible:ring-accent-400',
                   selectedDate === cell.date && 'ring-2 ring-accent-400',

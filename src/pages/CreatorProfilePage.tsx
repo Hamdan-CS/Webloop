@@ -13,7 +13,6 @@ import {
   Calendar,
   ArrowRight,
   Sparkles,
-  Trash2,
   MessageSquare,
   Users,
   X,
@@ -36,19 +35,16 @@ import {
   fetchProfileContributions,
   fetchProjectApplicationsDetailed,
   fetchProjectApplicationCount,
-  deleteProject,
-  updateProjectStatus,
   updateApplicationStatus,
   acceptApplicationAndAddMember,
   sendMessage,
 } from '@/services/api';
-import type { Application, PortfolioItem, Profile, Project, Review, ProjectStatus } from '@/types';
+import type { Application, PortfolioItem, Profile, Project, Review } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
 import { Badge } from '@/components/shared/ui/Badge';
 import { Rating, NoRating } from '@/components/shared/ui/Rating';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { Button } from '@/components/shared/ui/Button';
-import { Select } from '@/components/shared/ui/Select';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { useAuthPrompt } from '@/components/auth/AuthPrompt';
 import { useAuth } from '@/contexts/AuthContext';
@@ -58,8 +54,6 @@ import { cn } from '@/utils/cn';
 const ContributionGrid = lazy(() =>
   import('@/components/contributions').then((m) => ({ default: m.ContributionGrid })),
 );
-
-const PROJECT_STATUSES: ProjectStatus[] = ['draft', 'published', 'recruiting', 'in_progress', 'completed', 'archived'];
 
 type Tab = 'projects' | 'applications';
 const VALID_TABS: Tab[] = ['projects', 'applications'];
@@ -83,8 +77,6 @@ export function CreatorProfilePage() {
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
   const [projectApps, setProjectApps] = useState<Application[]>([]);
   const [pendingApps, setPendingApps] = useState(0);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-  const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
   const [contactOpen, setContactOpen] = useState(false);
   const { prompt } = useAuthPrompt();
   const tabSectionRef = useRef<HTMLDivElement>(null);
@@ -163,31 +155,6 @@ export function CreatorProfilePage() {
     setExpandedProject(projectId);
     const apps = await fetchProjectApplicationsDetailed(projectId);
     setProjectApps(apps);
-  };
-
-  const handleDeleteProject = async (projectId: string) => {
-    setStatusUpdating(projectId);
-    try {
-      await deleteProject(projectId);
-      setProjects(projects.filter((p) => p.id !== projectId));
-      setConfirmDelete(null);
-    } catch (err) {
-      console.error('Failed to delete project:', err);
-    } finally {
-      setStatusUpdating(null);
-    }
-  };
-
-  const handleStatusChange = async (projectId: string, status: string) => {
-    setStatusUpdating(projectId);
-    try {
-      await updateProjectStatus(projectId, status);
-      setProjects(projects.map((p) => (p.id === projectId ? { ...p, status: status as ProjectStatus } : p)));
-    } catch (err) {
-      console.error('Failed to update status:', err);
-    } finally {
-      setStatusUpdating(null);
-    }
   };
 
   const handleAppDecision = async (a: Application, status: 'accepted' | 'declined') => {
@@ -535,45 +502,8 @@ export function CreatorProfilePage() {
                     {publishedProjects.map((p) => (
                       <div key={p.id} className="relative">
                         <ProjectCard project={p} compact />
-                        {isOwner && (
-                          <div className="mt-2 rounded-xl border border-white/8 bg-ink-900/60 p-3 space-y-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] uppercase tracking-wider text-slate-500">Status</span>
-                              <Select
-                                className="flex-1"
-                                size="sm"
-                                value={p.status}
-                                disabled={statusUpdating === p.id}
-                                onChange={(v) => handleStatusChange(p.id, v)}
-                                options={PROJECT_STATUSES.map((s) => ({ value: s, label: statusLabel[s] }))}
-                              />
-                              {statusUpdating === p.id && <Loader2 size={12} className="animate-spin text-accent-400" />}
-                              {appCounts[p.id] > 0 && (
-                                <Link to="#" onClick={(e) => { e.preventDefault(); setTab('applications'); handleExpandApps(p.id); }} className="inline-flex items-center gap-1 text-[10px] text-signal-amber hover:text-signal-amber/80">
-                                  <Users size={11} /> {appCounts[p.id]}
-                                </Link>
-                              )}
-                            </div>
-                            <button
-                              onClick={() => setConfirmDelete(p.id)}
-                              className="flex w-full items-center justify-center gap-1.5 rounded-md border border-signal-rose/20 bg-signal-rose/5 px-2 py-1 text-xs text-signal-rose hover:bg-signal-rose/10 transition-colors"
-                            >
-                              <Trash2 size={11} /> Delete project
-                            </button>
-                          </div>
-                        )}
                       </div>
                     ))}
-                  </div>
-                </SectionCard>
-              )}
-
-              {/* Contributions */}
-              {(contributions.total > 0 || contributions.approved > 0) && (
-                <SectionCard title="Contributions" icon={<Award size={14} />}>
-                  <div className="grid grid-cols-2 gap-3">
-                    <ContributionStat label="Total submissions" value={contributions.total} />
-                    <ContributionStat label="Approved contributions" value={contributions.approved} />
                   </div>
                 </SectionCard>
               )}
@@ -660,30 +590,6 @@ export function CreatorProfilePage() {
         </div>
       </div>
 
-      {/* Delete confirmation modal */}
-      {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/80 backdrop-blur-sm">
-          <div className="surface-raised w-full max-w-md p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-signal-rose/15 text-signal-rose">
-                <AlertCircle size={20} />
-              </div>
-              <h3 className="font-display text-lg font-bold text-white">Delete this project?</h3>
-            </div>
-            <p className="text-sm text-slate-400 mb-5">
-              This permanently removes the project, its skills, roles, and all applications. This cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <Button variant="danger" onClick={() => handleDeleteProject(confirmDelete)} disabled={statusUpdating === confirmDelete}>
-                {statusUpdating === confirmDelete ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
-                Yes, delete
-              </Button>
-              <Button variant="ghost" onClick={() => setConfirmDelete(null)}>Cancel</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Contact modal */}
       {contactOpen && myProfile && profile && (
         <ContactModal
@@ -716,10 +622,6 @@ function Kpi({ value, label, tone }: { value: number; label: string; tone?: 'ok'
       <span>{label}</span>
     </div>
   );
-}
-
-function ContributionStat({ label, value }: { label: string; value: number }) {
-  return <Kpi value={value} label={label} />;
 }
 
 function TabButton({

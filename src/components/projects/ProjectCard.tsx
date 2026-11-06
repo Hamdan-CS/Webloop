@@ -1,15 +1,28 @@
 import { Link } from 'react-router-dom';
-import { Users, Star } from 'lucide-react';
+import { Users, Star, LayoutDashboard, Trash2, Loader2 } from 'lucide-react';
 import type { Project, ProjectStatus } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
+import { Button } from '@/components/shared/ui/Button';
+import { Select, type SelectOption } from '@/components/shared/ui/Select';
 import { statusLabel, projectTypeLabel } from '@/utils/labels';
 import { cn } from '@/utils/cn';
+
+export interface ProjectCardManage {
+  status: ProjectStatus;
+  statusOptions: SelectOption[];
+  statusUpdating: boolean;
+  onStatusChange: (status: string) => void;
+  onDelete: () => void;
+  onOverview: () => void;
+}
 
 interface ProjectCardProps {
   project: Project;
   selected?: boolean;
   onClick?: () => void;
   compact?: boolean;
+  /** When set, renders an owner-management footer (status, overview, delete) inside the card. */
+  manage?: ProjectCardManage;
 }
 
 const statusClass: Partial<Record<ProjectStatus, string>> = {
@@ -22,19 +35,15 @@ const statusClass: Partial<Record<ProjectStatus, string>> = {
 const ownerRole = (t: Project['project_type']) =>
   t === 'company' ? 'Company' : t === 'university' ? 'University' : t === 'open_source' ? 'Open source' : 'Student';
 
-export function ProjectCard({ project, selected, onClick }: ProjectCardProps) {
+export function ProjectCard({ project, selected, onClick, manage }: ProjectCardProps) {
   const owner = project.owner;
   const isLink = !onClick;
   const summary = project.summary.length > 96 ? `${project.summary.slice(0, 93)}…` : project.summary;
   const members = project.members?.length ?? 0;
   const contributors = Math.max(members, project.team_size ?? 0);
 
-  const inner = (
-    <article
-      className={cn('pc gal-card-hover', onClick && 'cursor-pointer', selected && 'pc-selected')}
-      tabIndex={0}
-      aria-label={project.title}
-    >
+  const thumbAndBody = (
+    <>
       <div className="thumb">
         {project.cover_image_url && (
           <img src={project.cover_image_url} alt="" loading="lazy" width={600} height={400} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
@@ -69,6 +78,48 @@ export function ProjectCard({ project, selected, onClick }: ProjectCardProps) {
           <span className="star" title="Stars"><Star size={15} /><b style={{ color: 'var(--text)', fontWeight: 600 }}>{project.stars_count ?? 0}</b></span>
         </div>
       </div>
+    </>
+  );
+
+  if (manage) {
+    return (
+      <article className={cn('pc gal-card-hover', selected && 'pc-selected')} tabIndex={0} aria-label={project.title}>
+        <Link to={`/projects/${project.slug}`} className="contents">
+          {thumbAndBody}
+        </Link>
+        <div className="space-y-2.5 border-t border-white/8 px-[18px] pb-[18px] pt-3">
+          <div className="flex items-center gap-2">
+            <span className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-slate-500">Status</span>
+            <Select
+              className="flex-1"
+              size="sm"
+              value={manage.status}
+              disabled={manage.statusUpdating}
+              onChange={manage.onStatusChange}
+              options={manage.statusOptions}
+            />
+            {manage.statusUpdating && <Loader2 size={12} className="shrink-0 animate-spin text-accent-400" />}
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" size="sm" className="flex-1" onClick={manage.onOverview}>
+              <LayoutDashboard size={13} /> Project overview
+            </Button>
+            <Button type="button" variant="danger" size="sm" onClick={manage.onDelete} aria-label="Delete project">
+              <Trash2 size={13} />
+            </Button>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  const inner = (
+    <article
+      className={cn('pc gal-card-hover', onClick && 'cursor-pointer', selected && 'pc-selected')}
+      tabIndex={0}
+      aria-label={project.title}
+    >
+      {thumbAndBody}
     </article>
   );
 

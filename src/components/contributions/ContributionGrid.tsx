@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 import { useContributionData } from './useContributionData';
 import { ContributionGrid2D } from './ContributionGrid2D';
@@ -19,6 +21,12 @@ interface ContributionGridProps {
 export function ContributionGrid({ studentId, size = 'full', profileHandle, className }: ContributionGridProps) {
   const days = size === 'mini' ? 84 : 365;
   const { cells, error, detail, loadDay, closeDay } = useContributionData(studentId, days);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+
+  const handleSelectDay = (date: string, rect: DOMRect) => {
+    setAnchorRect(rect);
+    loadDay(date);
+  };
 
   if (error) {
     return (
@@ -53,13 +61,22 @@ export function ContributionGrid({ studentId, size = 'full', profileHandle, clas
 
       <div className="mt-4">
         <div className="overflow-x-auto pb-1">
-          <ContributionGrid2D cells={cells} onSelectDay={loadDay} selectedDate={detail.day} />
+          <ContributionGrid2D cells={cells} onSelectDay={handleSelectDay} selectedDate={detail.day} />
         </div>
       </div>
 
-      {selectedCell && (
-        <DayDetailPanel day={selectedCell} tasks={detail.tasks} loading={detail.loading} onClose={closeDay} />
-      )}
+      <AnimatePresence>
+        {selectedCell && anchorRect && (
+          <DayDetailPanel
+            key={selectedCell.date}
+            day={selectedCell}
+            tasks={detail.tasks}
+            loading={detail.loading}
+            anchorRect={anchorRect}
+            onClose={closeDay}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,4 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { X, Clock, ExternalLink, Building2 } from 'lucide-react';
 import { Badge } from '@/components/shared/ui/Badge';
@@ -21,20 +23,52 @@ const STATUS_TONE: Record<string, 'default' | 'accent' | 'amber'> = {
   changes_requested: 'amber',
 };
 
+const POPOVER_WIDTH = 340;
+const MARGIN = 10;
+
 interface Props {
   day: DayCell;
   tasks: ContributionTask[] | null;
   loading: boolean;
+  anchorRect: DOMRect;
   onClose: () => void;
 }
 
-export function DayDetailPanel({ day, tasks, loading, onClose }: Props) {
+export function DayDetailPanel({ day, tasks, loading, anchorRect, onClose }: Props) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const width = panelRef.current?.offsetWidth ?? POPOVER_WIDTH;
+    const height = panelRef.current?.offsetHeight ?? 0;
+
+    let left = anchorRect.left;
+    if (left + width > window.innerWidth - MARGIN) left = window.innerWidth - width - MARGIN;
+    if (left < MARGIN) left = MARGIN;
+
+    let top = anchorRect.bottom + 8;
+    const fitsBelow = top + height <= window.innerHeight - MARGIN;
+    if (!fitsBelow) {
+      const above = anchorRect.top - 8 - height;
+      top = above >= MARGIN ? above : Math.max(MARGIN, window.innerHeight - height - MARGIN);
+    }
+
+    setPos({ top, left });
+  }, [anchorRect, tasks, loading]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
+    const onPointerDown = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) onClose();
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onPointerDown);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.removeEventListener('mousedown', onPointerDown);
+    };
   }, [onClose]);
 
   const accepted = (tasks ?? []).filter((t) => t.status === 'approved');
@@ -51,29 +85,38 @@ export function DayDetailPanel({ day, tasks, loading, onClose }: Props) {
       ? `${accepted.map((t) => `${t.title} (${SIZE_LABEL[t.size]}, ${t.points})`).join(' + ')} = ${Math.min(rawSum, 6)} point${Math.min(rawSum, 6) === 1 ? '' : 's'}.`
       : null;
 
-  return (
-    <>
-      {/* Mobile-only dimmed backdrop; desktop keeps the grid interactive beside the panel */}
-      <div className="fixed inset-0 z-40 bg-ink-950/50 sm:hidden" onClick={onClose} aria-hidden="true" />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Contributions for ${formatDayLabel(day.date)}`}
-        className="animate-fade-in-up surface-raised shadow-card fixed inset-x-0 bottom-0 z-50 max-h-[82vh] overflow-y-auto rounded-t-2xl sm:inset-y-0 sm:left-auto sm:right-0 sm:top-0 sm:h-full sm:max-h-none sm:w-[400px] sm:rounded-none sm:border-l sm:border-t-0"
-      >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/8 bg-ink-850/95 px-5 py-4 backdrop-blur-sm">
-          <div>
-            <p className="font-display text-sm font-semibold text-white">{formatDayLabel(day.date)}</p>
-            <p className="mt-0.5 text-xs text-slate-500">
-              {day.points > 0 ? `${day.points} point${day.points === 1 ? '' : 's'}` : 'No accepted tasks this day'}
-            </p>
-          </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:bg-white/5 hover:text-white transition-colors" aria-label="Close">
-            <X size={18} />
-          </button>
+  return createPortal(
+    <motion.div
+      ref={panelRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Contributions for ${formatDayLabel(day.date)}`}
+      initial={{ opacity: 0, scale: 0.96, y: -4 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.96, y: -4 }}
+      transition={{ duration: 0.16, ease: 'easeOut' }}
+      style={{
+        position: 'fixed',
+        top: pos?.top ?? anchorRect.bottom + 8,
+        left: pos?.left ?? anchorRect.left,
+        width: POPOVER_WIDTH,
+        visibility: pos ? 'visible' : 'hidden',
+      }}
+      className="surface-raised shadow-card z-50 max-h-[70vh] overflow-y-auto rounded-2xl"
+    >
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/8 bg-ink-850/95 px-4 py-3 backdrop-blur-sm rounded-t-2xl">
+        <div>
+          <p className="font-display text-sm font-semibold text-white">{formatDayLabel(day.date)}</p>
+          <p className="mt-0.5 text-xs text-slate-500">
+            {day.points > 0 ? `${day.points} point${day.points === 1 ? '' : 's'}` : 'No accepted tasks this day'}
+          </p>
         </div>
+        <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:bg-white/5 hover:text-white transition-colors" aria-label="Close">
+          <X size={18} />
+        </button>
+      </div>
 
-        <div className="space-y-4 p-5">
+      <div className="space-y-4 p-5">
           {loading ? (
             <div className="space-y-2">
               {[0, 1].map((i) => (
@@ -160,7 +203,7 @@ export function DayDetailPanel({ day, tasks, loading, onClose }: Props) {
             </>
           )}
         </div>
-      </div>
-    </>
+    </motion.div>,
+    document.body,
   );
 }

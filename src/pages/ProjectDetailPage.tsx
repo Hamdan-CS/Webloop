@@ -34,7 +34,6 @@ import { useAuthPrompt } from '@/components/auth/AuthPrompt';
 import { useAuth } from '@/contexts/AuthContext';
 import { ConversationModal } from '@/components/projects/ConversationModal';
 import { EditProjectModal } from '@/components/projects/EditProjectModal';
-import { ProjectProgressDashboard } from '@/components/projects/ProjectProgressDashboard';
 import { Pencil, Save } from 'lucide-react';
 import {
   statusLabel,
@@ -426,13 +425,6 @@ export function ProjectDetailPage() {
             </Section>
           )}
 
-          {/* Project progress dashboard — visible only to owner and accepted members */}
-          {(isOwner || (profile && teamMembers.some((m) => m.profile_id === profile.id))) && (
-            <Section title="Project progress dashboard">
-              <ProjectProgressDashboard project={project} isOwner={isOwner} />
-            </Section>
-          )}
-
             </>
           )}
 
@@ -510,7 +502,7 @@ export function ProjectDetailPage() {
           )}
 
           {/* Meta */}
-          <div className="surface p-5 space-y-3">
+          <div className="surface-raised p-5 space-y-3">
             <MetaRow icon={<Target size={14} />} label="Type" value={projectTypeLabel[project.project_type]} />
             {owner && <MetaRow icon={<Users size={14} />} label="Owner" value={owner.display_name} />}
             {project.license && <MetaRow icon={<CheckCircle2 size={14} />} label="License" value={project.license} />}
@@ -524,7 +516,7 @@ export function ProjectDetailPage() {
           </div>
 
           {project.skills && project.skills.length > 0 && (
-            <div className="surface p-5">
+            <div className="surface-raised p-5">
               <h4 className="mb-3 text-sm font-semibold text-white">Technologies</h4>
               <div className="techs">
                 {project.skills.slice(0, 4).map((sk) => <div key={sk.id}>{sk.name}</div>)}
