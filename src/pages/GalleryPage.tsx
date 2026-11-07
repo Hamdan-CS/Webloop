@@ -5,6 +5,13 @@ import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import type { PortfolioItem } from '@/types';
 import { WorkCard } from '@/components/gallery/WorkCard';
 import { WorkDetail, StudentDetail } from '@/components/gallery/GalleryOverlays';
+import { Select } from '@/components/shared/ui/Select';
+
+const SORT_OPTIONS = [
+  { value: 'act', label: 'Most active' },
+  { value: 'new', label: 'Newest' },
+  { value: 'az', label: 'A to Z' },
+];
 
 type Sort = 'act' | 'new' | 'az';
 const ALL = 'All works';
@@ -71,11 +78,13 @@ export function GalleryPage() {
             </div>
             <div className="gal-tools">
               <input className="gal-input" type="search" placeholder="Search work, tech or student" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search student work" />
-              <select className="gal-select" value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Sort">
-                <option value="act">Most active</option>
-                <option value="new">Newest</option>
-                <option value="az">A to Z</option>
-              </select>
+              <Select
+                value={sort}
+                onChange={(v) => setSort(v as Sort)}
+                options={SORT_OPTIONS}
+                size="sm"
+                className="w-44 shrink-0"
+              />
             </div>
           </div>
 

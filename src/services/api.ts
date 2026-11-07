@@ -495,8 +495,11 @@ export async function checkExistingApplication(projectId: string, applicantId: s
 // ============================================================
 
 export async function deleteProject(projectId: string): Promise<void> {
-  const { error } = await supabase.from('projects').delete().eq('id', projectId);
+  const { data, error } = await supabase.from('projects').delete().eq('id', projectId).select('id');
   if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("Project could not be deleted (it may already be removed, or you don't have permission).");
+  }
 }
 
 export async function updateProjectStatus(projectId: string, status: string): Promise<void> {

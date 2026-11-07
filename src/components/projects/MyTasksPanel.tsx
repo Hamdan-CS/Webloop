@@ -90,7 +90,7 @@ export function MyTasksPanel({ profileId, filter, onTasks }: Props) {
 
   if (tasks.length === 0) {
     return (
-      <div className="surface p-8 text-center">
+      <div className="surface pf-card p-8 text-center">
         <ClipboardList size={32} className="mx-auto text-slate-600" />
         <p className="mt-3 text-sm text-slate-400">No tasks assigned to you yet. Join a project to get tasks from the team owner.</p>
       </div>
