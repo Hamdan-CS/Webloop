@@ -1,6 +1,6 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, LogOut, User, LayoutDashboard, FileText, Mail, FolderKanban } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/shared/ui/Button';
 import { Wordmark } from '@/components/navigation/Wordmark';
@@ -22,9 +22,31 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, profile, signOut, pendingInvites } = useAuth();
   const visibleNavItems = navItems.filter((item) => item.to !== '/how-it-works' || !user);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0, opacity: 0 });
+
+  // slide the active-tab indicator to whichever link React Router has marked
+  // active, instead of re-deriving route-matching rules here
+  useLayoutEffect(() => {
+    const updateIndicator = () => {
+      const nav = navRef.current;
+      const activeEl = nav?.querySelector<HTMLElement>('.hdr-link.active');
+      if (nav && activeEl) {
+        const navRect = nav.getBoundingClientRect();
+        const elRect = activeEl.getBoundingClientRect();
+        setIndicator({ left: elRect.left - navRect.left, width: elRect.width, opacity: 1 });
+      } else {
+        setIndicator((prev) => ({ ...prev, opacity: 0 }));
+      }
+    };
+    updateIndicator();
+    window.addEventListener('resize', updateIndicator);
+    return () => window.removeEventListener('resize', updateIndicator);
+  }, [location.pathname]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -61,7 +83,7 @@ export function Navbar() {
           <Wordmark />
         </Link>
 
-        <nav className="hidden md:flex items-center gap-[clamp(10px,1.8vw,30px)]">
+        <nav ref={navRef} className="hdr-nav hidden md:flex items-center gap-[clamp(10px,1.8vw,30px)]">
           {visibleNavItems.map((item) => (
             <NavLink
               key={item.to}
@@ -71,6 +93,11 @@ export function Navbar() {
               {item.label}
             </NavLink>
           ))}
+          <span
+            className="hdr-nav-indicator"
+            style={{ transform: `translateX(${indicator.left}px)`, width: indicator.width, opacity: indicator.opacity }}
+            aria-hidden="true"
+          />
         </nav>
 
         <div className="hidden md:flex items-center gap-2 lg:gap-3">

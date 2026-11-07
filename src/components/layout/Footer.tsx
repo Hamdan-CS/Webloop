@@ -37,7 +37,7 @@ export function Footer() {
   return (
     <footer
       className="relative z-[2] mt-24 border-t backdrop-blur-md"
-      style={{ borderColor: 'var(--glass-line)', background: 'var(--panel-2)' }}
+      style={{ borderColor: 'var(--glass-line)', background: 'var(--footer-bg)' }}
     >
       <div className="container-page py-14">
         <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
