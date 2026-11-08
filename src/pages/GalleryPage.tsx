@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Images } from 'lucide-react';
 import { fetchPortfolioGallery } from '@/services/api';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
@@ -7,7 +6,6 @@ import type { PortfolioItem } from '@/types';
 import { WorkCard } from '@/components/gallery/WorkCard';
 import { WorkDetail, StudentDetail } from '@/components/gallery/GalleryOverlays';
 import { Select } from '@/components/shared/ui/Select';
-import { GalleryHero, matchesGalleryChip, type GalleryChipId } from '@/components/gallery/GalleryHero';
 
 const SORT_OPTIONS = [
   { value: 'act', label: 'Most active' },
@@ -16,16 +14,16 @@ const SORT_OPTIONS = [
 ];
 
 type Sort = 'act' | 'new' | 'az';
+const ALL = 'All works';
 
 export function GalleryPage() {
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [chip, setChip] = useState<GalleryChipId>('all');
+  const [cat, setCat] = useState(ALL);
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<Sort>('act');
   const [work, setWork] = useState<PortfolioItem | null>(null);
   const [studentId, setStudentId] = useState<string | null>(null);
-  const reduce = useReducedMotion();
 
   useEffect(() => {
     fetchPortfolioGallery(60)
@@ -34,11 +32,13 @@ export function GalleryPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const cats = useMemo(() => [ALL, ...Array.from(new Set(items.map((i) => i.category).filter(Boolean) as string[]))], [items]);
+
   const list = useMemo(() => {
     const n = q.trim().toLowerCase();
     const l = items.filter(
       (w) =>
-        matchesGalleryChip(w, chip) &&
+        (cat === ALL || w.category === cat) &&
         (!n || `${w.title} ${w.description ?? ''} ${(w.tech ?? []).join(' ')} ${w.profile?.display_name ?? ''}`.toLowerCase().includes(n)),
     );
     const by = {
@@ -47,17 +47,17 @@ export function GalleryPage() {
       az: (a: PortfolioItem, b: PortfolioItem) => a.title.localeCompare(b.title),
     }[sort];
     return [...l].sort(by);
-  }, [items, chip, q, sort]);
+  }, [items, cat, q, sort]);
 
   return (
     <div className="container-page py-8">
-      <GalleryHero
-        activeChip={chip}
-        onSelectChip={setChip}
-        items={items}
-        loading={loading}
-        onOpenItem={setWork}
-      />
+      <div className="sec-hd" style={{ marginBottom: 28 }}>
+        <h1 className="gal-title">Student work <span className="hl">gallery</span></h1>
+        <p className="gal-sub">
+          Every task you finish is reviewed by a project owner and becomes verified career evidence.
+          Companies hire from demonstrated work, not self-reported skills.
+        </p>
+      </div>
 
       {loading ? (
         <div className="flex h-[40vh] items-center justify-center">
@@ -71,36 +71,30 @@ export function GalleryPage() {
       ) : (
         <>
           <div className="gal-bar">
+            <div className="gal-pills" role="group" aria-label="Filter by category">
+              {cats.map((c) => (
+                <button key={c} type="button" className={`pill ${cat === c ? 'on' : ''}`} onClick={() => setCat(c)}>{c}</button>
+              ))}
+            </div>
             <div className="gal-tools">
               <input className="gal-input" type="search" placeholder="Search work, tech or student" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search student work" />
               <Select
                 value={sort}
                 onChange={(v) => setSort(v as Sort)}
                 options={SORT_OPTIONS}
+                size="sm"
                 className="w-44 shrink-0"
               />
             </div>
-            <span className="gal-count">{list.length} work{list.length === 1 ? '' : 's'}</span>
           </div>
 
           {list.length === 0 ? (
-            <div className="gal-empty">No student work matches this category or search.</div>
+            <div className="gal-empty">No student work matches your search.</div>
           ) : (
             <div className="grid3">
-              <AnimatePresence mode="popLayout" initial={false}>
-                {list.map((w, i) => (
-                  <motion.div
-                    key={w.id}
-                    layout
-                    initial={reduce ? false : { opacity: 0, y: 14, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={reduce ? undefined : { opacity: 0, scale: 0.98 }}
-                    transition={{ duration: 0.35, delay: reduce ? 0 : Math.min(i, 8) * 0.04, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    <WorkCard item={w} onOpen={setWork} onOpenStudent={setStudentId} />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+              {list.map((w) => (
+                <WorkCard key={w.id} item={w} onOpen={setWork} onOpenStudent={setStudentId} />
+              ))}
             </div>
           )}
         </>
