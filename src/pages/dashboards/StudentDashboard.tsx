@@ -7,7 +7,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useFloatingPanel } from '@/components/FloatingPanel';
 import {
-  fetchProfileProjects, fetchProfilePortfolio, fetchProfileStats, fetchProjectApplicationCount,
+  fetchProfileProjects, fetchJoinedProjects, fetchProfilePortfolio, fetchProfileStats, fetchProjectApplicationCount,
   fetchAssignedTasks, fetchMyApplications, fetchInboxMessages,
 } from '@/services/api';
 import type { Application, Message, PortfolioItem, Project, Task } from '@/types';
@@ -39,6 +39,7 @@ export function StudentDashboard() {
   const [tab, setTab] = useState<Tab>('ov');
   const [taskView, setTaskView] = useState<TaskView>('all');
   const [projects, setProjects] = useState<Project[]>([]);
+  const [joined, setJoined] = useState<Project[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [stats, setStats] = useState({ avg: 0, count: 0 });
   const [appCounts, setAppCounts] = useState<Record<string, number>>({});
@@ -50,8 +51,9 @@ export function StudentDashboard() {
   useEffect(() => {
     if (!profile) return;
     (async () => {
-      const [prs, pfs, st, tks, apps, msgs] = await Promise.all([
-        fetchProfileProjects(profile.id),
+      const [prs, jn, pfs, st, tks, apps, msgs] = await Promise.all([
+        fetchProfileProjects(profile.id, { includeDrafts: true }),
+        fetchJoinedProjects(profile.id).catch(() => [] as Project[]),
         fetchProfilePortfolio(profile.id),
         fetchProfileStats(profile.id),
         fetchAssignedTasks(profile.id).catch(() => [] as Task[]),
@@ -59,6 +61,7 @@ export function StudentDashboard() {
         fetchInboxMessages(profile.id).catch(() => [] as Message[]),
       ]);
       setProjects(prs);
+      setJoined(jn);
       setPortfolio(pfs);
       setStats({ avg: st.avg_rating, count: st.review_count });
       setTasks(tks);
@@ -77,7 +80,9 @@ export function StudentDashboard() {
   const changes = tasks.filter((t) => t.status === 'changes_requested').length;
   const pct = tasks.length ? Math.round((approved / tasks.length) * 100) : 0;
   const requests = Object.values(appCounts).reduce((a, b) => a + b, 0);
-  const activeProjects = projects.filter((p) => p.status === 'recruiting' || p.status === 'in_progress').length;
+  const allProjects = [...projects, ...joined];
+  const activeProjects = allProjects.filter((p) => p.status === 'recruiting' || p.status === 'in_progress').length;
+  const joinedIds = new Set(joined.map((p) => p.id));
 
   const nextUp = useMemo(
     () =>
@@ -124,7 +129,7 @@ export function StudentDashboard() {
               <span className="ref-tag pf-type">Student</span>
             </div>
             <p className="mt-1 text-sm text-slate-400">
-              @{profile.handle} · {projects.length} project{projects.length !== 1 ? 's' : ''} · {portfolio.length} portfolio item{portfolio.length !== 1 ? 's' : ''}
+              @{profile.handle} · {projects.length} project{projects.length !== 1 ? 's' : ''}{joined.length > 0 && ` · member of ${joined.length}`} · {portfolio.length} portfolio item{portfolio.length !== 1 ? 's' : ''}
             </p>
           </div>
           <div className="flex gap-2">
@@ -135,7 +140,7 @@ export function StudentDashboard() {
         <div className="d-tabs pf-tabs sd-tabs mt-5" role="tablist">
           {([
             ['ov', 'Overview', null],
-            ['pj', 'My Projects', projects.length],
+            ['pj', 'My Projects', allProjects.length],
             ['tk', 'Tasks', todo + changes],
             ['rq', 'Requests', requests + pendingApps],
           ] as [Tab, string, number | null][]).map(([k, label, n]) => (
@@ -203,7 +208,7 @@ export function StudentDashboard() {
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => openPanel('messages')}><Inbox size={14} /> Messages{unreadMessages > 0 && <span className="pf-count amber">{unreadMessages}</span>}</button>
                 <Link to="/my-applications" className="btn btn-ghost btn-sm"><Briefcase size={14} /> My applications</Link>
                 <Link to={`/creators/${profile.handle}`} className="btn btn-ghost btn-sm"><UserCircle2 size={14} /> View profile</Link>
-                <Link to="/settings" className="btn btn-ghost btn-sm"><Pencil size={14} /> Edit profile</Link>
+                <Link to="/settings/profile" className="btn btn-ghost btn-sm"><Pencil size={14} /> Edit profile</Link>
               </div>
             </section>
           </div>
@@ -214,18 +219,18 @@ export function StudentDashboard() {
                 <h2 className="pf-h4">My projects</h2>
                 <button type="button" className="sd-link" onClick={() => setTab('pj')}>View all <ArrowRight size={12} /></button>
               </div>
-              {loading ? <p className="text-sm text-slate-500">Loading…</p> : projects.length === 0 ? (
+              {loading ? <p className="text-sm text-slate-500">Loading…</p> : allProjects.length === 0 ? (
                 <div className="sd-empty">
                   <GitBranch size={22} />
-                  <p>You haven't published a project yet.</p>
+                  <p>You haven't published or joined a project yet.</p>
                   <Link to="/publish" className="btn btn-ghost btn-sm"><Plus size={14} /> Publish your first project</Link>
                 </div>
               ) : (
                 <ul className="sd-list">
-                  {projects.slice(0, 4).map((p) => (
+                  {allProjects.slice(0, 4).map((p) => (
                     <li key={p.id}>
                       <Link to={`/projects/${p.slug}`}>
-                        <span className="sd-list-t"><b>{p.title}</b><small>{statusLabel[p.status]}</small></span>
+                        <span className="sd-list-t"><b>{p.title}</b><small>{statusLabel[p.status]}{joinedIds.has(p.id) ? ' · Member' : ' · Owner'}</small></span>
                         {appCounts[p.id] > 0 && <span className="pf-count amber">{appCounts[p.id]} request{appCounts[p.id] !== 1 ? 's' : ''}</span>}
                         <ArrowRight size={14} />
                       </Link>
@@ -262,6 +267,23 @@ export function StudentDashboard() {
             <h2 className="pf-h4">My projects</h2>
             <Link to="/publish" className="sd-link"><Plus size={12} /> Publish new</Link>
           </div>
+          {!loading && joined.length > 0 && (
+            <div className="mb-8">
+              <h3 className="pf-h4 mb-3 flex items-center gap-2"><Users size={15} /> Projects I joined</h3>
+              <div className="pc-grid grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {joined.map((p) => (
+                  <div key={p.id}>
+                    <ProjectCard project={p} />
+                    <div className="sd-proj-foot">
+                      <span className="ref-tag">{statusLabel[p.status]}</span>
+                      <button type="button" className="sd-link" onClick={() => goTasks('all')}>My tasks <ArrowRight size={11} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <h3 className="pf-h4 mt-8 mb-3">Projects I own</h3>
+            </div>
+          )}
           {loading ? (
             <div className="surface pf-card p-8 text-center text-sm text-slate-500">Loading…</div>
           ) : projects.length === 0 ? (
@@ -271,7 +293,7 @@ export function StudentDashboard() {
               <Link to="/publish" className="mt-4 inline-block"><Button variant="ghost" className="btn-sm"><Plus size={14} /> Publish your first project</Button></Link>
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="pc-grid grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {projects.map((p) => (
                 <div key={p.id}>
                   <ProjectCard project={p} />

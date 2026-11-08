@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { fetchCompanies, fetchCompanyProjectSummaries, type CompanyProjectSummary } from '@/services/api';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
@@ -18,6 +19,7 @@ export function CompaniesPage() {
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<Sort>('new');
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     fetchCompanies()
@@ -68,8 +70,15 @@ export function CompaniesPage() {
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {list.map((c) => (
-                <CompanyCard key={c.id} company={c} summary={summaries[c.id]} glow={hoverId === c.id} onHover={setHoverId} onOpen={openCompany} />
+              {list.map((c, i) => (
+                <motion.div
+                  key={c.id}
+                  initial={reduce ? false : { opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: reduce ? 0 : Math.min(i, 8) * 0.05, ease: 'easeOut' }}
+                >
+                  <CompanyCard company={c} summary={summaries[c.id]} glow={hoverId === c.id} onHover={setHoverId} onOpen={openCompany} />
+                </motion.div>
               ))}
             </div>
           )}

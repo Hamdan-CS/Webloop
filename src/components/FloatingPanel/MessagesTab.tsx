@@ -199,7 +199,7 @@ function ComposePicker({
 
   useEffect(() => {
     (async () => {
-      const prs = await fetchProfileProjects(profileId);
+      const prs = await fetchProfileProjects(profileId, { includeDrafts: true });
       setProjects(prs);
       const m: Record<string, { profile: Profile; role: string | null }[]> = {};
       await Promise.all(

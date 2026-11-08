@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Sparkles, Loader2, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Sparkles, Loader2, Trash2, AlertCircle, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchProfileProjects, updateProjectStatus, deleteProject } from '@/services/api';
+import { fetchProfileProjects, fetchJoinedProjects, updateProjectStatus, deleteProject } from '@/services/api';
 import type { Project, ProjectStatus } from '@/types';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { Button } from '@/components/shared/ui/Button';
@@ -17,17 +17,19 @@ const STATUS_OPTIONS = PROJECT_STATUSES.map((s) => ({ value: s, label: statusLab
 export function MyProjectsPage() {
   const { user, profile } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [joined, setJoined] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [overviewProject, setOverviewProject] = useState<Project | null>(null);
 
   useEffect(() => {
     if (!profile) return;
-    fetchProfileProjects(profile.id)
-      .then(setProjects)
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetchProfileProjects(profile.id, { includeDrafts: true }).then(setProjects).catch(() => {}),
+      fetchJoinedProjects(profile.id).then(setJoined).catch(() => {}),
+    ]).finally(() => setLoading(false));
   }, [profile]);
 
   const handleStatusChange = async (projectId: string, status: string) => {
@@ -44,12 +46,14 @@ export function MyProjectsPage() {
 
   const handleDeleteProject = async (projectId: string) => {
     setStatusUpdating(projectId);
+    setDeleteError(null);
     try {
       await deleteProject(projectId);
       setProjects((prev) => prev.filter((p) => p.id !== projectId));
       setConfirmDelete(null);
     } catch (err) {
       console.error('Failed to delete project:', err);
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete project.');
     } finally {
       setStatusUpdating(null);
     }
@@ -74,7 +78,7 @@ export function MyProjectsPage() {
         <div>
           <span className="label-overline">Project overview</span>
           <h1 className="mt-2 font-display text-3xl font-bold pf-name">Your projects</h1>
-          <p className="mt-2 text-slate-400">Everything you've published, in one place.</p>
+          <p className="mt-2 text-slate-400">Projects you own and projects you've joined, in one place.</p>
         </div>
         <Link to="/publish"><Button><Plus size={15} /> Publish a project</Button></Link>
       </div>
@@ -83,15 +87,35 @@ export function MyProjectsPage() {
         <div className="flex h-[40vh] items-center justify-center">
           <LoopLoader size={28} />
         </div>
-      ) : projects.length === 0 ? (
+      ) : projects.length === 0 && joined.length === 0 ? (
         <div className="surface pf-card app-empty">
           <span className="pf-ic"><Sparkles size={22} /></span>
           <h3 className="pf-h4">No projects yet</h3>
-          <p>Publish your first project and track its tasks, team and activity here.</p>
+          <p>Publish your first project, or accept an invitation to join one. Both will show up here.</p>
           <Link to="/publish" className="btn btn-primary">Publish a project <Plus size={14} /></Link>
         </div>
       ) : (
         <>
+          {joined.length > 0 && (
+            <section className="mb-10">
+              <h2 className="pf-h4 mb-1 flex items-center gap-2"><Users size={16} /> Projects I joined</h2>
+              <p className="mb-4 text-sm text-slate-400">You're a team member here. Your assigned tasks are on your dashboard.</p>
+              <div className="pc-grid grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {joined.map((p) => (
+                  <ProjectCard key={p.id} project={p} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          <h2 className="pf-h4 mb-4">Projects I own</h2>
+          {projects.length === 0 ? (
+            <div className="surface pf-card app-empty mb-6">
+              <p>You haven't published a project yet.</p>
+              <Link to="/publish" className="btn btn-primary">Publish a project <Plus size={14} /></Link>
+            </div>
+          ) : (
+          <>
           <div className="pf-kpis mb-6">
             <div className="pf-kpi"><b>{projects.length}</b><span>Total projects</span></div>
             <div className="pf-kpi"><b className="c1">{recruiting}</b><span>Recruiting</span></div>
@@ -99,7 +123,7 @@ export function MyProjectsPage() {
             <div className="pf-kpi"><b>{completed}</b><span>Completed</span></div>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="pc-grid grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((p, i) => (
               <motion.div
                 key={p.id}
@@ -114,13 +138,15 @@ export function MyProjectsPage() {
                     statusOptions: STATUS_OPTIONS,
                     statusUpdating: statusUpdating === p.id,
                     onStatusChange: (status) => handleStatusChange(p.id, status),
-                    onDelete: () => setConfirmDelete(p.id),
+                    onDelete: () => { setDeleteError(null); setConfirmDelete(p.id); },
                     onOverview: () => setOverviewProject(p),
                   }}
                 />
               </motion.div>
             ))}
           </div>
+          </>
+          )}
         </>
       )}
 
@@ -136,12 +162,17 @@ export function MyProjectsPage() {
             <p className="text-sm text-slate-400 mb-5">
               This permanently removes the project, its skills, roles, and all applications. This cannot be undone.
             </p>
+            {deleteError && (
+              <p className="mb-4 rounded-lg border border-signal-rose/30 bg-signal-rose/10 px-3 py-2 text-sm text-signal-rose">
+                {deleteError}
+              </p>
+            )}
             <div className="flex gap-3">
               <Button variant="danger" onClick={() => handleDeleteProject(confirmDelete)} disabled={statusUpdating === confirmDelete}>
                 {statusUpdating === confirmDelete ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
                 Yes, delete
               </Button>
-              <Button variant="ghost" onClick={() => setConfirmDelete(null)}>Cancel</Button>
+              <Button variant="ghost" onClick={() => { setConfirmDelete(null); setDeleteError(null); }}>Cancel</Button>
             </div>
           </div>
         </div>

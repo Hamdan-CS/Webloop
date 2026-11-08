@@ -30,7 +30,7 @@ export const darkColors = {
 
 export const lightColors = {
   ink: {
-    950: '#f6f8fc', 900: '#fafbfe', 850: '#ffffff', 800: '#eef2f9',
+    950: '#f4f8fd', 900: '#fafbfe', 850: '#ffffff', 800: '#f1f5fb',
     700: '#e2e8f4', 600: '#cbd5e8', 500: '#94a3c0', 400: '#64748b',
   },
   slate: {
@@ -45,7 +45,7 @@ export const lightColors = {
   },
   signal: { green: '#037a56', amber: '#a16207', rose: '#be123c', violet: '#6d28d9' },
   contentStrong: '#0f172a',
-  bodyBg: '#edf2f9',
+  bodyBg: '#f4f8fd',
 } as const;
 
 export type DesignTheme = 'dark' | 'light';

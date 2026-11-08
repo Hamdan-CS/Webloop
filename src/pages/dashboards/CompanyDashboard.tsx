@@ -40,7 +40,7 @@ export function CompanyDashboard() {
     if (!profile) return;
     (async () => {
       const [prs, st] = await Promise.all([
-        fetchProfileProjects(profile.id),
+        fetchProfileProjects(profile.id, { includeDrafts: true }),
         fetchProfileStats(profile.id),
       ]);
       setProjects(prs);
@@ -102,7 +102,7 @@ export function CompanyDashboard() {
               <Link to="/publish" className="mt-4 inline-block"><Button variant="secondary"><Plus size={14} /> Post your first project</Button></Link>
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="pc-grid grid gap-5 sm:grid-cols-2">
               {projects.map((p) => (
                 <div key={p.id}>
                   <ProjectCard project={p} />
@@ -131,7 +131,7 @@ export function CompanyDashboard() {
               <QuickLink to={`/creators/${profile.handle}?tab=applications`} icon={<Briefcase size={15} />} label="Review applicants" count={Object.values(appCounts).reduce((a, b) => a + b, 0)} />
               <QuickLink to="/explore" icon={<TrendingUp size={15} />} label="Browse student work" />
               <QuickLink to="/gallery" icon={<Users size={15} />} label="Discover talent" />
-              <QuickLink to="/settings" icon={<Building2 size={15} />} label="Edit company profile" />
+              <QuickLink to="/settings/profile" icon={<Building2 size={15} />} label="Edit company profile" />
             </nav>
           </section>
 

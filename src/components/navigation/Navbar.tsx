@@ -1,6 +1,6 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut, User, LayoutDashboard, FileText, Mail, FolderKanban } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { Menu, X, LogOut, User, LayoutDashboard, FileText, Mail, FolderKanban, Settings } from 'lucide-react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/shared/ui/Button';
 import { Wordmark } from '@/components/navigation/Wordmark';
@@ -22,9 +22,31 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, profile, signOut, pendingInvites } = useAuth();
   const visibleNavItems = navItems.filter((item) => item.to !== '/how-it-works' || !user);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0, opacity: 0 });
+
+  // slide the active-tab indicator to whichever link React Router has marked
+  // active, instead of re-deriving route-matching rules here
+  useLayoutEffect(() => {
+    const updateIndicator = () => {
+      const nav = navRef.current;
+      const activeEl = nav?.querySelector<HTMLElement>('.hdr-link.active');
+      if (nav && activeEl) {
+        const navRect = nav.getBoundingClientRect();
+        const elRect = activeEl.getBoundingClientRect();
+        setIndicator({ left: elRect.left - navRect.left, width: elRect.width, opacity: 1 });
+      } else {
+        setIndicator((prev) => ({ ...prev, opacity: 0 }));
+      }
+    };
+    updateIndicator();
+    window.addEventListener('resize', updateIndicator);
+    return () => window.removeEventListener('resize', updateIndicator);
+  }, [location.pathname]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -61,7 +83,7 @@ export function Navbar() {
           <Wordmark />
         </Link>
 
-        <nav className="hidden md:flex items-center gap-[clamp(10px,1.8vw,30px)]">
+        <nav ref={navRef} className="hdr-nav hidden md:flex items-center gap-[clamp(10px,1.8vw,30px)]">
           {visibleNavItems.map((item) => (
             <NavLink
               key={item.to}
@@ -71,6 +93,11 @@ export function Navbar() {
               {item.label}
             </NavLink>
           ))}
+          <span
+            className="hdr-nav-indicator"
+            style={{ transform: `translateX(${indicator.left}px)`, width: indicator.width, opacity: indicator.opacity }}
+            aria-hidden="true"
+          />
         </nav>
 
         <div className="hidden md:flex items-center gap-2 lg:gap-3">
@@ -95,11 +122,11 @@ export function Navbar() {
                 </button>
                 {menuOpen && (
                   <div className="hdr-menu animate-fade-in-up">
-                    <MenuItem icon={<LayoutDashboard size={15} />} label={profile ? getDashboardLabel(profile.creator_type) : 'Dashboard'} onClick={() => { setMenuOpen(false); navigate(profile ? getDashboardPath(profile.creator_type) : '/'); }} />
                     <MenuItem icon={<User size={15} />} label="My Profile" onClick={() => { setMenuOpen(false); navigate(`/creators/${profile?.handle}`); }} />
                     <MenuItem icon={<FolderKanban size={15} />} label="My Projects" onClick={() => { setMenuOpen(false); navigate('/my-projects'); }} />
                     <MenuItem icon={<FileText size={15} />} label="My Applications" onClick={() => { setMenuOpen(false); navigate('/my-applications'); }} />
                     <MenuItem icon={<Mail size={15} />} label="My Invitations" count={pendingInvites} onClick={() => { setMenuOpen(false); navigate('/my-invitations'); }} />
+                    <MenuItem icon={<Settings size={15} />} label="Settings" onClick={() => { setMenuOpen(false); navigate('/settings'); }} />
                     <div className="hdr-menu-sep" />
                     <MenuItem icon={<LogOut size={15} />} label="Sign Out" onClick={handleSignOut} danger />
                   </div>
@@ -119,6 +146,17 @@ Join the Platform
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
+        {user && profile && (
+          <button
+            type="button"
+            className="hdr-theme"
+            aria-label={getDashboardLabel(profile.creator_type)}
+            title={getDashboardLabel(profile.creator_type)}
+            onClick={() => { setMobileOpen(false); navigate(getDashboardPath(profile.creator_type)); }}
+          >
+            <LayoutDashboard size={18} />
+          </button>
+        )}
         <NotificationBell />
         <button
           className="hdr-theme hdr-burger md:hidden"
@@ -131,7 +169,7 @@ Join the Platform
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden px-5 py-4" style={{ borderTop: '1px solid var(--hdr-line)', background: 'var(--hdr-bg)' }}>
+        <div className="md:hidden px-5 py-4" style={{ borderTop: '1px solid var(--hdr-line)', background: 'var(--panel-solid)', boxShadow: 'var(--glass-shadow)' }}>
           <nav className="flex flex-col gap-1">
             {visibleNavItems.map((item) => (
               <NavLink
@@ -147,14 +185,17 @@ Join the Platform
               <ThemeToggle className="self-start" />
               {user ? (
                 <>
-                  {profile && (
-                    <Button variant="secondary" onClick={() => { setMobileOpen(false); navigate(getDashboardPath(profile.creator_type)); }}>
-                      <LayoutDashboard size={15} /> {getDashboardLabel(profile.creator_type)}
+                  {[
+                    { to: `/creators/${profile?.handle}`, icon: <User size={15} />, label: 'My Profile' },
+                    { to: '/my-projects', icon: <FolderKanban size={15} />, label: 'My Projects' },
+                    { to: '/my-applications', icon: <FileText size={15} />, label: 'My Applications' },
+                    { to: '/my-invitations', icon: <Mail size={15} />, label: pendingInvites ? `My Invitations (${pendingInvites})` : 'My Invitations' },
+                    { to: '/settings', icon: <Settings size={15} />, label: 'Settings' },
+                  ].map((item) => (
+                    <Button key={item.to} variant="secondary" onClick={() => { setMobileOpen(false); navigate(item.to); }}>
+                      {item.icon} {item.label}
                     </Button>
-                  )}
-                  <Button variant="secondary" onClick={() => { setMobileOpen(false); navigate(`/creators/${profile?.handle}`); }}>
-                    <User size={15} /> My Profile
-                  </Button>
+                  ))}
                   <Button variant="ghost" onClick={handleSignOut}>
                     <LogOut size={15} /> Sign Out
                   </Button>

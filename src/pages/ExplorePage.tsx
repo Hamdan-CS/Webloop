@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Building2, GitBranch, GraduationCap, Landmark, LayoutGrid, Search, SlidersHorizontal, X } from 'lucide-react';
 import { fetchProjects, type ProjectQuery } from '@/services/api';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import type { Project } from '@/types';
@@ -12,11 +13,11 @@ import { Badge } from '@/components/shared/ui/Badge';
 
 const CATEGORIES = ['Web App', 'Mobile App', 'Backend / Infra', 'Developer Tool', 'Game / Engine', 'ML', 'CLI'];
 const TYPES = [
-  { value: 'all', label: 'All projects' },
-  { value: 'student', label: 'Student projects' },
-  { value: 'company', label: 'Company projects' },
-  { value: 'university', label: 'University projects' },
-  { value: 'open_source', label: 'Open source' },
+  { value: 'all', label: 'All projects', icon: LayoutGrid },
+  { value: 'student', label: 'Student projects', icon: GraduationCap },
+  { value: 'company', label: 'Company projects', icon: Building2 },
+  { value: 'university', label: 'University projects', icon: Landmark },
+  { value: 'open_source', label: 'Open source', icon: GitBranch },
 ];
 const SORTS = [
   { value: 'newest', label: 'Newest' },
@@ -31,6 +32,7 @@ export function ExplorePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const reduce = useReducedMotion();
 
   const query: ProjectQuery = useMemo(
     () => ({
@@ -105,13 +107,16 @@ export function ExplorePage() {
 
       {/* Toolbar */}
       <div className="toolbar">
-        <div className="pills">
+        <div className="filter-chip-row" role="group" aria-label="Filter by project type">
           {TYPES.map((t) => (
             <button
               key={t.value}
+              type="button"
               onClick={() => updateParam('type', t.value)}
-              className={cn('pill', (query.type ?? 'all') === t.value && 'on')}
+              className={cn('filter-chip', (query.type ?? 'all') === t.value && 'on')}
+              aria-pressed={(query.type ?? 'all') === t.value}
             >
+              <t.icon size={15} />
               {t.label}
             </button>
           ))}
@@ -231,9 +236,16 @@ export function ExplorePage() {
       ) : projects.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((p) => (
-            <ProjectCard key={p.id} project={p} />
+        <div className="pc-grid grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {projects.map((p, i) => (
+            <motion.div
+              key={p.id}
+              initial={reduce ? false : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: reduce ? 0 : Math.min(i, 8) * 0.05, ease: 'easeOut' }}
+            >
+              <ProjectCard project={p} />
+            </motion.div>
           ))}
         </div>
       )}
