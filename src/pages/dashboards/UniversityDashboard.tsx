@@ -40,7 +40,7 @@ export function UniversityDashboard() {
     if (!profile) return;
     (async () => {
       const [prs, st] = await Promise.all([
-        fetchProfileProjects(profile.id),
+        fetchProfileProjects(profile.id, { includeDrafts: true }),
         fetchProfileStats(profile.id),
       ]);
       setProjects(prs);
@@ -102,7 +102,7 @@ export function UniversityDashboard() {
               <Link to="/publish" className="mt-4 inline-block"><Button variant="secondary"><Plus size={14} /> Create your first program</Button></Link>
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="pc-grid grid gap-5 sm:grid-cols-2">
               {projects.map((p) => (
                 <div key={p.id}>
                   <ProjectCard project={p} />
@@ -131,7 +131,7 @@ export function UniversityDashboard() {
               <QuickLink to={`/creators/${profile.handle}?tab=applications`} icon={<Users size={15} />} label="Review student requests" count={Object.values(appCounts).reduce((a, b) => a + b, 0)} />
               <QuickLink to="/explore" icon={<Sparkles size={15} />} label="Browse industry projects" />
               <QuickLink to="/companies" icon={<Building2 size={15} />} label="Connect with companies" />
-              <QuickLink to="/settings" icon={<GraduationCap size={15} />} label="Edit university profile" />
+              <QuickLink to="/settings/profile" icon={<GraduationCap size={15} />} label="Edit university profile" />
             </nav>
           </section>
 

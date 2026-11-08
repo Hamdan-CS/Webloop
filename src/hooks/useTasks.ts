@@ -13,7 +13,7 @@ export function useTasks(profileId: string | undefined) {
     setLoading(true);
     setError(null);
     try {
-      setProjects(await fetchProfileProjects(profileId));
+      setProjects(await fetchProfileProjects(profileId, { includeDrafts: true }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load tasks');
     } finally {

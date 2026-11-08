@@ -281,7 +281,7 @@ export function CreatorProfilePage() {
           {/* Action buttons + social links */}
           <div className="mt-5 flex flex-wrap items-center gap-2.5">
             {isOwner ? (
-              <Link to="/settings">
+              <Link to="/settings/profile">
                 <Button variant="ghost" className="btn-sm">
                   <Sparkles size={14} /> Edit Profile
                 </Button>

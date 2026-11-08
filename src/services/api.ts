@@ -164,23 +164,57 @@ export async function fetchProfileByHandle(handle: string): Promise<Profile | nu
   return (data as unknown as Profile) ?? null;
 }
 
-export async function fetchProfileProjects(profileId: string): Promise<Project[]> {
+const PROJECT_WITH_RELATIONS = `
+  *,
+  owner:profiles!projects_owner_id_fkey(*),
+  skills:project_skills(*),
+  roles:project_roles(*),
+  members:project_members(
+    *,
+    profile:profiles!project_members_profile_id_fkey(*)
+  )
+`;
+
+/**
+ * Projects owned by `profileId`. Public views (someone else's profile) only see
+ * published statuses; pass `includeDrafts` on the owner's own screens so their
+ * drafts and archived projects don't silently disappear.
+ */
+export async function fetchProfileProjects(
+  profileId: string,
+  options: { includeDrafts?: boolean } = {},
+): Promise<Project[]> {
+  let q = supabase
+    .from('projects')
+    .select(PROJECT_WITH_RELATIONS)
+    .eq('owner_id', profileId);
+  if (!options.includeDrafts) q = q.in('status', VISIBLE_STATUSES);
+  const { data, error } = await q.order('published_at', { ascending: false, nullsFirst: false });
+
+  if (error) throw error;
+  return (data ?? []) as unknown as Project[];
+}
+
+/**
+ * Projects `profileId` has joined as a team member (via an accepted invitation
+ * or application), excluding ones they own. Drafts are only returned once the
+ * members-can-read-their-projects RLS policy (migration 020) is applied.
+ */
+export async function fetchJoinedProjects(profileId: string): Promise<Project[]> {
+  const { data: rows, error: memberError } = await supabase
+    .from('project_members')
+    .select('project_id')
+    .eq('profile_id', profileId);
+  if (memberError) throw memberError;
+  const ids = (rows ?? []).map((r) => r.project_id as string);
+  if (ids.length === 0) return [];
+
   const { data, error } = await supabase
     .from('projects')
-    .select(`
-      *,
-      owner:profiles!projects_owner_id_fkey(*),
-      skills:project_skills(*),
-      roles:project_roles(*),
-      members:project_members(
-        *,
-        profile:profiles!project_members_profile_id_fkey(*)
-      )
-    `)
-    .eq('owner_id', profileId)
-    .in('status', VISIBLE_STATUSES)
-    .order('published_at', { ascending: false, nullsFirst: false });
-
+    .select(PROJECT_WITH_RELATIONS)
+    .in('id', ids)
+    .neq('owner_id', profileId)
+    .order('updated_at', { ascending: false, nullsFirst: false });
   if (error) throw error;
   return (data ?? []) as unknown as Project[];
 }

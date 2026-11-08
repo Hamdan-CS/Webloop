@@ -790,7 +790,7 @@ html.light .home-redesign .hr-btn.primary { background: #0a6c8f; color: #fff; }
 .bbody p { font-size: 12.5px; color: #475569; }
 .bbody .row { display: flex; gap: 6px; margin-top: 4px; }
 .bbody .row b { font-size: 12px; font-weight: 600; padding: 7px 15px; border-radius: 999px; background: #0d9488; color: #fff; cursor: pointer; }
-.bbody .row u { font-size: 12px; font-weight: 500; padding: 7px 15px; border-radius: 999px; background: #f1f5f9; text-decoration: none; cursor: pointer; }
+.bbody .row u { font-size: 12px; font-weight: 500; padding: 7px 15px; border-radius: 999px; background: #e8f3fc; color: #0679ab; text-decoration: none; cursor: pointer; }
 .bbody img, .bbody .bbody-art { width: 100%; height: 100%; object-fit: cover; background-size: cover; background-position: center; }
 .stack-labels { position: relative; height: 100%; align-self: stretch; min-width: 0; }
 .slabel { position: absolute; left: 0; right: 0; transform: translateY(-50%); display: block; width: 100%; text-align: left; padding: 10px 12px 10px 28px; border-radius: 14px; background: transparent; border: 1px solid transparent; opacity: .4; transition: opacity .4s, background .3s, border-color .3s; cursor: pointer; font-size: 16px; font-weight: 600; font-family: inherit; color: var(--text); }
@@ -1288,7 +1288,7 @@ html[data-hdr="hidden"] .toolbar { top: 0; }
 .gal-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .gal-pills .pill { height: 34px; padding: 0 14px; font-size: 13px; }
 .gal-pills .pill.on { background: var(--btn); color: var(--btn-text); border-color: transparent; }
-.gal-tools { display: flex; gap: 10px; flex-wrap: wrap; }
+.gal-tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .gal-input { height: 38px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--panel); color: var(--text); padding: 0 14px; font-size: 14px; font-family: inherit; min-width: 220px; }
 .gal-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .gal-empty { padding: 56px 20px; text-align: center; color: var(--text-2); border: 1px dashed var(--line-2); border-radius: 20px; }
@@ -1316,6 +1316,145 @@ html[data-hdr="hidden"] .toolbar { top: 0; }
 .gal-scroll { overflow-x: auto; padding-bottom: 6px; }
 .gal-title { margin: 0; font-family: var(--font-display, inherit); font-weight: 700; font-size: clamp(32px, 4.4vw, 56px); line-height: 1.07; letter-spacing: -.025em; color: var(--text); }
 .gal-sub { max-width: 62ch; font-size: clamp(15px, 1.3vw, 18px); line-height: 1.6; color: var(--text-2); }
+.gal-count { font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+/* ---- Gallery hero — copy + feature highlights + illustration + category chips ---- */
+.gal-hero-sec { margin-bottom: 36px; }
+.gal-hero-wrap { display: grid; grid-template-columns: minmax(320px, 1fr) minmax(280px, .82fr); gap: 56px; align-items: center; margin-bottom: 30px; }
+.gal-hero-copy { display: flex; flex-direction: column; gap: 26px; min-width: 0; }
+
+.gal-features { display: flex; flex-direction: column; gap: 16px; }
+.gal-feature { display: flex; gap: 14px; align-items: flex-start; }
+.gal-feature-icon {
+  display: flex; align-items: center; justify-content: center; flex: none;
+  width: 42px; height: 42px; border-radius: 13px;
+  background: color-mix(in srgb, var(--cyan) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cyan) 24%, transparent);
+  color: var(--accent);
+}
+.gal-feature h4 { margin: 0; font-size: 15px; font-weight: 600; color: var(--text); }
+.gal-feature p { margin: 3px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--text-2); }
+
+/* ---- 2D interactive hero illustration ----
+   A laptop (hand-authored SVG, crisp at any size) + three independently
+   floating, clickable project cards, each built from plain HTML/CSS/SVG
+   layers — no images, no WebGL. Every element is split into an outer
+   "parallax" wrapper (reads the --px/--py custom properties set on pointer
+   move) and an inner "float" wrapper (its own CSS keyframe loop), because a
+   single element can't carry both a live CSS-var transform and a keyframe
+   animation on the same `transform` property without one clobbering the
+   other each frame. */
+.gal-hero-art-wrap { position: relative; min-width: 0; }
+.hero2d { position: relative; width: 100%; aspect-ratio: 11 / 9; perspective: 900px; --px: 0; --py: 0; }
+.hero2d.reduced { --px: 0; --py: 0; }
+.gal-art-glow {
+  position: absolute; inset: -6% -4% 8%; border-radius: 50%; z-index: 0; pointer-events: none;
+  background: radial-gradient(55% 55% at 50% 48%, color-mix(in srgb, var(--cyan) 22%, transparent), transparent 70%);
+  filter: blur(18px);
+}
+
+.hero2d-laptop {
+  position: absolute; left: 50%; top: 50%; width: 76%; z-index: 1; transform-style: preserve-3d;
+  transform:
+    translate(-50%, -50%)
+    translate(calc(var(--px) * 10px), calc(var(--py) * 6px))
+    rotateX(calc(var(--py) * -6deg)) rotateY(calc(var(--px) * 8deg));
+  transition: transform .25s ease-out;
+}
+.hero2d-laptop-float { animation: hero2dBob 6s ease-in-out infinite; }
+.hero2d-laptop-svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 20px 28px rgba(10, 30, 60, .2)); }
+@media (prefers-reduced-motion: reduce) { .hero2d-laptop-float { animation: none; } }
+
+.hero2d-card-wrap {
+  position: absolute; z-index: 2; width: 124px; transition: transform .2s ease-out;
+}
+.hero2d-card-wrap.pos-a { left: -6%; top: 8%; transform: translate(calc(var(--px) * -20px), calc(var(--py) * -12px)); }
+.hero2d-card-wrap.pos-b { right: -4%; top: -6%; transform: translate(calc(var(--px) * 22px), calc(var(--py) * -16px)); }
+.hero2d-card-wrap.pos-c { right: -2%; bottom: 6%; transform: translate(calc(var(--px) * 18px), calc(var(--py) * 14px)); }
+
+.hero2d-card-float { will-change: transform; }
+.pos-a .hero2d-card-float { animation: hero2dBobA 5.2s ease-in-out infinite; }
+.pos-b .hero2d-card-float { animation: hero2dBobB 5.8s ease-in-out .4s infinite; }
+.pos-c .hero2d-card-float { animation: hero2dBobC 4.9s ease-in-out .9s infinite; }
+@media (prefers-reduced-motion: reduce) { .hero2d-card-float { animation: none !important; transform: none !important; } }
+
+.hero2d-card {
+  position: relative; display: block; width: 100%; height: 90px; padding: 0; margin: 0; border: 0; cursor: pointer;
+  border-radius: 16px; overflow: hidden; background: var(--panel-solid); box-shadow: var(--shadow-lg);
+  transition: transform .22s ease, box-shadow .22s ease;
+}
+.hero2d-card:hover, .hero2d-card:focus-visible { transform: translateY(-5px) scale(1.07) rotate(0deg); box-shadow: var(--shadow-lg), 0 0 0 3px color-mix(in srgb, var(--cyan) 40%, transparent); z-index: 4; }
+.hero2d-card:disabled { cursor: default; }
+.hero2d-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.hero2d-card-face { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 14px; }
+.hero2d-card-face.k-code { background: #10172a; }
+.hero2d-card-face.k-code i { display: block; height: 5px; border-radius: 3px; opacity: .9; font-style: normal; }
+.hero2d-card-face.k-code .l1 { width: 80%; background: #f472b6; }
+.hero2d-card-face.k-code .l2 { width: 60%; background: #60a5fa; }
+.hero2d-card-face.k-code .l3 { width: 45%; background: #34d399; }
+.hero2d-card-face.k-chart { background: linear-gradient(160deg, #eef4ff, #ffffff); padding: 16px; }
+.hero2d-card-face.k-chart svg { width: 100%; height: 100%; }
+.hero2d-card-face.k-mobile { background: linear-gradient(135deg, #1e1b4b, #312e81); flex-direction: row; align-items: center; justify-content: center; gap: 8px; }
+.hero2d-card-face.k-mobile .ph { display: block; width: 25px; height: 52px; border-radius: 8px; background: linear-gradient(160deg, #818cf8, #d946ef); border: 2px solid rgba(255, 255, 255, .4); }
+.hero2d-card-face.k-mobile .p2 { height: 44px; margin-top: 8px; background: linear-gradient(160deg, #22d3ee, #6366f1); }
+
+.hero2d-card-badge {
+  position: absolute; bottom: 8px; right: 8px; width: 24px; height: 24px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 4px 10px rgba(0, 0, 0, .25);
+}
+.hero2d-card-label {
+  position: absolute; left: 8px; bottom: 8px; right: 36px; padding: 3px 8px; border-radius: 999px;
+  background: rgba(10, 16, 32, .85); color: #fff; font-size: 10.5px; font-weight: 600; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  opacity: 0; transform: translateY(4px); transition: opacity .2s ease, transform .2s ease; pointer-events: none;
+}
+.hero2d-card:hover .hero2d-card-label, .hero2d-card:focus-visible .hero2d-card-label { opacity: 1; transform: translateY(0); }
+
+.hero2d-icon-wrap { position: absolute; z-index: 3; transition: transform .2s ease-out; }
+.hero2d-icon-wrap.spark { left: 42%; top: -5%; transform: translate(calc(var(--px) * 26px), calc(var(--py) * 16px)); }
+.hero2d-icon {
+  display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--panel-solid); border: 1px solid var(--line-2); box-shadow: var(--shadow); color: var(--cyan);
+  animation: hero2dBob 4.4s ease-in-out 1.6s infinite;
+}
+@media (prefers-reduced-motion: reduce) { .hero2d-icon { animation: none; } }
+
+@keyframes hero2dBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes hero2dBobA { 0%, 100% { transform: rotate(-5deg) translateY(0); } 50% { transform: rotate(-5deg) translateY(-9px); } }
+@keyframes hero2dBobB { 0%, 100% { transform: rotate(4deg) translateY(0); } 50% { transform: rotate(4deg) translateY(-9px); } }
+@keyframes hero2dBobC { 0%, 100% { transform: rotate(-3deg) translateY(0); } 50% { transform: rotate(-3deg) translateY(-9px); } }
+
+@media (max-width: 640px) {
+  .hero2d-card-wrap { width: 96px; }
+  .hero2d-card { height: 72px; border-radius: 13px; }
+  .hero2d-card-badge { width: 20px; height: 20px; border-radius: 7px; }
+  .hero2d-icon { width: 26px; height: 26px; }
+}
+
+/* Shared pill-chip filter — used by the gallery hero, Explore Projects, and
+   anywhere else a category/type filter row needs the same look + motion. */
+.filter-chip-row { display: flex; gap: 10px; flex-wrap: nowrap; overflow-x: auto; padding: 2px 2px 6px; margin: 0 -2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.filter-chip-row::-webkit-scrollbar { display: none; }
+.filter-chip {
+  display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 18px; flex: none;
+  border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text-2);
+  font-size: 14px; font-weight: 500; font-family: inherit; white-space: nowrap; cursor: pointer;
+  transition: transform .2s, border-color .2s, color .2s, background .2s, box-shadow .2s;
+}
+.filter-chip:hover { border-color: var(--line-2); color: var(--text); transform: translateY(-1px); }
+.filter-chip.on { background: var(--btn); color: var(--btn-text); border-color: transparent; box-shadow: var(--shadow); }
+
+@media (max-width: 1000px) {
+  .gal-hero-wrap { grid-template-columns: 1fr; gap: 32px; }
+  .gal-hero-art-wrap { max-width: 420px; margin: 0 auto; width: 100%; }
+}
+@media (max-width: 640px) {
+  .gal-hero-wrap { gap: 24px; }
+  .gal-feature-icon { width: 38px; height: 38px; }
+  .filter-chip { height: 38px; padding: 0 14px; font-size: 13px; }
+  .gal-featured-chip { width: 40px; height: 40px; border-radius: 11px; }
+}
 .gc .stu small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
 .gc .stu .who { min-width: 0; }
 
@@ -1336,7 +1475,7 @@ html[data-hdr="hidden"] .toolbar { top: 0; }
 .pd-task .ck.b::after, .pd-task .ck.g::after { content: ""; width: 4px; height: 8px; border: solid #fff; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg) translate(-1px, -1px); }
 .pd-task-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pd-task-tag { height: 20px !important; font-size: 10.5px !important; padding: 0 8px !important; margin-left: auto; }
-.pd-star { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 44px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--panel-2); color: var(--text); font: inherit; font-weight: 500; cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+.pd-star { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 48px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--panel-2); color: var(--text); font: inherit; font-weight: 500; cursor: pointer; transition: border-color .2s, box-shadow .2s; }
 .pd-star:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--glow-border), 0 10px 26px -10px var(--glow-spread); }
 .pd-star.on { border-color: var(--accent); color: var(--accent-text, var(--accent)); }
 .pd-star svg { transition: transform .2s cubic-bezier(.2,.7,.2,1); }
@@ -1389,7 +1528,7 @@ html[data-hdr="hidden"] .toolbar { top: 0; }
 .light .dash::after { background: linear-gradient(180deg, #f3f5f8, #e3e7ee); opacity: .7; }
 .light .dash .dcell { background: #fff; border-color: rgba(16, 24, 40, .1); box-shadow: 0 8px 20px -14px rgba(16, 24, 40, .25); }
 .light .dash .dcell h4 { color: var(--text); }
-.light .dash .d-tabs { background: rgba(16, 24, 40, .06); }
+.light .dash .d-tabs { background: var(--wl-hover); }
 .light .dash .d-tabs button.on { background: #fff; color: #0662b4; box-shadow: 0 2px 8px -2px rgba(16, 24, 40, .22); }
 /* dark theme: drop the cyan outer glow too, keep the depth shadow */
 .dash { box-shadow: var(--shadow-lg); }
@@ -1666,3 +1805,65 @@ h1, h2, .font-display { font-variation-settings: 'opsz' 96; }
 h1, h2 { font-family: var(--font-display); text-wrap: balance; }
 p { text-wrap: pretty; }
 ::selection { background: rgb(var(--accent-400) / .35); }
+
+/* ==========================================================================
+   LIGHT THEME: NO SILVER
+   In light mode Tailwind's `white` resolves to dark navy (--content-strong),
+   so every `bg-white/[0.02]`, `bg-white/5`… and the old --panel-2 / --glass-chip
+   tokens (navy at 6–9% alpha) rendered as a flat grey "silver" film on buttons,
+   tiles, inputs and chips. Replace them with the theme's palette: white
+   surfaces, faint sky-blue tints, and blue strokes.
+   ========================================================================== */
+.light {
+  --panel-2: #f5f9ff;                           /* tiles & inner panels: faint sky, not grey */
+  --glass-chip: #e8f3fc;                        /* chips, icon circles, hover fills */
+  --glass-chip-line: rgba(6, 121, 171, 0.22);
+  --wl-tint: #f5f9ff;
+  --wl-tint-line: rgba(6, 121, 171, 0.18);
+  --wl-hover: #e8f3fc;
+  --wl-stroke: rgba(6, 121, 171, 0.45);
+  --hdr-chip: #e8f3fc;                          /* header theme / bell buttons */
+  --heat-0: #e3eef9; --h0: #e3eef9;             /* empty contribution squares & progress tracks */
+}
+
+/* Secondary / outline buttons → white with a blue stroke and blue label */
+.light .btn-secondary,
+.light .pd-star,
+.light .pf .btn-ghost,
+.light .rot-hint button {
+  background: #fff;
+  border: 1px solid var(--wl-stroke);
+  color: var(--accent);
+}
+.light .btn-secondary:hover,
+.light .pd-star:hover,
+.light .pf .btn-ghost:hover,
+.light .rot-hint button:hover {
+  background: var(--wl-hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.light .pd-star.on { background: var(--wl-hover); }
+/* Plain ghost buttons (no border) keep a transparent base but hover in blue, not grey */
+.light .btn-ghost:hover { background: var(--wl-hover); color: var(--accent); }
+
+/* Tailwind `bg-white/…` boxes (cards, tiles, list rows, KPI boxes) → sky tint.
+   `[class^=…], [class*=" …"]` matches the base utility only, not `hover:bg-white/…`. */
+.light [class^="bg-white/"], .light [class*=" bg-white/"] {
+  background-color: var(--wl-tint);
+}
+.light [class^="border-white/"], .light [class*=" border-white/"] {
+  border-color: var(--wl-tint-line);
+}
+.light [class*="hover:bg-white/"]:hover { background-color: var(--wl-hover); }
+/* Inputs & dropdown triggers (`bg-ink-900/60`) → clean white fields with a blue hairline */
+.light [class^="bg-ink-900/"], .light [class*=" bg-ink-900/"] {
+  background-color: #fff;
+  border-color: var(--wl-tint-line);
+}
+.light .wl-select-btn { background: #fff; border-color: var(--wl-stroke); color: var(--accent); }
+.light .wl-select-btn:hover { background: var(--wl-hover); }
+
+/* Project cards in a grid fill the row height so footers line up */
+.pc-grid > * { display: flex; flex-direction: column; }
+.pc-grid > * > .pc { flex: 1; }

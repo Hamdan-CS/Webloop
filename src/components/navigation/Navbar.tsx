@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, LogOut, User, LayoutDashboard, FileText, Mail, FolderKanban } from 'lucide-react';
+import { Menu, X, LogOut, User, LayoutDashboard, FileText, Mail, FolderKanban, Settings } from 'lucide-react';
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/shared/ui/Button';
@@ -122,11 +122,11 @@ export function Navbar() {
                 </button>
                 {menuOpen && (
                   <div className="hdr-menu animate-fade-in-up">
-                    <MenuItem icon={<LayoutDashboard size={15} />} label={profile ? getDashboardLabel(profile.creator_type) : 'Dashboard'} onClick={() => { setMenuOpen(false); navigate(profile ? getDashboardPath(profile.creator_type) : '/'); }} />
                     <MenuItem icon={<User size={15} />} label="My Profile" onClick={() => { setMenuOpen(false); navigate(`/creators/${profile?.handle}`); }} />
                     <MenuItem icon={<FolderKanban size={15} />} label="My Projects" onClick={() => { setMenuOpen(false); navigate('/my-projects'); }} />
                     <MenuItem icon={<FileText size={15} />} label="My Applications" onClick={() => { setMenuOpen(false); navigate('/my-applications'); }} />
                     <MenuItem icon={<Mail size={15} />} label="My Invitations" count={pendingInvites} onClick={() => { setMenuOpen(false); navigate('/my-invitations'); }} />
+                    <MenuItem icon={<Settings size={15} />} label="Settings" onClick={() => { setMenuOpen(false); navigate('/settings'); }} />
                     <div className="hdr-menu-sep" />
                     <MenuItem icon={<LogOut size={15} />} label="Sign Out" onClick={handleSignOut} danger />
                   </div>
@@ -146,6 +146,17 @@ Join the Platform
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
+        {user && profile && (
+          <button
+            type="button"
+            className="hdr-theme"
+            aria-label={getDashboardLabel(profile.creator_type)}
+            title={getDashboardLabel(profile.creator_type)}
+            onClick={() => { setMobileOpen(false); navigate(getDashboardPath(profile.creator_type)); }}
+          >
+            <LayoutDashboard size={18} />
+          </button>
+        )}
         <NotificationBell />
         <button
           className="hdr-theme hdr-burger md:hidden"
@@ -158,7 +169,7 @@ Join the Platform
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden px-5 py-4" style={{ borderTop: '1px solid var(--hdr-line)', background: 'var(--hdr-bg)' }}>
+        <div className="md:hidden px-5 py-4" style={{ borderTop: '1px solid var(--hdr-line)', background: 'var(--panel-solid)', boxShadow: 'var(--glass-shadow)' }}>
           <nav className="flex flex-col gap-1">
             {visibleNavItems.map((item) => (
               <NavLink
@@ -174,14 +185,17 @@ Join the Platform
               <ThemeToggle className="self-start" />
               {user ? (
                 <>
-                  {profile && (
-                    <Button variant="secondary" onClick={() => { setMobileOpen(false); navigate(getDashboardPath(profile.creator_type)); }}>
-                      <LayoutDashboard size={15} /> {getDashboardLabel(profile.creator_type)}
+                  {[
+                    { to: `/creators/${profile?.handle}`, icon: <User size={15} />, label: 'My Profile' },
+                    { to: '/my-projects', icon: <FolderKanban size={15} />, label: 'My Projects' },
+                    { to: '/my-applications', icon: <FileText size={15} />, label: 'My Applications' },
+                    { to: '/my-invitations', icon: <Mail size={15} />, label: pendingInvites ? `My Invitations (${pendingInvites})` : 'My Invitations' },
+                    { to: '/settings', icon: <Settings size={15} />, label: 'Settings' },
+                  ].map((item) => (
+                    <Button key={item.to} variant="secondary" onClick={() => { setMobileOpen(false); navigate(item.to); }}>
+                      {item.icon} {item.label}
                     </Button>
-                  )}
-                  <Button variant="secondary" onClick={() => { setMobileOpen(false); navigate(`/creators/${profile?.handle}`); }}>
-                    <User size={15} /> My Profile
-                  </Button>
+                  ))}
                   <Button variant="ghost" onClick={handleSignOut}>
                     <LogOut size={15} /> Sign Out
                   </Button>

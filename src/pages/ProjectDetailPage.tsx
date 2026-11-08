@@ -35,6 +35,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ConversationModal } from '@/components/projects/ConversationModal';
 import { EditProjectModal } from '@/components/projects/EditProjectModal';
 import { Pencil, Save } from 'lucide-react';
+import { getDashboardPath } from '@/utils/roles';
 import {
   statusLabel,
   statusTone,
@@ -119,6 +120,8 @@ export function ProjectDetailPage() {
   const openRoles = project.roles?.filter((r) => r.is_open) ?? [];
   const isCompleted = project.status === 'completed';
   const isOwner = !!(user && profile && project.owner_id === profile.id);
+  const isMember = !isOwner && !!profile && teamMembers.some((m) => m.profile_id === profile.id);
+  const myRole = isMember ? teamMembers.find((m) => m.profile_id === profile?.id)?.role : null;
   const taskDone = tasks.filter((t) => t.status === 'approved');
   const taskProg = tasks.filter((t) => ['in_progress', 'submitted', 'changes_requested'].includes(t.status));
   const taskTodo = tasks.filter((t) => t.status === 'open');
@@ -130,7 +133,7 @@ export function ProjectDetailPage() {
   const tags = ['Feature', 'Core', 'Docs', 'Perf'];
 
   const handleJoin = () => {
-    if (isOwner) return;
+    if (isOwner || isMember) return;
     if (!user || !profile) {
       prompt({
         title: 'Join this project',
@@ -443,6 +446,18 @@ export function ProjectDetailPage() {
               <Button className="w-full" onClick={() => setShowEditModal(true)}>
                 <Pencil size={15} /> Edit Project
               </Button>
+            ) : isMember ? (
+              <>
+                <div className="rounded-xl border border-signal-green/30 bg-signal-green/10 px-3 py-2.5 text-center">
+                  <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-signal-green">
+                    <CheckCircle2 size={15} /> You're a member of this team
+                  </p>
+                  {myRole && <p className="mt-0.5 text-xs text-slate-400">Your role: {myRole}</p>}
+                </div>
+                <Link to={profile ? getDashboardPath(profile.creator_type) : '/'} className="btn-secondary w-full">
+                  <ArrowRight size={15} /> Go to my tasks
+                </Link>
+              </>
             ) : isCompleted ? (
               <Badge tone="accent" className="w-full justify-center py-2">Completed showcase</Badge>
             ) : alreadyApplied ? (

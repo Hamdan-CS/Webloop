@@ -22,6 +22,7 @@ export function MyInvitationsPage() {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('all');
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [respondError, setRespondError] = useState<string | null>(null);
+  const [justJoined, setJustJoined] = useState<Invitation | null>(null);
 
   useEffect(() => {
     if (!profile) return;
@@ -46,9 +47,11 @@ export function MyInvitationsPage() {
   const respond = async (invite: Invitation, status: 'accepted' | 'declined') => {
     setRespondingId(invite.id);
     setRespondError(null);
+    setJustJoined(null);
     try {
       if (status === 'accepted') {
         await acceptInvite(invite.id);
+        setJustJoined(invite);
       } else {
         await respondToInvite(invite.id, 'declined');
       }
@@ -84,6 +87,17 @@ export function MyInvitationsPage() {
         <>
           {respondError && (
             <div className="pub-err mb-4"><span>{respondError}</span></div>
+          )}
+          {justJoined && (
+            <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-signal-green/30 bg-signal-green/10 px-4 py-3">
+              <p className="flex items-center gap-2 text-sm text-signal-green">
+                <CheckCircle2 size={16} />
+                <span>You joined <b>{justJoined.project?.title ?? 'the project'}</b>. It's now in My Projects, and tasks assigned to you will show on your dashboard.</span>
+              </p>
+              {justJoined.project && (
+                <Link to={`/projects/${justJoined.project.slug}`} className="btn btn-primary btn-sm">Go to project <ArrowRight size={13} /></Link>
+              )}
+            </div>
           )}
           <div className="pf-kpis mb-5">
             <div className="pf-kpi"><b>{invites.length}</b><span>Total</span></div>
@@ -132,7 +146,9 @@ export function MyInvitationsPage() {
                           </button>
                         </div>
                       ) : (
-                        <span className={cn('ref-badge', inviteBadge[inv.status])}>{inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}</span>
+                        <span className={cn('ref-badge', inviteBadge[inv.status])}>
+                          {inv.status === 'accepted' ? "Joined: you're a member" : inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
+                        </span>
                       )}
                       {inv.project && <Link to={`/projects/${inv.project.slug}`} className="sd-link">View project <ArrowRight size={12} /></Link>}
                     </div>
