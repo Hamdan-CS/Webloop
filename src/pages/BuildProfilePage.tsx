@@ -208,9 +208,10 @@ function TagField({
   );
 }
 
-export function BuildProfilePage() {
+export function BuildProfilePage({ mode = 'build' }: { mode?: 'build' | 'edit' }) {
   const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const isEdit = mode === 'edit';
   const reduceMotion = useMemo(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     [],
@@ -382,7 +383,7 @@ export function BuildProfilePage() {
   if (!user || !profile) {
     return (
       <div className="container-page py-20 text-center">
-        <h1 className="font-display text-2xl font-bold text-white">Sign in to build your profile</h1>
+        <h1 className="font-display text-2xl font-bold text-white">Sign in to {isEdit ? 'edit' : 'build'} your profile</h1>
         <Link to="/signin" className="mt-4 inline-block link-accent">Sign In</Link>
       </div>
     );
@@ -470,7 +471,13 @@ export function BuildProfilePage() {
     const ok = await persist();
     setBusy(null);
     if (ok) {
-      setDialog({
+      setDialog(isEdit ? {
+        title: 'Changes saved',
+        text: 'Your public profile has been updated.',
+        tickOn: true,
+        primaryLabel: 'Back to your profile',
+        onPrimary: () => navigate(`/creators/${profile.handle}`, { replace: true }),
+      } : {
         title: 'Profile complete',
         text: 'Nice work — your public profile now shows this information. You can keep refining it any time from Settings.',
         tickOn: true,
@@ -579,10 +586,14 @@ export function BuildProfilePage() {
             <div className="bp-formin">
               <header className="bp-mhead">
                 <div className="bp-mrow">
-                  <h1>Build your profile</h1>
-                  <button type="button" className="bp-btn bp-sm bp-ghost" onClick={skip} disabled={busy !== null}>
-                    {busy === 'skip' ? <Loader2 size={13} className="animate-spin" /> : 'Skip for now'}
-                  </button>
+                  <h1>{isEdit ? 'Edit your profile' : 'Build your profile'}</h1>
+                  {isEdit ? (
+                    <Link to={`/creators/${profile.handle}`} className="bp-btn bp-sm bp-ghost">Back to profile</Link>
+                  ) : (
+                    <button type="button" className="bp-btn bp-sm bp-ghost" onClick={skip} disabled={busy !== null}>
+                      {busy === 'skip' ? <Loader2 size={13} className="animate-spin" /> : 'Skip for now'}
+                    </button>
+                  )}
                 </div>
                 <p className="bp-lede">Step {step} of {STEPS.length}. {STEP_NOTES[step - 1]}</p>
               </header>
@@ -817,7 +828,7 @@ export function BuildProfilePage() {
                   {step > 1 && step < STEPS.length && <button type="button" className="bp-btn bp-ghost" onClick={() => setStep((s) => s + 1)}>Skip this step</button>}
                   <button type="button" className="bp-btn bp-primary" onClick={goNext} disabled={busy !== null || uploading}>
                     {busy === 'next' || busy === 'finish' ? <Loader2 size={15} className="animate-spin" /> : step === STEPS.length ? <Check size={15} /> : null}
-                    {step === STEPS.length ? 'Complete profile' : 'Next'}
+                    {step === STEPS.length ? (isEdit ? 'Save changes' : 'Complete profile') : 'Next'}
                   </button>
                 </div>
               </div>

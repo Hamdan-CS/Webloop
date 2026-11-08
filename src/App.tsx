@@ -10,6 +10,7 @@ import { Footer } from '@/components/layout/Footer';
 import { RoleRoute } from '@/components/auth/RoleRoute';
 import { GuestOnlyRoute } from '@/components/auth/GuestOnlyRoute';
 import { GlobalTip } from '@/components/shared/ui/GlobalTip';
+import { AuthErrorBanner } from '@/components/auth/AuthErrorBanner';
 
 // Route-level code splitting: each page ships as its own chunk instead of
 // one ~1.3MB bundle, so a visitor only downloads the page they land on.
@@ -34,6 +35,19 @@ const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ de
 const StudentDashboard = lazy(() => import('@/pages/dashboards/StudentDashboard').then((m) => ({ default: m.StudentDashboard })));
 const CompanyDashboard = lazy(() => import('@/pages/dashboards/CompanyDashboard').then((m) => ({ default: m.CompanyDashboard })));
 const UniversityDashboard = lazy(() => import('@/pages/dashboards/UniversityDashboard').then((m) => ({ default: m.UniversityDashboard })));
+
+/**
+ * Students get the same rich wizard used at signup (university/major/skills
+ * fields the plain settings form doesn't have), reused in "edit" mode.
+ * Company/university accounts have no use for those student-only fields, so
+ * they keep the plain settings form.
+ */
+function SettingsRoute() {
+  const { profile, loading } = useAuth();
+  if (loading) return <RouteLoading />;
+  if (profile?.creator_type === 'student') return <BuildProfilePage mode="edit" />;
+  return <EditProfilePage />;
+}
 
 function RouteLoading() {
   return (
@@ -107,6 +121,7 @@ function App() {
             <Navbar />
             {/* the header is now position:fixed (so it can hide on scroll), so push content below it */}
             <main className="flex-1 pt-16">
+              <AuthErrorBanner />
               <Suspense fallback={<RouteLoading />}>
                 <Routes>
                   <Route path="/" element={<HomePage />} />
@@ -124,7 +139,7 @@ function App() {
                   <Route path="/my-applications" element={<MyApplicationsPage />} />
                   <Route path="/my-invitations" element={<MyInvitationsPage />} />
                   <Route path="/my-projects" element={<MyProjectsPage />} />
-                  <Route path="/settings" element={<EditProfilePage />} />
+                  <Route path="/settings" element={<SettingsRoute />} />
                   <Route path="/build-profile" element={<BuildProfilePage />} />
                   <Route path="/dashboard/student" element={<RoleRoute allowed={['student', 'team']}><StudentDashboard /></RoleRoute>} />
                   <Route path="/dashboard/company" element={<RoleRoute allowed={['company']}><CompanyDashboard /></RoleRoute>} />
