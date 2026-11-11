@@ -72,7 +72,8 @@ export function MyInvitationsPage() {
         <p className="mt-2 text-slate-400">Teams that have invited you to join their project.</p>
       </div>
 
-      {loading ? (
+      <div className={loading ? undefined : 'reveal'}>
+{loading ? (
         <div className="flex h-[40vh] items-center justify-center">
           <LoopLoader size={28} />
         </div>
@@ -159,6 +160,7 @@ export function MyInvitationsPage() {
           )}
         </>
       )}
+</div>
     </div>
   );
 }

@@ -233,7 +233,7 @@ export function ProjectDetailPage() {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[1.6fr_1fr]">
+      <div key={tab} className="reveal mt-6 grid gap-8 lg:grid-cols-[1.6fr_1fr]">
         {/* Main column */}
         <div className="space-y-8">
           {tab === 'ov' && (

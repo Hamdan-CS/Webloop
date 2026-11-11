@@ -1,28 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Plus, Sparkles, Loader2, Trash2, AlertCircle, Users } from 'lucide-react';
+import { Plus, Sparkles, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchProfileProjects, fetchJoinedProjects, updateProjectStatus, deleteProject } from '@/services/api';
-import type { Project, ProjectStatus } from '@/types';
+import { fetchProfileProjects, fetchJoinedProjects } from '@/services/api';
+import type { Project } from '@/types';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { Button } from '@/components/shared/ui/Button';
 import { ProjectCard } from '@/components/projects/ProjectCard';
-import { ProjectOverviewModal } from '@/components/projects/ProjectOverviewModal';
-import { statusLabel } from '@/utils/labels';
-
-const PROJECT_STATUSES: ProjectStatus[] = ['draft', 'published', 'recruiting', 'in_progress', 'completed', 'archived'];
-const STATUS_OPTIONS = PROJECT_STATUSES.map((s) => ({ value: s, label: statusLabel[s] }));
+import { ManagedProjectGrid } from '@/components/projects/ManagedProjectGrid';
 
 export function MyProjectsPage() {
   const { user, profile } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [joined, setJoined] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [overviewProject, setOverviewProject] = useState<Project | null>(null);
 
   useEffect(() => {
     if (!profile) return;
@@ -31,33 +22,6 @@ export function MyProjectsPage() {
       fetchJoinedProjects(profile.id).then(setJoined).catch(() => {}),
     ]).finally(() => setLoading(false));
   }, [profile]);
-
-  const handleStatusChange = async (projectId: string, status: string) => {
-    setStatusUpdating(projectId);
-    try {
-      await updateProjectStatus(projectId, status);
-      setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, status: status as ProjectStatus } : p)));
-    } catch (err) {
-      console.error('Failed to update status:', err);
-    } finally {
-      setStatusUpdating(null);
-    }
-  };
-
-  const handleDeleteProject = async (projectId: string) => {
-    setStatusUpdating(projectId);
-    setDeleteError(null);
-    try {
-      await deleteProject(projectId);
-      setProjects((prev) => prev.filter((p) => p.id !== projectId));
-      setConfirmDelete(null);
-    } catch (err) {
-      console.error('Failed to delete project:', err);
-      setDeleteError(err instanceof Error ? err.message : 'Failed to delete project.');
-    } finally {
-      setStatusUpdating(null);
-    }
-  };
 
   if (!user || !profile) {
     return (
@@ -83,7 +47,8 @@ export function MyProjectsPage() {
         <Link to="/publish"><Button><Plus size={15} /> Publish a project</Button></Link>
       </div>
 
-      {loading ? (
+      <div className={loading ? undefined : 'reveal'}>
+{loading ? (
         <div className="flex h-[40vh] items-center justify-center">
           <LoopLoader size={28} />
         </div>
@@ -123,64 +88,12 @@ export function MyProjectsPage() {
             <div className="pf-kpi"><b>{completed}</b><span>Completed</span></div>
           </div>
 
-          <div className="pc-grid grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.map((p, i) => (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: Math.min(i, 8) * 0.05, ease: 'easeOut' }}
-              >
-                <ProjectCard
-                  project={p}
-                  manage={{
-                    status: p.status,
-                    statusOptions: STATUS_OPTIONS,
-                    statusUpdating: statusUpdating === p.id,
-                    onStatusChange: (status) => handleStatusChange(p.id, status),
-                    onDelete: () => { setDeleteError(null); setConfirmDelete(p.id); },
-                    onOverview: () => setOverviewProject(p),
-                  }}
-                />
-              </motion.div>
-            ))}
-          </div>
+          <ManagedProjectGrid projects={projects} onProjectsChange={setProjects} />
           </>
           )}
         </>
       )}
-
-      {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/80 backdrop-blur-sm">
-          <div className="surface-raised w-full max-w-md p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-signal-rose/15 text-signal-rose">
-                <AlertCircle size={20} />
-              </div>
-              <h3 className="font-display text-lg font-bold text-white">Delete this project?</h3>
-            </div>
-            <p className="text-sm text-slate-400 mb-5">
-              This permanently removes the project, its skills, roles, and all applications. This cannot be undone.
-            </p>
-            {deleteError && (
-              <p className="mb-4 rounded-lg border border-signal-rose/30 bg-signal-rose/10 px-3 py-2 text-sm text-signal-rose">
-                {deleteError}
-              </p>
-            )}
-            <div className="flex gap-3">
-              <Button variant="danger" onClick={() => handleDeleteProject(confirmDelete)} disabled={statusUpdating === confirmDelete}>
-                {statusUpdating === confirmDelete ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
-                Yes, delete
-              </Button>
-              <Button variant="ghost" onClick={() => { setConfirmDelete(null); setDeleteError(null); }}>Cancel</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {overviewProject && (
-        <ProjectOverviewModal project={overviewProject} onClose={() => setOverviewProject(null)} />
-      )}
+</div>
     </div>
   );
 }

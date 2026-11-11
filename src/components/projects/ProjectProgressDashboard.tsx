@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -16,7 +16,9 @@ import {
   AlertCircle,
   Mail,
   Rocket,
+  Plus,
 } from 'lucide-react';
+import { useFloatingPanel } from '@/components/FloatingPanel';
 import {
   fetchProjectTasks,
   fetchProjectMembers,
@@ -59,7 +61,17 @@ const submissionStatusBadge: Record<SubmissionStatus, { tone: 'default' | 'accen
 interface Props {
   project: Project;
   isOwner: boolean;
+  onClose?: () => void;
 }
+
+const ACTIVE_TASK_STATUSES: TaskStatus[] = ['in_progress', 'submitted', 'changes_requested'];
+type TaskFilter = 'all' | 'open' | 'active' | 'approved';
+const TASK_FILTERS: { key: TaskFilter; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'open', label: 'Open' },
+  { key: 'active', label: 'In progress' },
+  { key: 'approved', label: 'Approved' },
+];
 
 type DashTab = 'overview' | 'tasks' | 'team' | 'activity';
 const DASH_TABS: { key: DashTab; label: string }[] = [
@@ -71,8 +83,23 @@ const DASH_TABS: { key: DashTab; label: string }[] = [
 
 type ActivityItem = { id: string; at: string; icon: React.ReactNode; text: string };
 
-export function ProjectProgressDashboard({ project, isOwner }: Props) {
+export function ProjectProgressDashboard({ project, isOwner, onClose }: Props) {
+  const { openPanel } = useFloatingPanel();
   const [dashTab, setDashTab] = useState<DashTab>('overview');
+  const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
+  const [assigneeFilter, setAssigneeFilter] = useState<string>('all');
+  const tiltRef = useRef<HTMLDivElement>(null);
+
+  // Same mouse tilt as the home page panel, kept small because this one holds real work.
+  const onTiltMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = tiltRef.current;
+    if (!el || window.innerWidth <= 960 || !window.matchMedia('(pointer: fine)').matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const b = el.getBoundingClientRect();
+    el.style.transition = 'transform .8s cubic-bezier(.16,1,.3,1)';
+    el.style.transform = `perspective(2000px) rotateX(${(-((e.clientY - b.top) / b.height - 0.5) * 1.5).toFixed(2)}deg) rotateY(${(((e.clientX - b.left) / b.width - 0.5) * 2).toFixed(2)}deg)`;
+  };
+  const onTiltLeave = () => { if (tiltRef.current) tiltRef.current.style.transform = ''; };
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [pendingApps, setPendingApps] = useState<Application[]>([]);
@@ -153,15 +180,38 @@ export function ProjectProgressDashboard({ project, isOwner }: Props) {
     })),
   ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 20);
 
+  const visibleTasks = tasks.filter((t) => {
+    if (assigneeFilter !== 'all' && t.assignee_id !== assigneeFilter) return false;
+    if (taskFilter === 'open') return t.status === 'open';
+    if (taskFilter === 'active') return ACTIVE_TASK_STATUSES.includes(t.status);
+    if (taskFilter === 'approved') return t.status === 'approved';
+    return true;
+  });
+  const showTasksFor = (memberId: string | 'all') => { setAssigneeFilter(memberId); setTaskFilter('all'); setDashTab('tasks'); };
+
   return (
     <div>
-      <div className="pd-tabs" role="tablist" style={{ marginTop: 0 }}>
-        {DASH_TABS.map((t) => (
-          <button key={t.key} type="button" role="tab" aria-selected={dashTab === t.key} className={dashTab === t.key ? 'on' : ''} onClick={() => setDashTab(t.key)}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <div className="dash-stage">
+        <div className="dash-tilt" ref={tiltRef} onPointerMove={onTiltMove} onPointerLeave={onTiltLeave}>
+          <div className="dash dash-app">
+            <div className="dash-top">
+              <h3>
+                <span className="art" style={{ background: 'linear-gradient(135deg, var(--cyan), var(--blue))' }} />
+                <span className="truncate">{project.title}</span>
+              </h3>
+              <div className="d-tabs" role="tablist">
+                {DASH_TABS.map((t) => (
+                  <button key={t.key} type="button" role="tab" aria-selected={dashTab === t.key} className={dashTab === t.key ? 'on' : ''} onClick={() => setDashTab(t.key)}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              {onClose && (
+                <button type="button" className="dash-close" onClick={onClose} aria-label="Close overview">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -170,50 +220,23 @@ export function ProjectProgressDashboard({ project, isOwner }: Props) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="mt-5 space-y-6"
+          className="dpane space-y-6"
         >
           {dashTab === 'overview' && (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <StatCard label="Completion" value={`${completionPct}%`} />
-                <StatCard label="Total tasks" value={totalTasks} />
-                <StatCard label="Team" value={members.length} />
-                <StatCard label="In progress" value={inProgressTasks} />
-              </div>
-
-              <div>
-                <h3 className="label-overline mb-3">Project lifecycle</h3>
-                <div className="flex flex-wrap items-center gap-2 text-xs">
-                  {LIFECYCLE_STEPS.map((s, i) => (
-                    <span key={s.key} className="flex items-center gap-2">
-                      <span
-                        className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
-                          i === currentIdx
-                            ? 'bg-accent-500 text-ink-950'
-                            : i < currentIdx
-                            ? 'bg-signal-green/20 text-signal-green'
-                            : 'bg-white/5 text-slate-500'
-                        }`}
-                      >
-                        {s.label}
-                      </span>
-                      {i < LIFECYCLE_STEPS.length - 1 && <span className="text-slate-600">→</span>}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="label-overline mb-3">Recent activity</h3>
-                {activity.length > 0 ? (
-                  <div className="space-y-2">
-                    {activity.slice(0, 5).map((item) => <ActivityRow key={item.id} item={item} />)}
-                  </div>
-                ) : (
-                  <EmptyState icon={<Rocket size={22} />} text="Nothing's happened here yet — invite your team and create some tasks to get started." />
-                )}
-              </div>
-            </>
+            <OverviewPane
+              tasks={tasks}
+              members={members}
+              approved={allSubmissions.filter((s) => s.status === 'approved')}
+              activity={activity}
+              currentIdx={currentIdx}
+              completionPct={completionPct}
+              approvedTasks={approvedTasks}
+              inProgressTasks={inProgressTasks}
+              isOwner={isOwner}
+              onInvite={() => setShowInvite(true)}
+              onShowTasks={showTasksFor}
+              onAddTask={() => openPanel('tasks')}
+            />
           )}
 
           {dashTab === 'tasks' && (
@@ -226,11 +249,32 @@ export function ProjectProgressDashboard({ project, isOwner }: Props) {
               </div>
 
               {totalTasks > 0 ? (
-                <div className="space-y-2">
-                  {tasks.map((task) => <TaskListRow key={task.id} task={task} />)}
-                </div>
+                <>
+                  <div className="ft-row">
+                    {TASK_FILTERS.map((f) => (
+                      <button key={f.key} type="button" className={`pill${taskFilter === f.key ? ' on' : ''}`} onClick={() => setTaskFilter(f.key)}>{f.label}</button>
+                    ))}
+                    {members.length > 0 && <span style={{ width: 10 }} />}
+                    {members.length > 0 && (
+                      <button type="button" className={`pill${assigneeFilter === 'all' ? ' on' : ''}`} onClick={() => setAssigneeFilter('all')}>Everyone</button>
+                    )}
+                    {members.map((m) => (
+                      <button key={m.id} type="button" className={`pill${assigneeFilter === m.profile_id ? ' on' : ''}`} onClick={() => setAssigneeFilter(m.profile_id)}>
+                        {m.profile?.display_name ?? 'Member'}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    {visibleTasks.map((task) => <TaskListRow key={task.id} task={task} />)}
+                    {visibleTasks.length === 0 && <EmptyState icon={<ListChecks size={22} />} text="No tasks match these filters." />}
+                  </div>
+                </>
               ) : (
-                <EmptyState icon={<ListChecks size={22} />} text={isOwner ? 'No tasks yet. Create tasks from your dashboard to track team work.' : 'No tasks have been created for this project yet.'} />
+                <div className="dcell dash-start">
+                  <ListChecks size={24} className="mx-auto" />
+                  <p className="mt-2">{isOwner ? 'No tasks yet. Add your first task to start tracking work.' : 'No tasks have been created for this project yet.'}</p>
+                  {isOwner && <button type="button" className="btn btn-primary btn-sm" onClick={() => openPanel('tasks')}><Plus size={14} /> Add a task</button>}
+                </div>
               )}
 
               <div>
@@ -332,13 +376,171 @@ export function ProjectProgressDashboard({ project, isOwner }: Props) {
           )}
         </motion.div>
       </AnimatePresence>
+          </div>
+        </div>
+      </div>
 
+      {/* Outside the panel: its CSS transform would otherwise trap this fixed-position dialog. */}
       {showInvite && (
         <InviteModal
           projectId={project.id}
           onClose={() => setShowInvite(false)}
           onInvited={(inv) => { setInvites((prev) => [inv, ...prev.filter((i) => i.invitee_email !== inv.invitee_email)]); }}
         />
+      )}
+    </div>
+  );
+}
+
+const DONUT_LENGTH = 314;
+const DAY_MS = 86_400_000;
+
+/** Counts approved work into time buckets, oldest first. */
+function approvedBuckets(approved: TaskSubmission[], range: '30' | '7') {
+  const bucketDays = range === '30' ? 2 : 1;
+  const count = range === '30' ? 15 : 7;
+  const startOfToday = new Date().setHours(0, 0, 0, 0);
+  const buckets = Array.from({ length: count }, (_, i) => {
+    const end = startOfToday + DAY_MS - (count - 1 - i) * bucketDays * DAY_MS;
+    return { end, start: end - bucketDays * DAY_MS, value: 0 };
+  });
+  for (const s of approved) {
+    const at = new Date(s.reviewed_at ?? s.created_at).getTime();
+    const bucket = buckets.find((b) => at >= b.start && at < b.end);
+    if (bucket) bucket.value += 1;
+  }
+  return buckets;
+}
+
+function OverviewPane({
+  tasks, members, approved, activity, currentIdx, completionPct, approvedTasks, inProgressTasks, isOwner, onInvite, onShowTasks, onAddTask,
+}: {
+  tasks: Task[];
+  members: ProjectMember[];
+  approved: TaskSubmission[];
+  activity: ActivityItem[];
+  currentIdx: number;
+  completionPct: number;
+  approvedTasks: number;
+  inProgressTasks: number;
+  isOwner: boolean;
+  onInvite: () => void;
+  onShowTasks: (memberId: string | 'all') => void;
+  onAddTask: () => void;
+}) {
+  const [range, setRange] = useState<'30' | '7'>('30');
+  // Starts empty and fills one frame later so the ring, bars and chart animate in.
+  const [filled, setFilled] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setFilled(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const buckets = approvedBuckets(approved, range);
+  const maxBucket = Math.max(1, ...buckets.map((b) => b.value));
+  const approvedInRange = buckets.reduce((sum, b) => sum + b.value, 0);
+  const milestoneProgress = currentIdx > 0 ? (currentIdx / (LIFECYCLE_STEPS.length - 1)) * 80 : 0;
+
+  return (
+    <div>
+      <div className="dgrid">
+        <div className="dcell">
+          <div className="donut-wrap">
+            <button type="button" className="donut" aria-label={`Project ${completionPct}% complete. Open tasks`} onClick={() => onShowTasks('all')}>
+              <svg viewBox="0 0 120 120">
+                <defs><linearGradient id="dg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--cyan)" /><stop offset="1" stopColor="var(--blue)" /></linearGradient></defs>
+                <circle className="bg" cx="60" cy="60" r="50" />
+                <circle className="fg" cx="60" cy="60" r="50" style={{ strokeDashoffset: filled ? DONUT_LENGTH * (1 - completionPct / 100) : DONUT_LENGTH }} />
+              </svg>
+              <b>{completionPct}<span>%</span></b>
+            </button>
+            <div className="kpis">
+              <div><b>{tasks.length}</b>Total tasks</div>
+              <div><b className="c1">{approvedTasks}</b>Approved</div>
+              <div><b className="c2">{inProgressTasks}</b>In progress</div>
+              <div><b>{tasks.length - approvedTasks - inProgressTasks}</b>Remaining</div>
+            </div>
+          </div>
+        </div>
+        <div className="dcell">
+          <h4>
+            Team members
+            {isOwner && <button type="button" className="btn btn-ghost btn-sm" onClick={onInvite}>Invite</button>}
+          </h4>
+          {members.length > 0 ? (
+            <div className="ref-avs" style={{ display: 'flex' }}>
+              {members.slice(0, 6).map((m) => <Avatar key={m.id} src={m.profile?.avatar_url} name={m.profile?.display_name ?? ''} size="sm" />)}
+              {members.length > 6 && <span style={{ width: 32, height: 32 }}>+{members.length - 6}</span>}
+            </div>
+          ) : (
+            <p className="muted" style={{ fontSize: 13 }}>No team members yet.</p>
+          )}
+          <h4 style={{ margin: '16px 0 4px' }}>Project stage</h4>
+          <div className="miles five" style={{ gridTemplateColumns: 'repeat(5, 1fr)', ['--mp' as string]: filled ? `${milestoneProgress}%` : '0%' } as React.CSSProperties}>
+            {LIFECYCLE_STEPS.map((s, i) => (
+              <div key={s.key} className={`mile${i <= currentIdx ? ' done' : ''}`} aria-current={i === currentIdx ? 'step' : undefined}>{s.label}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {tasks.length === 0 ? (
+        <div className="dcell dash-start">
+          <Rocket size={24} className="mx-auto" />
+          <p className="mt-2">{isOwner ? 'Add your first task and progress will show up here.' : 'Progress will show up here once tasks are added.'}</p>
+          {isOwner && <button type="button" className="btn btn-primary btn-sm" onClick={onAddTask}><Plus size={14} /> Add a task</button>}
+        </div>
+      ) : (
+        <div className="dgrid3">
+          <div className="dcell">
+            <h4>Task progress <span className="muted" style={{ fontWeight: 500, fontSize: 11.5 }}>click to filter</span></h4>
+            <div className="dash-bars">
+              {members.length === 0 && <p className="muted" style={{ fontSize: 13 }}>Assign tasks to team members to see progress per person.</p>}
+              {members.map((m) => {
+                const own = tasks.filter((t) => t.assignee_id === m.profile_id);
+                const done = own.filter((t) => t.status === 'approved').length;
+                const name = m.profile?.display_name ?? 'Member';
+                return (
+                  <button key={m.id} type="button" className="dash-bar-row" onClick={() => onShowTasks(m.profile_id)} aria-label={`${name}: ${done} of ${own.length} approved. Show tasks`}>
+                    <span>{name}</span>
+                    <div className="tr"><i style={{ background: 'linear-gradient(90deg, var(--cyan), var(--blue))', width: filled && own.length ? `${(done / own.length) * 100}%` : 0 }} /></div>
+                    <span className="muted">{done}/{own.length}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="dcell">
+            <h4>
+              Approved work
+              <span className="dtog">
+                <button type="button" className={range === '30' ? 'on' : ''} onClick={() => setRange('30')}>30 days</button>
+                <button type="button" className={range === '7' ? 'on' : ''} onClick={() => setRange('7')}>7 days</button>
+              </span>
+            </h4>
+            <div className="commit-big"><b>+{approvedInRange}</b><span className="muted" style={{ fontSize: 12 }}>approved in {range} days</span></div>
+            <div className="commit">
+              {buckets.map((b) => (
+                <i key={b.end} style={{ height: filled ? `${(b.value / maxBucket) * 100}%` : 0 }} data-tip={`${b.value} approved · ${new Date(b.start).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`} />
+              ))}
+            </div>
+          </div>
+          <div className="dcell">
+            <h4>Activity feed</h4>
+            {activity.length > 0 ? (
+              <div className="dash-feed">
+                {activity.slice(0, 4).map((item) => (
+                  <div key={item.id} className="fi">
+                    <span className="dash-fi-ic">{item.icon}</span>
+                    <div>{item.text}<small>{relativeDate(item.at)}</small></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="muted" style={{ fontSize: 13 }}>No activity yet.</p>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

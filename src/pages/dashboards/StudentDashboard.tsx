@@ -14,7 +14,8 @@ import type { Application, Message, PortfolioItem, Project, Task } from '@/types
 import { Avatar } from '@/components/shared/ui/Avatar';
 import { Rating, NoRating } from '@/components/shared/ui/Rating';
 import { ProjectCard } from '@/components/projects/ProjectCard';
-import { Button } from '@/components/shared/ui/Button';
+import { Button } from '@/components/shared/ui/Button';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { statusLabel, relativeDate } from '@/utils/labels';
 import { MyTasksPanel } from '@/components/projects/MyTasksPanel';
 import { cn } from '@/utils/cn';
@@ -184,7 +185,7 @@ export function StudentDashboard() {
             <section className="surface pf-card p-5">
               <h2 className="pf-h4 mb-3">Next up <small>closest deadline first</small></h2>
               {loading ? (
-                <p className="text-sm text-slate-500">Loading…</p>
+                <div className="flex justify-center py-3"><LoopLoader size={22} /></div>
               ) : nextUp.length === 0 ? (
                 <div className="sd-empty">
                   <ClipboardList size={22} />
@@ -219,7 +220,7 @@ export function StudentDashboard() {
                 <h2 className="pf-h4">My projects</h2>
                 <button type="button" className="sd-link" onClick={() => setTab('pj')}>View all <ArrowRight size={12} /></button>
               </div>
-              {loading ? <p className="text-sm text-slate-500">Loading…</p> : allProjects.length === 0 ? (
+              {loading ? <div className="flex justify-center py-3"><LoopLoader size={22} /></div> : allProjects.length === 0 ? (
                 <div className="sd-empty">
                   <GitBranch size={22} />
                   <p>You haven't published or joined a project yet.</p>
@@ -285,7 +286,7 @@ export function StudentDashboard() {
             </div>
           )}
           {loading ? (
-            <div className="surface pf-card p-8 text-center text-sm text-slate-500">Loading…</div>
+            <div className="surface pf-card p-8"><div className="flex justify-center"><LoopLoader size={24} /></div></div>
           ) : projects.length === 0 ? (
             <div className="surface pf-card p-8 text-center">
               <GitBranch size={24} className="mx-auto text-slate-600" />

@@ -9,12 +9,15 @@ import { Navbar } from '@/components/navigation/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { RoleRoute } from '@/components/auth/RoleRoute';
 import { GuestOnlyRoute } from '@/components/auth/GuestOnlyRoute';
+import { HomeRoute } from '@/components/auth/HomeRoute';
 import { GlobalTip } from '@/components/shared/ui/GlobalTip';
 import { AuthErrorBanner } from '@/components/auth/AuthErrorBanner';
 
 // Route-level code splitting: each page ships as its own chunk instead of
 // one ~1.3MB bundle, so a visitor only downloads the page they land on.
 const HomePage = lazy(() => import('@/pages/HomePage').then((m) => ({ default: m.HomePage })));
+const FeedPage = lazy(() => import('@/pages/FeedPage').then((m) => ({ default: m.FeedPage })));
+const AdminModerationPage = lazy(() => import('@/pages/AdminModerationPage').then((m) => ({ default: m.AdminModerationPage })));
 const ExplorePage = lazy(() => import('@/pages/ExplorePage').then((m) => ({ default: m.ExplorePage })));
 const GalleryPage = lazy(() => import('@/pages/GalleryPage').then((m) => ({ default: m.GalleryPage })));
 const CompaniesPage = lazy(() => import('@/pages/CompaniesPage').then((m) => ({ default: m.CompaniesPage })));
@@ -93,6 +96,20 @@ function NewStudentOnboardingRedirect() {
   return null;
 }
 
+/** Fades each page in once its code has loaded. Scroll-driven pages get opacity only:
+ * a moving parent would throw off their scroll position measurements. */
+function RouteStage({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation();
+  const scrollDriven = pathname === '/' || pathname === '/how-it-works';
+  return (
+    <Suspense fallback={<RouteLoading />}>
+      <div key={pathname} className={scrollDriven ? 'route-fade' : 'reveal'}>
+        {children}
+      </div>
+    </Suspense>
+  );
+}
+
 /** React Router doesn't reset scroll position on navigation (it's an SPA —
  * the browser never reloads), so without this, clicking a card from deep
  * down a long page (e.g. the scroll-heavy home page) lands on the new page
@@ -121,11 +138,13 @@ function App() {
           <div className="flex min-h-dvh flex-col">
             <Navbar />
             {/* the header is now position:fixed (so it can hide on scroll), so push content below it */}
-            <main className="flex-1 pt-16">
+            <main className="flex-1 pt-16 pb-16 md:pb-0">
               <AuthErrorBanner />
-              <Suspense fallback={<RouteLoading />}>
+              <RouteStage>
                 <Routes>
-                  <Route path="/" element={<HomePage />} />
+                  <Route path="/" element={<HomeRoute><HomePage /></HomeRoute>} />
+                  <Route path="/feed" element={<FeedPage />} />
+                  <Route path="/admin/moderation" element={<AdminModerationPage />} />
                   <Route path="/explore" element={<ExplorePage />} />
                   <Route path="/gallery" element={<GalleryPage />} />
                   <Route path="/companies" element={<CompaniesPage />} />
@@ -148,7 +167,7 @@ function App() {
                   <Route path="/dashboard/university" element={<RoleRoute allowed={['university']}><UniversityDashboard /></RoleRoute>} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
-              </Suspense>
+              </RouteStage>
             </main>
             <Footer />
             <PanelBadgeSync />

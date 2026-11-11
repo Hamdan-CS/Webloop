@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, LogOut, User, LayoutDashboard, FileText, Mail, FolderKanban, Settings } from 'lucide-react';
+import { Menu, X, LogOut, User, LayoutDashboard, FileText, Mail, FolderKanban, Settings, ShieldAlert } from 'lucide-react';
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/shared/ui/Button';
@@ -9,25 +9,53 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { NotificationBell } from '@/components/FloatingPanel';
 import { getDashboardPath, getDashboardLabel } from '@/utils/roles';
+import { MobileTabBar, type NavItem } from '@/components/navigation/MobileTabBar';
+import { FeedNavIcon } from '@/features/feed/components/FeedNavIcon';
+import { checkIsAdmin, fetchLatestPostTimestamp } from '@/features/feed/services/feedApi';
+import { LAST_FEED_VISIT_KEY } from '@/features/feed/constants';
 
-const navItems = [
+const GUEST_NAV_ITEMS: NavItem[] = [
   { to: '/explore', label: 'Explore Projects' },
   { to: '/gallery', label: 'Student Work' },
+  { to: '/feed', label: 'Feed', isFeed: true },
   { to: '/companies', label: 'Companies' },
   { to: '/how-it-works', label: 'How It Works' },
+];
+
+const AUTHED_NAV_ITEMS: NavItem[] = [
+  { to: '/explore', label: 'Explore Projects' },
+  { to: '/feed', label: 'Feed', isFeed: true },
+  { to: '/gallery', label: 'Student Work' },
+  { to: '/companies', label: 'Companies' },
 ];
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [hasUnseenFeed, setHasUnseenFeed] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, signOut, pendingInvites } = useAuth();
-  const visibleNavItems = navItems.filter((item) => item.to !== '/how-it-works' || !user);
+  const visibleNavItems = user ? AUTHED_NAV_ITEMS : GUEST_NAV_ITEMS;
   const [indicator, setIndicator] = useState({ left: 0, width: 0, opacity: 0 });
+
+  useEffect(() => {
+    if (!user) return;
+    fetchLatestPostTimestamp().then((latest) => {
+      if (!latest) return;
+      const lastVisit = localStorage.getItem(LAST_FEED_VISIT_KEY);
+      setHasUnseenFeed(!lastVisit || new Date(latest) > new Date(lastVisit));
+    });
+  }, [user, location.pathname]);
+
+  useEffect(() => {
+    if (!user) return;
+    checkIsAdmin().then(setIsAdmin);
+  }, [user]);
 
   // slide the active-tab indicator to whichever link React Router has marked
   // active, instead of re-deriving route-matching rules here
@@ -77,6 +105,7 @@ export function Navbar() {
   };
 
   return (
+    <>
     <header className={cn('site-header', hidden && 'hdr-hide')}>
       <div className="container-page flex h-16 items-center justify-between gap-4">
         <Link to="/" className="hdr-logo flex items-center" aria-label="WebLoop home">
@@ -88,8 +117,9 @@ export function Navbar() {
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) => cn('hdr-link whitespace-nowrap', isActive && 'active')}
+              className={({ isActive }) => cn('hdr-link whitespace-nowrap flex items-center gap-1.5', isActive && 'active')}
             >
+              {item.isFeed && <FeedNavIcon hasUnseen={hasUnseenFeed} />}
               {item.label}
             </NavLink>
           ))}
@@ -124,9 +154,14 @@ export function Navbar() {
                   <div className="hdr-menu animate-fade-in-up">
                     <MenuItem icon={<User size={15} />} label="My Profile" onClick={() => { setMenuOpen(false); navigate(`/creators/${profile?.handle}`); }} />
                     <MenuItem icon={<FolderKanban size={15} />} label="My Projects" onClick={() => { setMenuOpen(false); navigate('/my-projects'); }} />
-                    <MenuItem icon={<FileText size={15} />} label="My Applications" onClick={() => { setMenuOpen(false); navigate('/my-applications'); }} />
+                    {profile?.creator_type !== 'company' && (
+                      <MenuItem icon={<FileText size={15} />} label="My Applications" onClick={() => { setMenuOpen(false); navigate('/my-applications'); }} />
+                    )}
                     <MenuItem icon={<Mail size={15} />} label="My Invitations" count={pendingInvites} onClick={() => { setMenuOpen(false); navigate('/my-invitations'); }} />
                     <MenuItem icon={<Settings size={15} />} label="Settings" onClick={() => { setMenuOpen(false); navigate('/settings'); }} />
+                    {isAdmin && (
+                      <MenuItem icon={<ShieldAlert size={15} />} label="Moderation queue" onClick={() => { setMenuOpen(false); navigate('/admin/moderation'); }} />
+                    )}
                     <div className="hdr-menu-sep" />
                     <MenuItem icon={<LogOut size={15} />} label="Sign Out" onClick={handleSignOut} danger />
                   </div>
@@ -169,15 +204,16 @@ Join the Platform
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden px-5 py-4" style={{ borderTop: '1px solid var(--hdr-line)', background: 'var(--panel-solid)', boxShadow: 'var(--glass-shadow)' }}>
+        <div className="md:hidden px-5 py-4 reveal" style={{ borderTop: '1px solid var(--hdr-line)', background: 'var(--panel-solid)', boxShadow: 'var(--glass-shadow)' }}>
           <nav className="flex flex-col gap-1">
             {visibleNavItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 onClick={() => setMobileOpen(false)}
-                className={({ isActive }) => cn('hdr-link block rounded-lg px-3 py-2.5 text-sm font-medium', isActive && 'active')}
+                className={({ isActive }) => cn('hdr-link flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-medium', isActive && 'active')}
               >
+                {item.isFeed && <FeedNavIcon hasUnseen={hasUnseenFeed} />}
                 {item.label}
               </NavLink>
             ))}
@@ -188,7 +224,7 @@ Join the Platform
                   {[
                     { to: `/creators/${profile?.handle}`, icon: <User size={15} />, label: 'My Profile' },
                     { to: '/my-projects', icon: <FolderKanban size={15} />, label: 'My Projects' },
-                    { to: '/my-applications', icon: <FileText size={15} />, label: 'My Applications' },
+                    ...(profile?.creator_type !== 'company' ? [{ to: '/my-applications', icon: <FileText size={15} />, label: 'My Applications' }] : []),
                     { to: '/my-invitations', icon: <Mail size={15} />, label: pendingInvites ? `My Invitations (${pendingInvites})` : 'My Invitations' },
                     { to: '/settings', icon: <Settings size={15} />, label: 'Settings' },
                   ].map((item) => (
@@ -215,6 +251,8 @@ Join the Platform
         </div>
       )}
     </header>
+    <MobileTabBar items={visibleNavItems} hasUnseenFeed={hasUnseenFeed} />
+    </>
   );
 }
 

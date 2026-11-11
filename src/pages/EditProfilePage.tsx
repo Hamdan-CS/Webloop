@@ -71,6 +71,8 @@ export function EditProfilePage() {
     );
   }
 
+  const isCompany = profile.creator_type === 'company';
+
   const set = (key: keyof typeof form, value: string) => {
     setForm((f) => ({ ...f, [key]: value }));
     setSaved(false);
@@ -99,10 +101,12 @@ export function EditProfilePage() {
     const linkedin = form.linkedin_url.trim();
     if (
       linkedin &&
-        !/^https:\/\/(www\.)?linkedin\.com\/in\/[\w-]+\/?$/.test(linkedin)
+        !/^https:\/\/(www\.)?linkedin\.com\/(in|company|school)\/[\w%-]+\/?$/.test(linkedin)
     ){
       setError(
-          'Invalid LinkedIn URL. Use this format: https://www.linkedin.com/in/your-profile/' 
+        isCompany
+          ? 'Invalid LinkedIn URL. Use this format: https://www.linkedin.com/company/your-company/'
+          : 'Invalid LinkedIn URL. Use this format: https://www.linkedin.com/in/your-profile/',
       );
       return;
     }
@@ -139,8 +143,10 @@ export function EditProfilePage() {
 
       <div className="mb-8">
         <span className="label-overline">Settings</span>
-        <h1 className="pf-name mt-2">Edit your profile</h1>
-        <p className="mt-2 text-slate-400">Update how you appear to other members and companies on WebLoop.</p>
+        <h1 className="pf-name mt-2">{isCompany ? 'Edit company profile' : 'Edit your profile'}</h1>
+        <p className="mt-2 text-slate-400">
+          {isCompany ? 'Update how your company appears to students on WebLoop.' : 'Update how you appear to other members and companies on WebLoop.'}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -150,14 +156,14 @@ export function EditProfilePage() {
             {form.banner_url ? (
               <img src={form.banner_url} alt="" className="h-full w-full object-cover" />
             ) : (
-              <div className="h-full w-full bg-ink-800" />
+              <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, var(--cyan), var(--blue))' }} />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-ink-900/80 to-transparent" />
           </div>
           <div className="px-6 pb-6 -mt-10 flex items-end gap-4">
             <Avatar src={form.avatar_url || undefined} name={form.display_name || 'User'} size="xl" className="ring-4 ring-ink-850" />
             <div className="flex-1 pb-1">
-              <h3 className="font-display text-base font-semibold text-white">{form.display_name || 'Your name'}</h3>
+              <h3 className="font-display text-base font-semibold text-white">{form.display_name || (isCompany ? 'Company name' : 'Your name')}</h3>
               <p className="text-sm text-slate-500">@{profile.handle}</p>
             </div>
           </div>
@@ -165,28 +171,30 @@ export function EditProfilePage() {
 
         {/* Basic info */}
         <Section title="Basic information">
-          <Field label="Display name" value={form.display_name} onChange={(v) => set('display_name', v)} placeholder="Your name" required />
-          <Field label="Avatar image URL" value={form.avatar_url} onChange={(v) => set('avatar_url', v)} placeholder="https://..." />
+          <Field label={isCompany ? 'Company name' : 'Display name'} value={form.display_name} onChange={(v) => set('display_name', v)} placeholder={isCompany ? 'Your company name' : 'Your name'} required />
+          <Field label={isCompany ? 'Logo image URL' : 'Avatar image URL'} value={form.avatar_url} onChange={(v) => set('avatar_url', v)} placeholder="https://..." />
           <Field label="Banner image URL" value={form.banner_url} onChange={(v) => set('banner_url', v)} placeholder="https://... (wide image for your profile header)" />
-          <Field label="Bio" value={form.bio} onChange={(v) => set('bio', v)} placeholder="Tell others about yourself" textarea />
-          <Field label="Location" value={form.location} onChange={(v) => set('location', v)} placeholder="City, Country" />
+          <Field label={isCompany ? 'About the company' : 'Bio'} value={form.bio} onChange={(v) => set('bio', v)} placeholder={isCompany ? 'What your company does and what students can work on' : 'Tell others about yourself'} textarea />
+          <Field label={isCompany ? 'Headquarters' : 'Location'} value={form.location} onChange={(v) => set('location', v)} placeholder="City, Country" />
         </Section>
 
         {/* Links */}
         <Section title="Links">
           <Field label="Website URL" value={form.website_url} onChange={(v) => set('website_url', v)} placeholder="https://..." />
           <Field label="GitHub URL" value={form.github_url} onChange={(v) => set('github_url', v)} placeholder="https://github.com/..." />
-          <Field label="LinkedIn URL" value={form.linkedin_url} onChange={(v) => set('linkedin_url', v)} placeholder="https://www.linkedin.com/in/..." />
+          <Field label="LinkedIn URL" value={form.linkedin_url} onChange={(v) => set('linkedin_url', v)} placeholder={isCompany ? 'https://www.linkedin.com/company/...' : 'https://www.linkedin.com/in/...'} />
         </Section>
 
         {/* Experience */}
-        <Section title="Experience & availability">
-          <Select label="Experience level" value={form.experience_level} onChange={(v) => set('experience_level', v)} options={[{ value: '', label: 'Not specified' }, ...EXPERIENCE_LEVELS.map((e) => ({ value: e, label: e }))]} />
-          <Select label="Availability" value={form.availability} onChange={(v) => set('availability', v)} options={[{ value: '', label: 'Not specified' }, ...AVAILABILITY_OPTIONS.map((a) => ({ value: a, label: a }))]} />
-        </Section>
+        {!isCompany && (
+          <Section title="Experience & availability">
+            <Select label="Experience level" value={form.experience_level} onChange={(v) => set('experience_level', v)} options={[{ value: '', label: 'Not specified' }, ...EXPERIENCE_LEVELS.map((e) => ({ value: e, label: e }))]} />
+            <Select label="Availability" value={form.availability} onChange={(v) => set('availability', v)} options={[{ value: '', label: 'Not specified' }, ...AVAILABILITY_OPTIONS.map((a) => ({ value: a, label: a }))]} />
+          </Section>
+        )}
 
         {/* Interests */}
-        <Section title="Interests">
+        <Section title={isCompany ? 'Focus areas' : 'Interests'}>
           <div className="flex flex-wrap gap-2 mb-3">
             {interests.map((s) => (
               <span key={s} className="ref-tag">
@@ -196,7 +204,7 @@ export function EditProfilePage() {
                 </button>
               </span>
             ))}
-            {interests.length === 0 && <span className="text-xs text-slate-500">No interests added yet.</span>}
+            {interests.length === 0 && <span className="text-xs text-slate-500">{isCompany ? 'No focus areas added yet.' : 'No interests added yet.'}</span>}
           </div>
           <div className="flex gap-2">
             <input
@@ -204,7 +212,7 @@ export function EditProfilePage() {
               value={interestInput}
               onChange={(e) => setInterestInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addInterest(); } }}
-              placeholder="Type an interest and press Enter"
+              placeholder={isCompany ? 'e.g. Climate tech, then press Enter' : 'Type an interest and press Enter'}
               className="flex-1 rounded-lg border border-white/10 bg-ink-900/60 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-accent-400/40 focus:bg-ink-900 transition-colors"
             />
             <Button type="button" variant="ghost" className="btn-sm" onClick={addInterest}><Plus size={14} /> Add</Button>

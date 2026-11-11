@@ -50,7 +50,8 @@ export function MyApplicationsPage() {
         <p className="mt-2 text-slate-400">Track the status of projects you've applied to join.</p>
       </div>
 
-      {loading ? (
+      <div className={loading ? undefined : 'reveal'}>
+{loading ? (
         <div className="flex h-[40vh] items-center justify-center">
           <LoopLoader size={28} />
         </div>
@@ -108,6 +109,7 @@ export function MyApplicationsPage() {
           )}
         </>
       )}
+</div>
     </div>
   );
 }

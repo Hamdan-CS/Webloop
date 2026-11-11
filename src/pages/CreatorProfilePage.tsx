@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
-  Loader2,
   MapPin,
   Github,
   Linkedin,
@@ -16,7 +15,6 @@ import {
   MessageSquare,
   Users,
   X,
-  Send,
   AlertCircle,
   Mail,
   Image as ImageIcon,
@@ -25,6 +23,7 @@ import {
   Languages as LanguagesIcon,
   Link2,
   GraduationCap,
+  Rss,
 } from 'lucide-react';
 import {
   fetchProfileByHandle,
@@ -37,7 +36,6 @@ import {
   fetchProjectApplicationCount,
   updateApplicationStatus,
   acceptApplicationAndAddMember,
-  sendMessage,
 } from '@/services/api';
 import type { Application, PortfolioItem, Profile, Project, Review } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
@@ -47,9 +45,12 @@ import { ProjectCard } from '@/components/projects/ProjectCard';
 import { Button } from '@/components/shared/ui/Button';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { useAuthPrompt } from '@/components/auth/AuthPrompt';
+import { ContactModal } from '@/components/messaging/ContactModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { creatorTypeLabel, relativeDate, statusLabel, statusTone } from '@/utils/labels';
 import { cn } from '@/utils/cn';
+import { MyPostsSection } from '@/features/feed/components/MyPostsSection';
+import { checkIsAdmin } from '@/features/feed/services/feedApi';
 
 const ContributionGrid = lazy(() =>
   import('@/components/contributions').then((m) => ({ default: m.ContributionGrid })),
@@ -77,7 +78,9 @@ export function CreatorProfilePage() {
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
   const [projectApps, setProjectApps] = useState<Application[]>([]);
   const [pendingApps, setPendingApps] = useState(0);
+  const [decisionError, setDecisionError] = useState<string | null>(null);
   const [contactOpen, setContactOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { prompt } = useAuthPrompt();
   const tabSectionRef = useRef<HTMLDivElement>(null);
 
@@ -147,6 +150,11 @@ export function CreatorProfilePage() {
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    if (!user) return;
+    checkIsAdmin().then(setIsAdmin);
+  }, [user]);
+
   const handleExpandApps = async (projectId: string) => {
     if (expandedProject === projectId) {
       setExpandedProject(null);
@@ -158,6 +166,7 @@ export function CreatorProfilePage() {
   };
 
   const handleAppDecision = async (a: Application, status: 'accepted' | 'declined') => {
+    setDecisionError(null);
     try {
       if (status === 'accepted') {
         await acceptApplicationAndAddMember(a.id, a.project_id, a.applicant_id, a.role_title);
@@ -168,8 +177,10 @@ export function CreatorProfilePage() {
       const projId = a.project_id;
       const newCount = projectApps.filter((pa) => pa.id !== a.id && pa.status === 'pending').length;
       setAppCounts({ ...appCounts, [projId]: newCount });
+      setPendingApps((n) => Math.max(0, n - 1));
     } catch (err) {
       console.error('Failed to update application:', err);
+      setDecisionError(`Couldn't ${status === 'accepted' ? 'accept' : 'decline'} ${a.applicant?.display_name ?? 'this applicant'}. Please try again.`);
     }
   };
 
@@ -205,7 +216,7 @@ export function CreatorProfilePage() {
   const publishedProjects = projects.filter((p) => p.status !== 'draft' && p.status !== 'archived');
 
   return (
-    <div className="container-page py-8 max-w-5xl pf">
+    <div className="container-page py-8 max-w-5xl pf reveal">
       {/* ===== Profile Card (LinkedIn-style header) ===== */}
       <div className="surface-raised pf-card pf-head overflow-hidden">
         {/* Banner */}
@@ -248,13 +259,13 @@ export function CreatorProfilePage() {
                     <GraduationCap size={12} /> {[profile.university, profile.graduation_year && `class of ${profile.graduation_year}`].filter(Boolean).join(', ')}
                   </span>
                 )}
-                {profile.experience_level && (
+                {!isCompany && profile.experience_level && (
                   <span className="inline-flex items-center gap-1"><Briefcase size={12} /> {profile.experience_level}</span>
                 )}
                 {profile.location && (
                   <span className="inline-flex items-center gap-1"><MapPin size={12} /> {profile.location}</span>
                 )}
-                {profile.availability && (
+                {!isCompany && profile.availability && (
                   <span className="inline-flex items-center gap-1"><Calendar size={12} /> {profile.availability}</span>
                 )}
               </div>
@@ -274,7 +285,7 @@ export function CreatorProfilePage() {
             </div>
             <Kpi value={publishedProjects.length} label={`Project${publishedProjects.length !== 1 ? 's' : ''}`} />
             {contributions.total > 0 && <Kpi value={contributions.total} label={`Submission${contributions.total !== 1 ? 's' : ''}`} />}
-            <Kpi value={contributions.approved} label={`Approved contribution${contributions.approved !== 1 ? 's' : ''}`} tone="ok" />
+            {!isCompany && <Kpi value={contributions.approved} label={`Approved contribution${contributions.approved !== 1 ? 's' : ''}`} tone="ok" />}
             {portfolio.length > 0 && <Kpi value={portfolio.length} label={`Portfolio item${portfolio.length !== 1 ? 's' : ''}`} />}
           </div>
 
@@ -344,19 +355,25 @@ export function CreatorProfilePage() {
       {/* ===== Owner management tabs ===== */}
       {isOwner && (
         <div ref={tabSectionRef} className="d-tabs pf-tabs mt-6" role="tablist">
-          <TabButton active={tab === 'projects'} onClick={() => setTab('projects')} icon={<GitBranch size={15} />} label="My Projects" badge={projects.length} />
-          <TabButton active={tab === 'applications'} onClick={() => setTab('applications')} icon={<Users size={15} />} label="Join Requests" badge={pendingApps} badgeTone="amber" />
+          <TabButton active={tab === 'projects'} onClick={() => setTab('projects')} icon={<GitBranch size={15} />} label="Profile" />
+          <TabButton active={tab === 'applications'} onClick={() => setTab('applications')} icon={<Users size={15} />} label={isCompany ? 'Applicants' : 'Join Requests'} badge={pendingApps} badgeTone="amber" />
         </div>
       )}
 
       {/* ===== Main content grid ===== */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div key={tab} className="reveal mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* LEFT — primary content */}
         <div className="space-y-6 min-w-0">
           {/* Owner management views */}
           {isOwner && tab === 'applications' && (
             <section className="surface pf-card p-5">
-              <h2 className="pf-h4 mb-4">Join requests across your projects</h2>
+              <h2 className="pf-h4 mb-4">{isCompany ? 'Applicants across your projects' : 'Join requests across your projects'}</h2>
+              {decisionError && (
+                <div className="mb-4 flex items-start gap-2 rounded-lg border border-signal-rose/30 bg-signal-rose/10 px-3 py-2.5 text-sm text-signal-rose">
+                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                  <span>{decisionError}</span>
+                </div>
+              )}
               {projects.length === 0 ? (
                 <EmptyState label="You haven't published any projects yet." />
               ) : (
@@ -374,7 +391,7 @@ export function CreatorProfilePage() {
                           </div>
                         </div>
                         <Button variant="secondary" onClick={() => handleExpandApps(p.id)} className="text-xs">
-                          {expandedProject === p.id ? 'Hide' : 'View requests'}
+                          {expandedProject === p.id ? 'Hide' : isCompany ? 'View applicants' : 'View requests'}
                         </Button>
                       </div>
                       {expandedProject === p.id && (
@@ -431,7 +448,7 @@ export function CreatorProfilePage() {
                 ) : (
                   <p className="text-sm text-slate-500">No bio available.</p>
                 )}
-                {(profile.experience_level || profile.availability) && (
+                {!isCompany && (profile.experience_level || profile.availability) && (
                   <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-400">
                     {profile.experience_level && (
                       <span className="inline-flex items-center gap-1.5"><Briefcase size={12} /> {profile.experience_level}</span>
@@ -443,9 +460,24 @@ export function CreatorProfilePage() {
                 )}
               </SectionCard>
 
+              {/* Posts */}
+              {user && (
+                <SectionCard title="Posts" icon={<Rss size={14} />}>
+                  <MyPostsSection
+                    profileId={profile.id}
+                    isOwner={isOwner}
+                    viewerProfileId={myProfile?.id ?? null}
+                    isAdmin={isAdmin}
+                    onRequireAuth={() =>
+                      prompt({ title: 'Join to do more', reason: 'Create a free account to like, comment, save, and post.' })
+                    }
+                  />
+                </SectionCard>
+              )}
+
               {/* Skills */}
               {profile.interests && profile.interests.length > 0 && (
-                <SectionCard title="Skills" icon={<Award size={14} />}>
+                <SectionCard title={isCompany ? 'Focus areas' : 'Skills'} icon={<Award size={14} />}>
                   <div className="flex flex-wrap gap-2">
                     {profile.interests.map((skill) => (
                       <span key={skill} className="ref-tag">{skill}</span>
@@ -510,7 +542,7 @@ export function CreatorProfilePage() {
 
               {/* Portfolio / Experience */}
               {portfolio.length > 0 && (
-                <SectionCard title="Experience & Portfolio" icon={<ImageIcon size={14} />}>
+                <SectionCard title={isCompany ? 'Past work' : 'Experience & Portfolio'} icon={<ImageIcon size={14} />}>
                   <div className="grid gap-4 sm:grid-cols-2">
                     {portfolio.map((item) => (
                       <div key={item.id} className="group pf-work">
@@ -659,92 +691,3 @@ function EmptyState({ label }: { label: string }) {
   );
 }
 
-function ContactModal({
-  from,
-  to,
-  onClose,
-  onSent,
-}: {
-  from: Profile;
-  to: Profile;
-  onClose: () => void;
-  onSent: () => void;
-}) {
-  const [body, setBody] = useState('');
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
-
-  const handleSend = async () => {
-    if (!body.trim()) {
-      setError('Please write a message.');
-      return;
-    }
-    setSending(true);
-    setError(null);
-    try {
-      await sendMessage(from.id, to.id, body.trim());
-      setSent(true);
-      setTimeout(onSent, 1500);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send message');
-    } finally {
-      setSending(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/80 backdrop-blur-sm animate-fade-in-up">
-      <div className="surface-raised w-full max-w-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Avatar src={to.avatar_url} name={to.display_name} size="md" />
-            <div>
-              <h2 className="font-display text-lg font-bold text-white">Message {to.display_name}</h2>
-              <p className="text-xs text-slate-500">@{to.handle}</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:text-white hover:bg-white/5 transition-colors">
-            <X size={18} />
-          </button>
-        </div>
-
-        {sent ? (
-          <div className="py-6 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-signal-green/15 text-signal-green">
-              <CheckCircle2 size={28} />
-            </div>
-            <h3 className="mt-4 font-display text-lg font-semibold text-white">Message sent!</h3>
-            <p className="mt-2 text-sm text-slate-400">{to.display_name} will see your message in their inbox.</p>
-          </div>
-        ) : (
-          <>
-            <label className="block mb-4">
-              <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">Your message</span>
-              <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                rows={5}
-                placeholder={`Hi ${to.display_name}, I'd like to connect about...`}
-                className="w-full rounded-lg border border-white/10 bg-ink-900/60 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-accent-400/40 focus:bg-ink-900 transition-colors resize-y"
-              />
-            </label>
-            {error && (
-              <div className="flex items-start gap-2 rounded-lg border border-signal-rose/30 bg-signal-rose/10 px-3 py-2.5 text-sm text-signal-rose mb-4">
-                <AlertCircle size={16} className="mt-0.5 shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-            <div className="flex gap-3">
-              <Button onClick={handleSend} disabled={sending} className="flex-1">
-                {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={15} />}
-                {sending ? 'Sending...' : 'Send Message'}
-              </Button>
-              <Button variant="ghost" onClick={onClose} className="px-5">Cancel</Button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}

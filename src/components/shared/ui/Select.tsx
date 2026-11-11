@@ -92,7 +92,7 @@ export function Select({ label, value, options, onChange, className, disabled, s
               ref={panelRef}
               role="listbox"
               style={{ position: 'fixed', top: position.top, left: position.left, width: position.width }}
-              className="z-[60] max-h-60 overflow-auto rounded-lg border border-white/10 bg-ink-900/95 backdrop-blur-md py-1 shadow-card animate-fade-in-up"
+              className="z-[90] max-h-60 overflow-auto rounded-lg border border-white/10 bg-ink-900/95 backdrop-blur-md py-1 shadow-card animate-fade-in-up"
             >
               {options.map((o) => {
                 const isSelected = o.value === value;

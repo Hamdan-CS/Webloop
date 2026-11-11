@@ -225,7 +225,8 @@ export function ExplorePage() {
       )}
 
       {/* Main grid */}
-      {loading ? (
+      <div className={loading ? undefined : 'reveal'}>
+{loading ? (
         <div className="flex h-[70vh] items-center justify-center">
           <LoopLoader size={28} />
         </div>
@@ -249,6 +250,7 @@ export function ExplorePage() {
           ))}
         </div>
       )}
+</div>
     </div>
   );
 }

@@ -121,7 +121,8 @@ export function MessagesTab({ profileId, myProfile }: Props) {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-2">
-              {loading ? (
+              <div className={loading ? undefined : 'reveal'}>
+{loading ? (
                 <div className="flex justify-center py-10">
                   <LoopLoader size={22} />
                 </div>
@@ -176,6 +177,7 @@ export function MessagesTab({ profileId, myProfile }: Props) {
                   );
                 })
               )}
+</div>
             </div>
           </motion.div>
         )}

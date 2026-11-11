@@ -180,14 +180,14 @@ export function JoinPage() {
 
             <form onSubmit={handleSubmit} className="auth-fm" style={{ gap: 14 }}>
               <div className="auth-fld">
-                <label htmlFor="join-name">Display name</label>
+                <label htmlFor="join-name">{selected === 'student' ? 'Display name' : `${active.title} name`}</label>
                 <div className="inp">
                   <User />
                   <input
                     id="join-name"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Your name"
+                    placeholder={selected === 'student' ? 'Your name' : `Your ${selected} name`}
                     required
                   />
                 </div>
@@ -241,21 +241,26 @@ export function JoinPage() {
                 {loading ? <Loader2 size={16} className="animate-spin" /> : 'Create account'}
               </Button>
 
-              <div className="or">or</div>
-
-              <Button
-                type="button"
-                variant="secondary"
-                className="w-full"
-                onClick={handleGoogle}
-                disabled={googleLoading}
-              >
-                {googleLoading ? <Loader2 size={16} className="animate-spin" /> : <GoogleIcon />}
-                Continue with Google
-              </Button>
-              <p className="fine">
-                Creates a student account instantly. Companies and universities should use the form above.
-              </p>
+              {/* Google sign-up can only create student accounts, so it's offered only for that role. */}
+              {selected === 'student' ? (
+                <>
+                  <div className="or">or</div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full"
+                    onClick={handleGoogle}
+                    disabled={googleLoading}
+                  >
+                    {googleLoading ? <Loader2 size={16} className="animate-spin" /> : <GoogleIcon />}
+                    Continue with Google
+                  </Button>
+                </>
+              ) : (
+                <p className="fine">
+                  {active.title} accounts are created with email and password.
+                </p>
+              )}
 
               <p className="fine">
                 Already have an account? <Link to="/signin" className="link-accent">Sign in</Link>

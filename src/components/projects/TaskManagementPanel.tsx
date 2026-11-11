@@ -20,6 +20,8 @@ import {
   createTask,
   deleteTask,
   reviewSubmission,
+  sendMessage,
+  updateTask,
 } from '@/services/api';
 import { supabase } from '@/integrations/supabase/client';
 import type { ProjectMember, Task, TaskStatus, TaskSubmission } from '@/types';
@@ -39,13 +41,19 @@ const statusBadge: Record<TaskStatus, { tone: 'default' | 'accent' | 'green' | '
   rejected: { tone: 'rose', label: 'Rejected' },
 };
 
+/** Once work is submitted or decided, the assignee is part of its record and stays fixed. */
+const REASSIGNABLE: TaskStatus[] = ['open', 'in_progress', 'changes_requested'];
+
 interface Props {
   projectId: string;
   profileId: string;
+  /** Called after a task is created, reassigned, reviewed or deleted. */
+  onChange?: () => void;
 }
 
-export function TaskManagementPanel({ projectId, profileId }: Props) {
+export function TaskManagementPanel({ projectId, profileId, onChange }: Props) {
   const { refreshCounts } = useAuth();
+  const [actionError, setActionError] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,6 +92,10 @@ export function TaskManagementPanel({ projectId, profileId }: Props) {
     };
   }, [projectId, loadData]);
 
+  /** Assignees otherwise only find out by opening their dashboard; a failed note must not undo the assignment. */
+  const notifyAssignee = (assigneeId: string, task: Task) =>
+    sendMessage(profileId, assigneeId, `Assigned you a task: ${task.title}`, projectId, task.id).catch(() => {});
+
   const handleCreate = async (input: {
     title: string;
     description: string;
@@ -92,28 +104,51 @@ export function TaskManagementPanel({ projectId, profileId }: Props) {
     due_date: string;
   }) => {
     setBusy(true);
+    setActionError(null);
     try {
-      await createTask(projectId, profileId, {
+      const task = await createTask(projectId, profileId, {
         title: input.title,
         description: input.description || undefined,
         acceptance_criteria: input.acceptance_criteria || undefined,
         assignee_id: input.assignee_id || null,
         due_date: input.due_date || null,
       });
+      if (input.assignee_id) await notifyAssignee(input.assignee_id, task);
       setShowCreate(false);
       await loadData();
+      onChange?.();
     } catch {
-      // ignore
+      setActionError("Couldn't create the task. Please try again.");
     }
     setBusy(false);
   };
 
-  const handleDelete = async (taskId: string) => {
+  const handleAssign = async (task: Task, assigneeId: string) => {
+    setActionError(null);
+    // Same rule as createTask: having an assignee means work has started.
+    const status: TaskStatus =
+      assigneeId && task.status === 'open' ? 'in_progress'
+      : !assigneeId && task.status === 'in_progress' ? 'open'
+      : task.status;
     try {
-      await deleteTask(taskId);
-      setTasks(tasks.filter((t) => t.id !== taskId));
+      await updateTask(task.id, { assignee_id: assigneeId || null, status });
+      if (assigneeId) await notifyAssignee(assigneeId, task);
+      await loadData();
+      onChange?.();
     } catch {
-      // ignore
+      setActionError(`Couldn't reassign "${task.title}". Please try again.`);
+    }
+  };
+
+  const handleDelete = async (task: Task) => {
+    if (!window.confirm(`Delete "${task.title}"? This can't be undone.`)) return;
+    setActionError(null);
+    try {
+      await deleteTask(task.id);
+      setTasks(tasks.filter((t) => t.id !== task.id));
+      onChange?.();
+    } catch {
+      setActionError(`Couldn't delete "${task.title}". Please try again.`);
     }
   };
 
@@ -133,8 +168,9 @@ export function TaskManagementPanel({ projectId, profileId }: Props) {
       });
       await loadData();
       await refreshCounts();
+      onChange?.();
     } catch {
-      // ignore
+      setActionError("Couldn't save the review. Please try again.");
     }
     setReviewing(null);
   };
@@ -148,13 +184,20 @@ export function TaskManagementPanel({ projectId, profileId }: Props) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 reveal">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-lg font-semibold text-white">Task Management</h3>
         <Button size="sm" onClick={() => setShowCreate(true)}>
           <Plus size={15} /> New Task
         </Button>
       </div>
+
+      {actionError && (
+        <div className="flex items-start gap-2 rounded-lg border border-signal-rose/30 bg-signal-rose/10 px-3 py-2.5 text-sm text-signal-rose">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <span>{actionError}</span>
+        </div>
+      )}
 
       {tasks.length === 0 ? (
         <div className="surface p-8 text-center">
@@ -169,7 +212,9 @@ export function TaskManagementPanel({ projectId, profileId }: Props) {
               task={task}
               expanded={expandedTask === task.id}
               onToggle={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
-              onDelete={() => handleDelete(task.id)}
+              onDelete={() => handleDelete(task)}
+              members={members}
+              onAssign={(assigneeId) => handleAssign(task, assigneeId)}
               onReview={handleReview}
               reviewing={reviewing}
             />
@@ -194,6 +239,8 @@ function TaskRow({
   expanded,
   onToggle,
   onDelete,
+  members,
+  onAssign,
   onReview,
   reviewing,
 }: {
@@ -201,6 +248,8 @@ function TaskRow({
   expanded: boolean;
   onToggle: () => void;
   onDelete: () => void;
+  members: ProjectMember[];
+  onAssign: (assigneeId: string) => void;
   onReview: (submission: TaskSubmission, taskId: string, status: 'approved' | 'changes_requested' | 'not_completed' | 'rejected', feedback: string, rating: number) => void;
   reviewing: string | null;
 }) {
@@ -228,7 +277,19 @@ function TaskRow({
               {submissions.length > 0 && <span>{submissions.length} submission(s)</span>}
             </div>
           </button>
-          <button onClick={onDelete} className="rounded-lg p-1.5 text-slate-600 hover:text-signal-rose hover:bg-signal-rose/10 transition-colors">
+          {REASSIGNABLE.includes(task.status) && (
+            <Select
+              size="sm"
+              className="w-32 shrink-0"
+              value={task.assignee_id ?? ''}
+              onChange={onAssign}
+              options={[
+                { value: '', label: 'Unassigned' },
+                ...members.map((m) => ({ value: m.profile_id, label: m.profile?.display_name ?? 'Member' })),
+              ]}
+            />
+          )}
+          <button onClick={onDelete} aria-label={`Delete ${task.title}`} className="rounded-lg p-1.5 text-slate-600 hover:text-signal-rose hover:bg-signal-rose/10 transition-colors">
             <Trash2 size={14} />
           </button>
         </div>

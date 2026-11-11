@@ -25,7 +25,8 @@ import { Avatar } from '@/components/shared/ui/Avatar';
 import { Badge } from '@/components/shared/ui/Badge';
 import { Rating, NoRating } from '@/components/shared/ui/Rating';
 import { ProjectCard } from '@/components/projects/ProjectCard';
-import { Button } from '@/components/shared/ui/Button';
+import { Button } from '@/components/shared/ui/Button';
+import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { statusLabel, statusTone } from '@/utils/labels';
 
 export function UniversityDashboard() {
@@ -94,7 +95,7 @@ export function UniversityDashboard() {
             </Link>
           </div>
           {loading ? (
-            <div className="surface p-8 text-center text-sm text-slate-500">Loading…</div>
+            <div className="surface p-8"><div className="flex justify-center"><LoopLoader size={24} /></div></div>
           ) : projects.length === 0 ? (
             <div className="surface p-8 text-center">
               <BookOpen size={24} className="mx-auto text-slate-600" />

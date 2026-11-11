@@ -62,7 +62,9 @@ export function CompanyCard({ company: c, summary, glow, onHover, onOpen }: Prop
           <div style={{ display: 'flex', alignItems: 'center' }}>
             {shown.length > 0 && (
               <span className="ref-avs">
-                {shown.map((p) => <img key={p.id} src={p.avatar_url ?? ''} alt={p.display_name} />)}
+                {shown.map((p) => (p.avatar_url
+                  ? <img key={p.id} src={p.avatar_url} alt={p.display_name} />
+                  : <span key={p.id} title={p.display_name}>{p.display_name.charAt(0).toUpperCase()}</span>))}
                 {more > 0 && <span style={{ display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 600 }}>+{more}</span>}
               </span>
             )}

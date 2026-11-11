@@ -1524,8 +1524,8 @@ html[data-hdr="hidden"] .toolbar { top: 0; }
 
 /* ---- Live dashboard, light theme: clean white slab (no blue tint / cyan glow) ---- */
 .light .dash { background: linear-gradient(115deg, rgba(255, 255, 255, .9) 0, rgba(255, 255, 255, 0) 26%), linear-gradient(180deg, #ffffff, #f6f8fb); border-color: rgba(16, 24, 40, .14); box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgba(16, 24, 40, .06), 0 50px 80px -40px rgba(16, 24, 40, .28); }
-.light .dash::before { background: linear-gradient(180deg, #eceff4, #d9dee7); border-color: rgba(16, 24, 40, .12); box-shadow: 0 60px 80px -38px rgba(16, 24, 40, .22); }
-.light .dash::after { background: linear-gradient(180deg, #f3f5f8, #e3e7ee); opacity: .7; }
+.light .dash::before { background: linear-gradient(180deg, #ffffff, #cfeafb); border-color: rgba(6, 121, 171, .2); box-shadow: 0 60px 80px -38px rgba(8, 100, 180, .28); }
+.light .dash::after { background: linear-gradient(180deg, #ffffff, #dcebff); opacity: .7; }
 .light .dash .dcell { background: #fff; border-color: rgba(16, 24, 40, .1); box-shadow: 0 8px 20px -14px rgba(16, 24, 40, .25); }
 .light .dash .dcell h4 { color: var(--text); }
 .light .dash .d-tabs { background: var(--wl-hover); }
@@ -1811,19 +1811,21 @@ p { text-wrap: pretty; }
    In light mode Tailwind's `white` resolves to dark navy (--content-strong),
    so every `bg-white/[0.02]`, `bg-white/5`… and the old --panel-2 / --glass-chip
    tokens (navy at 6–9% alpha) rendered as a flat grey "silver" film on buttons,
-   tiles, inputs and chips. Replace them with the theme's palette: white
-   surfaces, faint sky-blue tints, and blue strokes.
+   tiles, inputs and chips. Replace them with pure white surfaces, blue strokes,
+   and the cyan-to-blue gradient (see the block at the end of this file).
    ========================================================================== */
 .light {
-  --panel-2: #f5f9ff;                           /* tiles & inner panels: faint sky, not grey */
-  --glass-chip: #e8f3fc;                        /* chips, icon circles, hover fills */
+  --panel-2: #ffffff;                           /* tiles & inner panels */
+  --glass-chip: #ffffff;                        /* chips, icon circles */
   --glass-chip-line: rgba(6, 121, 171, 0.22);
-  --wl-tint: #f5f9ff;
+  --glass-line: rgba(6, 121, 171, 0.2);         /* hairlines: blue, not navy-grey */
+  --glass-line-2: rgba(6, 121, 171, 0.36);
+  --wl-tint: #ffffff;
   --wl-tint-line: rgba(6, 121, 171, 0.18);
-  --wl-hover: #e8f3fc;
+  --wl-hover: #eaf7fe;
   --wl-stroke: rgba(6, 121, 171, 0.45);
-  --hdr-chip: #e8f3fc;                          /* header theme / bell buttons */
-  --heat-0: #e3eef9; --h0: #e3eef9;             /* empty contribution squares & progress tracks */
+  --hdr-chip: #ffffff;                          /* header theme / bell buttons */
+  --heat-0: #dff1fb; --h0: #dff1fb;             /* empty contribution squares & progress tracks */
 }
 
 /* Secondary / outline buttons → white with a blue stroke and blue label */
@@ -1867,3 +1869,172 @@ p { text-wrap: pretty; }
 /* Project cards in a grid fill the row height so footers line up */
 .pc-grid > * { display: flex; flex-direction: column; }
 .pc-grid > * > .pc { flex: 1; }
+
+/* ==========================================================================
+   LIGHT THEME: WHITE + GRADIENT
+   White cards with a thin cyan-to-blue border, gradient selected states, soft
+   gradient tracks. `:not([data-preset="minimal"])` also outranks the glass preset.
+   ========================================================================== */
+html.light:not([data-preset="minimal"]) .surface,
+html.light:not([data-preset="minimal"]) .surface-raised,
+.light .dash .dcell {
+  background: linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(135deg, rgba(34, 211, 238, .55), rgba(59, 130, 246, .24) 55%, rgba(139, 92, 246, .24)) border-box;
+  border-color: transparent;
+  box-shadow: 0 10px 28px -20px rgba(8, 100, 180, .4);
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+html.light:not([data-preset="minimal"]) .surface:hover,
+html.light:not([data-preset="minimal"]) .surface-raised:hover,
+.light .dash .dcell:hover {
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, .4), 0 16px 34px -20px rgba(8, 100, 180, .5);
+}
+
+/* Selected tabs and toggles */
+.light .d-tabs button.on, .light .dash .d-tabs button.on, .light .pf .pf-tab.on,
+.light .dtog button.on, .light .pill.on {
+  background: var(--btn); color: #fff; border-color: transparent;
+  box-shadow: 0 6px 14px -8px rgba(8, 100, 200, .7);
+}
+
+/* Progress tracks and letter avatars: soft gradient instead of grey */
+.light .dash-bar-row .tr,
+.light [class*="rounded-full"][class*="overflow-hidden"][class*="bg-white/"] { background: linear-gradient(90deg, #dff6fd, #e2ecff); }
+.light [class~="bg-ink-700"] { background-image: linear-gradient(135deg, #d6f4fd, #dbe7ff); }
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .light .dcell:hover, .light .tm:hover, .light .pf .pf-kpi:hover { transform: translateY(-2px); }
+  .light .pf .pf-kpi { transition: transform .2s ease; }
+  /* a single light sweep across primary buttons on hover */
+  .light .btn-primary { position: relative; overflow: hidden; isolation: isolate; }
+  .light .btn-primary::after {
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .55) 50%, transparent 65%);
+    transform: translateX(-120%);
+  }
+  .light .btn-primary:hover::after { transform: translateX(120%); transition: transform .6s ease; }
+}
+
+/* Real Project Overview: the home page's glass panel, settling flat so it stays readable */
+.dash.dash-app { transform: none; animation: dash-settle .9s var(--ease) both; }
+/* The stacked 3D edges rely on preserve-3d depth; once the animation flattens the panel they'd paint over its content. */
+.dash.dash-app::before, .dash.dash-app::after { display: none; }
+@keyframes dash-settle {
+  from { opacity: 0; transform: rotateX(11deg) rotateY(-11deg) rotateZ(.6deg) translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+@media (max-width: 960px), (prefers-reduced-motion: reduce) { .dash.dash-app { animation: none; } }
+.dash-app .dash-top h3 { min-width: 0; }
+.dash-app .dash-close { margin-left: auto; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--line); background: var(--panel-2); color: var(--text-2); cursor: pointer; }
+.dash-app .dash-close:hover { color: var(--text); border-color: var(--line-2); }
+.dash-app .dash-bar-row { grid-template-columns: 96px 1fr 36px; }
+.dash-app .dash-bar-row > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+button.dash-bar-row { width: calc(100% + 8px); background: none; border: 0; font: inherit; text-align: left; }
+.dash-app .ref-avs > * { margin-left: -8px; border: 2px solid var(--panel-solid); }
+.dash-app .ref-avs > :first-child { margin-left: 0; }
+.dash-app .commit i { min-height: 3px; }
+.dash-app .dash-fi-ic { width: 28px; height: 28px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--wl-hover, var(--chip)); color: var(--accent-text, var(--accent)); }
+.dash-app .miles.five::before { left: 10%; right: 10%; }
+.dash-app .miles.five::after { left: 10%; }
+.dash-app .mile { cursor: default; }
+.dash-app .dash-start { margin-top: 14px; text-align: center; padding: 34px 16px; color: var(--text-2); font-size: 14px; }
+.dash-app .dash-start .btn { margin-top: 14px; }
+@media (max-width: 560px) {
+  .dash-app .dash-close { position: absolute; top: 0; right: 0; }
+  .dash-app .dash-top h3 { padding-right: 42px; }
+  .dash-app .mile { font-size: 10px; }
+}
+.pf .pf-tab.on .pf-count, .light .pf .pf-tab.on .pf-count { background: rgba(255, 255, 255, .28); color: #fff; }
+html:not(.light) .pf .pf-tab.on .pf-count { color: var(--text); background: var(--chip); }
+
+/* Company dashboard tabs: outlined group with a gradient pill that slides to the selected tab */
+.pf .cw-tabs { display: flex; gap: 3px; padding: 3px; border-radius: 11px; background: var(--panel); border: 1px solid var(--line-2); }
+.pf .cw-tabs .pf-tab { position: relative; height: 30px; padding: 0 13px; font-size: 13px; border-radius: 8px; transition: color .2s; }
+.pf .cw-tabs .pf-tab:hover { color: var(--text); }
+.pf .cw-tabs .pf-tab.on, .light .pf .cw-tabs .pf-tab.on { background: transparent; box-shadow: none; color: var(--btn-text); }
+.cw-tab-pill { position: absolute; inset: 0; border-radius: 8px; background: var(--btn); box-shadow: 0 6px 14px -8px rgba(8, 100, 200, .7); }
+.cw-tab-label { position: relative; display: inline-flex; align-items: center; gap: 8px; }
+html .pf .cw-tabs .pf-tab.on .pf-count { background: rgba(255, 255, 255, .28); color: var(--btn-text); }
+
+/* Loading and transitions. Fill mode is `backwards` on purpose: once finished these leave no
+   transform behind, so fixed popups inside and hover lifts on cards keep working. */
+.loop-loader { animation: loader-in .2s ease .22s backwards; } /* quick loads never flash a spinner */
+@keyframes loader-in { from { opacity: 0; } }
+.reveal { animation: reveal-in .32s var(--ease) backwards; }
+@keyframes reveal-in { from { opacity: 0; transform: translateY(10px); } }
+.route-fade { animation: loader-in .3s ease backwards; }
+
+/* ============================================================
+   FEED — post cards, guide player, carousel, accordion
+   All keyframe animations below are already covered by the blanket
+   `@media (prefers-reduced-motion: reduce)` rule near the top of this file.
+   JS-timed sequences (typewriter, cursor move) are gated separately via
+   useReducedMotion() in the components themselves.
+   ============================================================ */
+:root {
+  /* A guide's terminal/code panes read as a real terminal regardless of
+     light/dark mode — same deliberate theme-invariant-surface exception
+     DESIGN-SYSTEM.md already documents for the scene illustrations. */
+  --feed-term-bg: #0a0f1a;
+  --feed-term-ink: #cdeee8;
+  --feed-term-line: rgba(255, 255, 255, 0.08);
+}
+
+.feed-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.feed-track::-webkit-scrollbar { display: none; }
+.feed-track > img { flex: 0 0 100%; scroll-snap-align: start; pointer-events: none; -webkit-user-select: none; user-select: none; }
+
+.feed-dot { width: 6px; height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.35); transition: background-color .2s, transform .2s; }
+.feed-dot.on { background: #fff; transform: scale(1.15); }
+
+.feed-burst { animation: feed-burst .8s ease-out forwards; }
+@keyframes feed-burst {
+  0% { transform: scale(.3); opacity: 0; }
+  25% { transform: scale(1.1); opacity: 1; }
+  45% { transform: scale(.95); opacity: 1; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+.feed-bump { animation: feed-bump .4s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes feed-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+.feed-caret { animation: feed-blink 1s steps(1) infinite; }
+@keyframes feed-blink { 50% { opacity: 0; } }
+
+.feed-hotspot { position: relative; }
+.feed-hotspot::after {
+  content: ''; position: absolute; inset: -8px; border-radius: 999px;
+  animation: feed-pulse 1.4s ease-out infinite;
+}
+@keyframes feed-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--cyan) 55%, transparent); }
+  100% { box-shadow: 0 0 0 20px transparent; }
+}
+
+/* Accordion sidebar: height via CSS grid-rows (0fr<->1fr) so an "auto" height
+   element still transitions smoothly without JS measuring pixels. */
+.feed-acc-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .32s cubic-bezier(.2, .8, .2, 1); overflow: hidden; }
+.feed-acc-body.open { grid-template-rows: 1fr; }
+.feed-acc-body > div { min-height: 0; opacity: 0; transition: opacity .25s; }
+.feed-acc-body.open > div { opacity: 1; }
+.feed-acc-chevron { transition: transform .3s cubic-bezier(.2, .8, .2, 1); }
+.feed-acc-chevron.open { transform: rotate(180deg); }
+
+.feed-nav-loop path { fill: none; stroke-width: 4.4; stroke-linecap: round; }
+.feed-nav-loop .spark { stroke: #fff; stroke-dasharray: 9 91; animation: none; }
+.light .feed-nav-loop .spark { stroke: rgb(var(--accent-100)); }
+.hdr-link:hover .feed-nav-loop .spark,
+.feed-nav-loop.live .spark { animation: wm-spark 1.8s linear infinite; }
+.feed-nav-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--cyan); box-shadow: 0 0 0 2px color-mix(in srgb, var(--cyan) 25%, transparent); }
+
+.feed-terminal { background: var(--feed-term-bg); color: var(--feed-term-ink); border: 1px solid var(--feed-term-line); }
+.feed-code { background: var(--feed-term-bg); color: var(--feed-term-ink); border: 1px solid var(--feed-term-line); font-family: ui-monospace, Menlo, Consolas, monospace; }
+.feed-code-line.hl { background: color-mix(in srgb, var(--cyan) 18%, transparent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .feed-hotspot::after { animation: none; box-shadow: 0 0 0 4px color-mix(in srgb, var(--cyan) 45%, transparent); }
+}

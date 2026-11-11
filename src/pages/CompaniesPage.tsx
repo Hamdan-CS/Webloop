@@ -15,6 +15,7 @@ export function CompaniesPage() {
   const navigate = useNavigate();
   const [companies, setCompanies] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [summaries, setSummaries] = useState<Record<string, CompanyProjectSummary>>({});
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [q, setQ] = useState('');
@@ -27,7 +28,7 @@ export function CompaniesPage() {
         setCompanies(c);
         try { setSummaries(await fetchCompanyProjectSummaries(c.map((p) => p.id))); } catch { /* cards still render without counts */ }
       })
-      .catch(() => setCompanies([]))
+      .catch(() => { setCompanies([]); setLoadFailed(true); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -44,7 +45,8 @@ export function CompaniesPage() {
     <div className="container-page py-8">
       {!loading && companies.length > 0 && <CompaniesCityScene companies={companies} onOpen={openCompany} hoveredId={hoverId} onHoverId={setHoverId} />}
 
-      {loading ? (
+      <div className={loading ? undefined : 'reveal'}>
+{loading ? (
         <div className="flex h-[40vh] items-center justify-center">
           <LoopLoader size={28} />
         </div>
@@ -66,7 +68,9 @@ export function CompaniesPage() {
 
           {list.length === 0 ? (
             <div className="surface p-14 text-center">
-              <p className="text-slate-400">No companies match those filters.</p>
+              <p className="text-slate-400">
+                {loadFailed ? "Companies couldn't be loaded. Please refresh and try again." : 'No companies match those filters.'}
+              </p>
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -84,6 +88,7 @@ export function CompaniesPage() {
           )}
         </>
       )}
+</div>
     </div>
   );
 }
