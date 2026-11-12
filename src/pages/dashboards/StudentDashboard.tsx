@@ -144,7 +144,7 @@ export function StudentDashboard() {
   const pendingApps = myApps.filter((a) => a.status === 'pending').length;
 
   return (
-    <div className="container-page py-8 pf sd">
+    <div className="container-page py-8 pf sdash">
       {/* Header + tabs */}
       <div className="surface-raised pf-card pf-head p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">

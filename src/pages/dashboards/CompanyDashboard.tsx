@@ -144,7 +144,7 @@ export function CompanyDashboard() {
   const nothingWaiting = pending.length === 0 && toReview.length === 0 && unreadMessages === 0;
 
   return (
-    <div className="container-page py-8 pf sd">
+    <div className="container-page py-8 pf sdash">
       <div className="surface-raised pf-card pf-head p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <Avatar src={profile.avatar_url} name={profile.display_name} size="xl" />

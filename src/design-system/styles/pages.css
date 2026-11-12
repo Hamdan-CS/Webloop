@@ -96,3 +96,38 @@
 
 /* How It Works: cloud banks above the first step and under the last */
 .how-outro { position: relative; overflow: hidden; }
+
+/* ---------- workspace pages (F8): dashboards, publish, settings, lists ---------- */
+.pf .pf-kpi { background: var(--g-aqua); border: 0; border-radius: var(--r-img); padding: 18px 20px; color: var(--graphite); font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; }
+.pf .pf-kpi:nth-child(4n+2) { background: var(--g-violet); }
+.pf .pf-kpi:nth-child(4n+3) { background: linear-gradient(#ecfbf3, #c9f1dc); }
+.pf .pf-kpi:nth-child(4n+4) { background: var(--g-solar); }
+.pf .pf-kpi b { font: 500 clamp(26px, 2.6vw, 34px)/1.05 var(--font-display); letter-spacing: -.04em; color: var(--ink); text-transform: none; }
+.dcell, .light .dash .dcell { background: #fff; border: 1px solid var(--line-hex); border-radius: var(--r-img); box-shadow: none; }
+.dcell h4 { font: 500 11.5px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--graphite); }
+.kpis b { font-weight: 500; letter-spacing: -.035em; }
+.sdash .sd-kpis button:hover { background: var(--sky); }
+.sdash .sd-mini > * { border-radius: 999px; }
+
+/* publish wizard: pastel step pills, iris progress */
+.pub-step { font-weight: 500; }
+.pub-step.on { background: #fff; border-color: transparent; box-shadow: 0 0 0 1px var(--line-hex); color: var(--ink); }
+.pub-step-n { background: var(--sky); border: 0; color: var(--graphite); font-family: var(--font-mono); }
+.pub-step.on .pub-step-n { background: var(--charcoal); color: #fff; }
+.pub-step.done .pub-step-n { background: var(--mint); color: var(--ok-hex); }
+.pub-steps-bar { background: var(--iris); }
+.pub-head h2 { font-weight: 500; letter-spacing: -.03em; color: var(--ink); }
+.pub-lbl { font: 500 11.5px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--graphite); }
+.pub-lbl em { color: var(--iris); }
+
+/* 404 */
+.nf { position: relative; overflow: hidden; min-height: calc(100vh - 220px); display: grid; place-items: center; text-align: center; padding: 64px 20px 140px; isolation: isolate; }
+.nf h1 { margin: 26px 0 0; font: 500 clamp(44px, 7vw, 104px)/1 var(--font-display); letter-spacing: -.05em; color: var(--ink); }
+.nf p { margin: 16px auto 0; max-width: 44ch; color: var(--graphite); font-size: 18px; }
+.nf .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 32px; }
+.nf .g-cloudbank { z-index: -1; }
+
+/* floating panel / drawers: sky scrim instead of navy */
+.fp-backdrop { background: rgba(235, 245, 255, .6) !important; backdrop-filter: blur(6px) !important; -webkit-backdrop-filter: blur(6px) !important; }
+.fpanel input[type="checkbox"] { accent-color: var(--iris); }
+.nf .g-loop { display: block; margin: 0 auto; }
