@@ -6,21 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WebLoop — Build Real Projects. Prove What You Can Do.</title>
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&amp;family=Figtree:wght@400;500;600;700&amp;family=Instrument+Serif:ital@0;1&amp;display=swap"
-      rel="stylesheet"
-    />
+    <meta name="theme-color" content="#ebf5ff" />
     <script>
       (function () {
-        try {
-          var t = localStorage.getItem('devloop-theme');
-          if (t !== 'light') t = 'dark';
-          document.documentElement.classList.add(t);
-        } catch (e) {
-          document.documentElement.classList.add('dark');
-        }
+        // Dark mode is switched off for the redesign (ThemeProvider DARK_MODE_ENABLED).
+        // Always start light so React never flips the theme right after mount.
+        document.documentElement.classList.add('light');
       })();
     </script>
   </head>

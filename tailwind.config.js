@@ -19,7 +19,25 @@ export default {
           900: 'rgb(var(--slate-900) / <alpha-value>)',
         },
         white: 'rgb(var(--content-strong) / <alpha-value>)',
+        // Genie semantic colours (F2). `bone` = card surface (not `card`, which
+        // would collide with the existing shadow-card utility); `sky` merges into
+        // Tailwind's sky palette as its DEFAULT so sky-50…900 keep working.
+        sky: { DEFAULT: '#ebf5ff' },
+        bone: '#fafdff',
+        paper: '#ffffff',
+        mist: '#f6f7f8',
+        charcoal: '#181d27',
+        graphite: '#535862',
+        fog: '#93979f',
+        line: '#dde8f5',
+        iris: { DEFAULT: '#0069e0', hi: '#479dff' },
+        lav: '#f1e6ff',
+        mint: '#d3f6e3',
+        powder: '#cce7ff',
+        solar: '#fff2be',
+        peach: '#ffe2d1',
         ink: {
+          DEFAULT: '#0a0d12',
           950: 'rgb(var(--ink-950) / <alpha-value>)',
           900: 'rgb(var(--ink-900) / <alpha-value>)',
           850: 'rgb(var(--ink-850) / <alpha-value>)',
@@ -49,14 +67,24 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Figtree', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['Bricolage Grotesque', 'Figtree', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['Geist Variable', 'Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['Geist Variable', 'Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         serif: ['Instrument Serif', 'Georgia', 'serif'],
-        mono: ['ui-monospace', 'Menlo', 'Consolas', 'monospace'],
+        mono: ['Geist Mono Variable', 'Geist Mono', 'ui-monospace', 'Menlo', 'Consolas', 'monospace'],
+      },
+      borderRadius: {
+        card: '32px',
+        img: '24px',
+        input: '16px',
       },
       boxShadow: {
         glow: '0 0 0 1px var(--glow-border)',
         card: '0 1px 0 0 var(--card-inner) inset, 0 1px 24px -12px var(--card-shadow)',
+        float: '0 14px 20px 4px rgba(4, 69, 144, .08)',
+        btn: '0 1px 2px rgba(10, 13, 18, .8), 0 0 0 1px #0a0d12',
+      },
+      transitionTimingFunction: {
+        out: 'cubic-bezier(.16, 1, .3, 1)',
       },
       keyframes: {
         'fade-in-up': {

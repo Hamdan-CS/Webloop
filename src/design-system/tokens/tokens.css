@@ -5,8 +5,8 @@
    (THEME SYSTEM block) during the design-system migration —
    values are unchanged, only the location moved.
 
-   :root/.dark hold the dark (default) theme; .light overrides
-   the same variables. tailwind.config.js reads the --slate-*,
+   :root/.dark hold the (currently switched-off) dark theme; the
+   light block at the end is the default Genie theme (F2). tailwind.config.js reads the --slate-*,
    --ink-*, --accent-*, --signal-* variables directly, so Tailwind
    color classes (bg-ink-900, text-slate-300, text-accent-400...)
    stay theme-aware automatically. Everything else (--panel,
@@ -21,21 +21,36 @@
 
 :root {
   /* ------------------------------------------------------------
-     TYPOGRAPHY — font stacks. Theme-invariant (same in dark and
-     light), so these live in a plain :root block rather than the
-     .dark/.light pair below. Mirrors fontFamily in
-     tailwind.config.js and tokens/typography.ts — keep all three
-     in sync when changing a face.
+     TYPOGRAPHY — Genie direction (F2). Geist for UI and display,
+     Instrument Serif italic for the one accent word per headline,
+     Geist Mono for eyebrows and data. Self-hosted via Fontsource
+     (imported in src/main.tsx). Mirrors fontFamily in
+     tailwind.config.js and tokens/typography.ts.
      ------------------------------------------------------------ */
-  --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Bricolage Grotesque', 'Figtree', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-accent: 'Instrument Serif', Georgia, serif;
-  --font-mono: ui-monospace, Menlo, Consolas, monospace;
+  --font-mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, Menlo, Consolas, monospace;
 
-  /* Always-dark text for buttons on the light cyan .btn-primary gradient — theme-invariant
-     on purpose: --ink-950 itself gets redefined to a near-white shade under .light (it's
-     reused there as a background token), which would otherwise wash out this button's text. */
-  --btn-accent-text: 7 10 18;
+  /* Always-dark text for buttons on accent fills (theme-invariant). */
+  --btn-accent-text: 255 255 255;
+
+  /* ------------------------------------------------------------
+     GENIE SEMANTIC TOKENS (hex) — new names for new code.
+     Pages never hard-code these values; use var(--x) or the
+     matching Tailwind names (bg-sky, text-graphite, rounded-card…).
+     ------------------------------------------------------------ */
+  --sky: #ebf5ff; --card: #fafdff; --paper: #ffffff; --mist: #f6f7f8; --stack-bg: #f4f8fd;
+  --ink: #0a0d12; --charcoal: #181d27; --graphite: #535862; --fog: #93979f; --line-hex: #dde8f5;
+  --iris: #0069e0; --iris-hi: #479dff; --iris-grad: linear-gradient(71deg, #479dff 11%, #0069e0 78%);
+  --lav: #f1e6ff; --mint: #d3f6e3; --powder: #cce7ff; --solar: #fff2be; --peach: #ffe2d1;
+  --g-aqua: linear-gradient(#e5f6ff, #c2e9ff); --g-violet: linear-gradient(#f4ebff, #e4ccff);
+  --g-solar: linear-gradient(#fff9e0, #ffeca3); --g-peach: linear-gradient(#fff2eb, #ffd1b8);
+  --ok-hex: #087443; --ok-bg-hex: #e4f6ec; --warn-hex: #a15c07; --warn-bg-hex: #fff3dc; --danger: #b42318; --danger-bg: #fdecea;
+  --r-card: 32px; --r-img: 24px; --r-input: 16px; --r-pill: 9999px;
+  --shadow-float: 0 14px 20px 4px rgba(4, 69, 144, .08);
+  --shadow-btn: 0 1px 2px rgba(10, 13, 18, .8), 0 0 0 1px #0a0d12;
+  --ease-out: cubic-bezier(.16, 1, .3, 1); --dur-1: .2s; --dur-2: .35s; --dur-3: .65s;
 }
 
 :root,
@@ -153,107 +168,123 @@
   --edge-a: rgba(140, 220, 255, .62); --edge-b: rgba(40, 100, 170, .26); --spec: rgba(255, 255, 255, .2); --spec-b: rgba(110, 200, 255, .16);
 }
 
-.light {
-  /* --cyan/--blue/--violet are universal constants in the reference (declared
-     once in :root, never re-themed) — keep them identical to .dark. The
-     per-theme "safe contrast" colour is --accent/--accent-text/--link below. */
-  --cyan: #22d3ee; --blue: #3b82f6; --violet: #8b5cf6;
-  --hdr-bg: rgba(255, 255, 255, 0.78); --hdr-ink: #050e26; --hdr-muted: #3f5375; --hdr-line: rgba(16, 48, 105, 0.2);
-  --hdr-accent: #0679ab; --hdr-accent-ink: #fff; --hdr-chip: rgba(16, 56, 140, 0.09);
-  --hdr-btn-grad: #0a6c8f;
-  --footer-bg: rgba(8, 145, 178, 0.05);
+/* ============================================================
+   LIGHT (default) — Genie direction, F2 of docs/redesign/BLUEPRINT.md.
+   Sky canvas, bone cards, charcoal actions, one iris accent.
+   Selector note: `:root:not(.dark)` makes light the default even
+   before the theme script runs, without overriding a real .dark.
+   Existing variable names are kept so every Tailwind class and
+   every var(--x) in component CSS follows automatically.
+   ============================================================ */
+.light,
+:root:not(.dark) {
+  /* legacy brand constants, re-pointed to the iris accent */
+  --cyan: #0069e0; --blue: #479dff; --violet: #7c3aed;
+  --wordmark-accent: #0069e0;
 
-  --panel: rgba(255, 255, 255, 0.92); --panel-solid: #ffffff; --panel-2: rgba(16, 48, 110, 0.065);
-  --glass-line: rgba(16, 48, 105, 0.2); --glass-line-2: rgba(16, 48, 105, 0.34);
-  --glass-shadow: 0 12px 30px -14px rgba(12, 40, 100, .38), 0 1px 0 rgba(255, 255, 255, .9) inset;
-  --glass-shadow-lg: 0 44px 70px -32px rgba(12, 50, 130, .5);
-  --heat-0: rgba(16, 48, 105, 0.1); --heat-1: #9ad3ee; --heat-2: #46b3e3; --heat-3: #1689cb; --heat-4: #0a5aa6;
-  --glass-chip: rgba(16, 56, 140, 0.09); --glass-chip-line: rgba(16, 56, 140, 0.16);
-  --ok-bg: #d9f7ea; --ok-fg: #056846;
-  --warn-bg: #fdecc8; --warn-fg: #8a5000;
-  --vio-bg: #e8e0ff; --vio-fg: #5b3bc4;
-  --inf-a: #0679ab; --inf-b: #1b4fd8; --inf-c: #7c3aed;
-  --text: #050e26; --text-2: #1b2b49; --muted: #3f5375; --accent: #0679ab; --accent-text: #0588c8; --link: #0662b4;
-  --line: var(--glass-line); --line-2: var(--glass-line-2); --ok: #34d399; --warn: #f59e0b;
+  /* header */
+  --hdr-bg: rgba(255, 255, 255, 0.86); --hdr-ink: #0a0d12; --hdr-muted: #535862; --hdr-line: #dde8f5;
+  --hdr-accent: #0069e0; --hdr-accent-ink: #ffffff; --hdr-chip: #ffffff;
+  --hdr-btn-grad: #181d27;
+  --footer-bg: #ffffff;
+
+  /* surfaces + hairlines (also replaces the old index.css "NO SILVER" vars) */
+  --panel: #fafdff; --panel-solid: #ffffff; --panel-2: #ffffff;
+  --glass-line: #dde8f5; --glass-line-2: #c9dcf2;
+  --glass-shadow: 0 14px 20px 4px rgba(4, 69, 144, 0.08);
+  --glass-shadow-lg: 0 30px 60px -20px rgba(4, 69, 144, 0.18);
+  --glass-chip: #ffffff; --glass-chip-line: #dde8f5;
+  --wl-tint: #ffffff; --wl-tint-line: #dde8f5;
+  --wl-hover: #ebf5ff; --wl-stroke: #c9dcf2;
+
+  /* contribution scale: blue (GitHub-style) */
+  --heat-0: #eef5ff; --heat-1: #bcd8ff; --heat-2: #7cb5ff; --heat-3: #3d8ef5; --heat-4: #0060cc;
+  --h0: var(--heat-0); --h1: var(--heat-1); --h2: var(--heat-2); --h3: var(--heat-3); --h4: var(--heat-4);
+
+  /* status */
+  --ok-bg: #e4f6ec; --ok-fg: #087443;
+  --warn-bg: #fff3dc; --warn-fg: #a15c07;
+  --vio-bg: #f1e6ff; --vio-fg: #5b3bc4;
+  --inf-a: #479dff; --inf-b: #0069e0; --inf-c: #7c3aed;
+
+  /* generic aliases used by ported component CSS */
+  --text: #0a0d12; --text-2: #181d27; --muted: #535862;
+  --accent: #0069e0; --accent-text: #0069e0; --link: #0069e0;
+  --line: var(--glass-line); --line-2: var(--glass-line-2); --ok: #087443; --warn: #a15c07;
   --shadow: var(--glass-shadow); --shadow-lg: var(--glass-shadow-lg);
   --chip: var(--glass-chip); --chip-line: var(--glass-chip-line);
-  --h0: var(--heat-0); --h1: var(--heat-1); --h2: var(--heat-2); --h3: var(--heat-3); --h4: var(--heat-4);
-  --btn: linear-gradient(135deg, #0897c2, #1b4fd8); --btn-text: #fff;
-  /* 21: slab refinement (deeper contrast, premium glass) — final/authoritative over the earlier REVISION pass */
+  --btn: #181d27; --btn-text: #ffffff;   /* primary actions are charcoal, never iris */
+
+  /* stack slab glass (the protected stack pins its own copy in stack.frozen.css) */
   --slab: linear-gradient(180deg, rgba(255, 255, 255, .92), rgba(255, 255, 255, .28) 22%), linear-gradient(158deg, rgba(170, 205, 248, .74), rgba(225, 238, 255, .5) 55%, rgba(140, 186, 240, .72));
   --slab-edge: rgba(60, 125, 225, .55); --slab-side: #86aee6;
   --edge-a: rgba(255, 255, 255, .95); --edge-b: rgba(60, 120, 225, .55); --spec: rgba(255, 255, 255, .9); --spec-b: rgba(90, 170, 255, .3);
-  /* Base surfaces — warm off-white with subtle blue. ink-900/850 step apart (not both pure
-     white) so a resting surface and a raised one still read as two tones with no border. */
-  --ink-950: 244 248 253;
-  --ink-900: 250 251 254;
-  --ink-850: 255 255 255;
-  --ink-800: 241 245 251;
-  --ink-700: 226 232 244;
-  --ink-600: 203 213 232;
-  --ink-500: 148 163 192;
-  --ink-400: 100 116 139;
 
-  /* Text scale — inverted for light bg */
-  --slate-50: 15 23 42;
-  --slate-100: 30 41 59;
-  --slate-200: 51 65 85;
-  --slate-300: 71 85 105;
-  --slate-400: 100 116 139;
-  --slate-500: 71 85 105;
-  --slate-600: 51 65 85;
-  --slate-700: 30 41 59;
-  --slate-800: 15 23 42;
-  --slate-900: 2 6 23;
+  /* Tailwind channel tokens — re-pointed so every utility class follows */
+  --ink-950: 235 245 255;   /* page canvas = sky   #ebf5ff */
+  --ink-900: 250 253 255;   /* cards       = card  #fafdff */
+  --ink-850: 255 255 255;   /* raised      = paper #ffffff */
+  --ink-800: 221 232 245;   /* = line #dde8f5 */
+  --ink-700: 201 216 236;
+  --ink-600: 168 184 206;
+  --ink-500: 130 141 158;
+  --ink-400: 99 104 114;
 
-  /* Strong text */
-  --content-strong: 15 23 42;
+  /* text scale (inverted for a light ground). 400/500 are a step darker than the
+     blueprint's 112/147 so muted text still clears 4.5:1 on the sky canvas. */
+  --slate-50: 10 13 18;
+  --slate-100: 10 13 18;
+  --slate-200: 24 29 39;
+  --slate-300: 83 88 98;
+  --slate-400: 99 104 114;
+  --slate-500: 112 118 128;
+  --slate-600: 83 88 98;
+  --slate-700: 53 58 68;
+  --slate-800: 24 29 39;
+  --slate-900: 10 13 18;
 
-  /* Accent — deeper teal for readable contrast on light backgrounds */
-  --accent-50: 236 254 255;
-  --accent-100: 204 251 240;
-  --accent-200: 13 100 115;
-  --accent-300: 14 116 144;
-  --accent-400: 8 145 178;
-  --accent-500: 14 116 144;
-  --accent-600: 14 116 144;
-  --accent-700: 13 90 108;
-  --accent-800: 21 94 117;
-  --accent-900: 22 78 99;
+  --content-strong: 10 13 18;   /* Tailwind `white` = ink */
 
-  /* Signal colors — deep enough that small badge text clears 4.5:1 on a light ground */
-  --signal-green: 3 122 86;
-  --signal-amber: 161 98 7;
-  --signal-rose: 190 18 60;
+  /* accent = iris */
+  --accent-50: 235 245 255;
+  --accent-100: 204 231 255;
+  --accent-200: 0 84 184;
+  --accent-300: 0 105 224;
+  --accent-400: 0 105 224;
+  --accent-500: 0 96 204;
+  --accent-600: 0 84 184;
+  --accent-700: 0 72 158;
+  --accent-800: 0 58 128;
+  --accent-900: 0 45 99;
+
+  --signal-green: 8 116 67;
+  --signal-amber: 161 92 7;
+  --signal-rose: 180 35 24;
   --signal-violet: 109 40 217;
 
-  /* Background decorations */
-  --body-bg: #f4f8fd;
-  --body-radial: rgba(8, 150, 220, 0.08);
-  --body-radial-fade: rgba(237, 242, 249, 0);
-  --grid-line: rgba(100, 116, 139, 0.06);
-  --radial-glow-color: rgba(14, 116, 144, 0.10);
-  --grid-faint-line: rgba(100, 116, 139, 0.07);
+  /* page background */
+  --body-bg: #ebf5ff;
+  --body-radial: rgba(255, 255, 255, 0);
+  --body-radial-fade: rgba(235, 245, 255, 0);
+  --grid-line: rgba(0, 105, 224, 0.04);
+  --radial-glow-color: rgba(0, 105, 224, 0.08);
+  --grid-faint-line: rgba(0, 105, 224, 0.05);
 
-  /* Shadows */
-  --glow-border: rgba(14, 116, 144, 0.20);
-  --glow-spread: rgba(14, 116, 144, 0.25);
-  --card-inner: rgba(255, 255, 255, 0.8);
-  --card-shadow: rgba(15, 23, 42, 0.08);
+  --glow-border: rgba(0, 105, 224, 0.20);
+  --glow-spread: rgba(0, 105, 224, 0.22);
+  --card-inner: rgba(255, 255, 255, 0);
+  --card-shadow: rgba(4, 69, 144, 0);
 
-  /* Particle-stage halo — one hue, normal blend so it reads as a soft wash (not a wash-out) on a light canvas */
-  --particle-glow-core: rgba(8, 145, 178, 0.22);
-  --particle-glow-edge: rgba(8, 145, 178, 0);
+  --particle-glow-core: rgba(0, 105, 224, 0.16);
+  --particle-glow-edge: rgba(0, 105, 224, 0);
   --particle-glow-blur: 64px;
   --particle-glow-blend: normal;
 
-  /* Borders / overlays — dark on light */
-  --border-subtle: rgba(15, 23, 42, 0.08);
-  --border-soft: rgba(15, 23, 42, 0.12);
-  --surface-overlay: rgba(15, 23, 42, 0.04);
-  --surface-overlay-strong: rgba(15, 23, 42, 0.025);
+  --border-subtle: #dde8f5;
+  --border-soft: #c9dcf2;
+  --surface-overlay: rgba(10, 13, 18, 0.03);
+  --surface-overlay-strong: rgba(10, 13, 18, 0.02);
 
-  /* Scrollbar */
-  --scroll-thumb: rgba(100, 116, 139, 0.25);
-  --scroll-thumb-hover: rgba(100, 116, 139, 0.4);
+  --scroll-thumb: rgba(83, 88, 98, 0.25);
+  --scroll-thumb-hover: rgba(83, 88, 98, 0.4);
 }

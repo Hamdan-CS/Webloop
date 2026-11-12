@@ -7,4 +7,8 @@ export const radius = {
   xl: '20px',
   '2xl': '22px',
   full: '9999px',
+  // Genie (F2)
+  card: '32px',
+  img: '24px',
+  input: '16px',
 } as const;

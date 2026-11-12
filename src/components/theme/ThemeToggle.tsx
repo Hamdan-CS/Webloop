@@ -1,8 +1,13 @@
 import { Moon, Sun } from 'lucide-react';
-import { useTheme } from '@/design-system/components/ThemeProvider';
+import { useTheme, DARK_MODE_ENABLED } from '@/design-system/components/ThemeProvider';
 import { cn } from '@/utils/cn';
 
 export function ThemeToggle({ className }: { className?: string }) {
+  if (!DARK_MODE_ENABLED) return null;
+  return <ThemeToggleButton className={className} />;
+}
+
+function ThemeToggleButton({ className }: { className?: string }) {
   const { theme, toggleTheme } = useTheme();
 
   return (

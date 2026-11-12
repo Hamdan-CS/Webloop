@@ -1814,19 +1814,8 @@ p { text-wrap: pretty; }
    tiles, inputs and chips. Replace them with pure white surfaces, blue strokes,
    and the cyan-to-blue gradient (see the block at the end of this file).
    ========================================================================== */
-.light {
-  --panel-2: #ffffff;                           /* tiles & inner panels */
-  --glass-chip: #ffffff;                        /* chips, icon circles */
-  --glass-chip-line: rgba(6, 121, 171, 0.22);
-  --glass-line: rgba(6, 121, 171, 0.2);         /* hairlines: blue, not navy-grey */
-  --glass-line-2: rgba(6, 121, 171, 0.36);
-  --wl-tint: #ffffff;
-  --wl-tint-line: rgba(6, 121, 171, 0.18);
-  --wl-hover: #eaf7fe;
-  --wl-stroke: rgba(6, 121, 171, 0.45);
-  --hdr-chip: #ffffff;                          /* header theme / bell buttons */
-  --heat-0: #dff1fb; --h0: #dff1fb;             /* empty contribution squares & progress tracks */
-}
+/* (F2) the light-surface variables that used to live here moved into
+   design-system/tokens/tokens.css; the selector patches below go in F3. */
 
 /* Secondary / outline buttons → white with a blue stroke and blue label */
 .light .btn-secondary,
