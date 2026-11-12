@@ -1,0 +1,98 @@
+/* =====================================================================
+   PAGES (F7–F8) — Genie overrides for the page blocks in index.css.
+   Loaded after index.css (see main.tsx) so equal-specificity rules win.
+   Every selector is scoped to its page/component container: several class
+   names here (ref-tag, ref-badge, hl, who…) also live inside the frozen
+   Project Stack, which must not be touched.
+   ===================================================================== */
+
+/* ---------- shared page headings (weight 500, tight tracking, accent word) ---------- */
+.ex-hero-h1, .gal-title, .co-hero-h2, .pd-hero h2, .how-intro h1 {
+  font-family: var(--font-display); font-weight: 500; letter-spacing: -.04em; color: var(--ink);
+}
+.ex-hero-h1 { font-size: clamp(40px, 5vw, 72px); line-height: 1.02; }
+.gal-title { font-size: clamp(40px, 5vw, 72px); line-height: 1.02; }
+.co-hero-h2 { font-size: clamp(36px, 4.6vw, 64px); }
+:is(.ex-hero-h1, .gal-title, .co-hero-h2, .how-intro h1, .pd-hero h2) .hl {
+  font-family: var(--font-accent); font-style: italic; font-weight: 400; letter-spacing: -.01em;
+  background: var(--iris-grad); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .06em;
+}
+
+/* ---------- project cards (Explore, Gallery, Publish preview, home) ---------- */
+.pc { border-radius: var(--r-card); background: var(--card); border: 1px solid transparent; box-shadow: none; transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out); }
+.pc:hover { transform: translateY(-4px); box-shadow: var(--shadow-float); }
+.pc .thumb { margin: 8px 8px 0; height: 150px; border-radius: var(--r-img); }
+.pc .body { padding: 18px 22px 22px; }
+.pc h3 { font-weight: 500; letter-spacing: -.02em; color: var(--ink); }
+.pc p { color: var(--graphite); }
+.pc .meta { color: var(--graphite); border-top: 1px solid #eef2f7; }
+.pc .meta .who { color: var(--ink); }
+.pc .ref-tag { background: var(--sky); border-color: transparent; color: var(--graphite); }
+.pc .corner .ref-badge { background: rgba(255, 255, 255, .92); color: var(--ink); border: 0; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-weight: 500; }
+.pc .corner .rb-type { background: rgba(255, 255, 255, .92); color: var(--graphite); font-family: var(--font-mono); letter-spacing: .06em; }
+.pc .corner .rb-rec::before { background: var(--ok-hex); }
+.pc .corner .rb-prog::before { background: #e8a920; }
+.pc .corner .rb-done::before { background: #7c3aed; }
+.pc-selected { box-shadow: 0 0 0 2px var(--iris) !important; }
+
+/* ---------- company cards (Companies page + home): Baselayer editorial ---------- */
+.cc { border-radius: var(--r-card); background: var(--card); border: 1px solid transparent; box-shadow: none; transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2); }
+.cc:hover { transform: translateY(-5px); box-shadow: var(--shadow-float); border-color: transparent; }
+.cc.glow { border-color: transparent; box-shadow: 0 0 0 2px var(--iris), var(--shadow-float); }
+.cc .banner { height: 72px; margin: 8px 8px 0; border-radius: var(--r-img); background: var(--g-aqua) !important; }
+.cc .banner .ft { left: 10px; top: 10px; background: #fff; color: var(--ink); border-radius: 999px; font-weight: 500; }
+.cc .main { padding: 0 24px 22px; gap: 12px; }
+.cc .hd { margin-top: -26px; }
+.cc .logo-sq { border-radius: 18px; border: 0; box-shadow: 0 0 0 4px var(--card), var(--shadow-float); }
+.cc h3 { font-weight: 500; letter-spacing: -.02em; color: var(--ink); }
+.cc .vf { color: var(--iris); }
+.cc .meta .ref-tag { height: 24px; background: #eef4fc; border: 0; color: var(--graphite); font: 500 11px var(--font-mono); letter-spacing: .04em; }
+.cc p { color: var(--graphite); }
+.cc .url { color: var(--iris); }
+.cc .foot { padding-top: 14px; border-top: 1px solid #eaf0f7; }
+.cc .foot small { color: var(--graphite); }
+.cc .go { border: 0; background: var(--sky); color: var(--ink); }
+.cc:hover .go { background: var(--charcoal); color: #fff; }
+
+/* ---------- project detail ---------- */
+.pd-tabs { gap: 2px; padding: 0; border-radius: 0; background: none; border: 0; border-bottom: 1px solid var(--line-hex); width: 100%; }
+.pd-tabs button { position: relative; height: 44px; padding: 0 14px; border-radius: 0; font: 500 12px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--graphite); }
+.pd-tabs button:hover { color: var(--ink); background: none; }
+.pd-tabs button.on, .light .pd-tabs button.on { background: none; color: var(--ink); box-shadow: none; }
+.pd-tabs button.on::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--iris); }
+.pd-hero .tl, .pd-hero .ds { color: var(--graphite); }
+.pd-prev .big h4 { font-weight: 500; letter-spacing: -.035em; }
+.checks li::before { color: var(--ok-hex); }
+
+/* GitHub-style tabs on profiles and dashboards (d-tabs / pf-tabs) */
+.d-tabs.pf-tabs, .pf .pf-tabs:not(.cw-tabs) { gap: 2px; padding: 0; background: none; border: 0; border-bottom: 1px solid var(--line-hex); border-radius: 0; box-shadow: none; }
+.d-tabs.pf-tabs button, .pf .pf-tabs:not(.cw-tabs) .pf-tab { position: relative; height: 44px; padding: 0 14px; border-radius: 0; background: none !important; box-shadow: none !important; font: 500 12px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--graphite) !important; }
+.d-tabs.pf-tabs button.on, .pf .pf-tabs:not(.cw-tabs) .pf-tab.on { color: var(--ink) !important; }
+.d-tabs.pf-tabs button.on::after, .pf .pf-tabs:not(.cw-tabs) .pf-tab.on::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--iris); }
+.pf .pf-tab.on .pf-count, .light .pf .pf-tab.on .pf-count { background: var(--powder); color: var(--iris); }
+
+/* ---------- How It Works ---------- */
+.how-intro h1 { font-size: clamp(44px, 6vw, 88px); line-height: 1.02; }
+.how-intro p, .how-step p { color: var(--graphite); }
+.how-step h2 { font-weight: 500; letter-spacing: -.03em; color: var(--ink); }
+.how-n { font-weight: 500; font-family: var(--font-mono); border-radius: 14px; background: #fff; color: var(--graphite); box-shadow: 0 0 0 1px var(--line-hex); }
+.how-step.on .how-n { background: var(--charcoal); color: #fff; box-shadow: none; }
+.how-tab { font-weight: 500; }
+.how-tab[aria-selected="true"] { background: var(--charcoal); color: #fff; }
+.how-tabs { background: rgba(255, 255, 255, .88) !important; border: 0 !important; box-shadow: var(--shadow-float); backdrop-filter: blur(12px); }
+.how-veil { background: radial-gradient(120% 70% at 50% 0%, rgba(255, 255, 255, .55), rgba(235, 245, 255, 0) 60%), linear-gradient(0deg, var(--sky) 0%, rgba(235, 245, 255, 0) 30%) !important; }
+.how-page-clouds { position: relative; height: 0; z-index: 3; }
+.how-page-clouds .g-cloudbank { height: 160px; }
+@media (max-width: 767px) {
+  .how-veil { background: linear-gradient(0deg, var(--sky) 0%, var(--sky) 36%, transparent 64%) !important; }
+}
+
+/* ---------- gallery / feed / profiles: small consistency fixes ---------- */
+.gal-input { border-radius: 999px !important; background: #fff !important; border: 1px solid var(--line-hex) !important; }
+.gal-input:focus { border-color: var(--iris) !important; box-shadow: 0 0 0 3px rgba(0, 105, 224, .18); outline: none; }
+.vbadge { background: rgba(255, 255, 255, .94); color: var(--ok-hex); font-weight: 500; }
+.pf .pf-ic { border-radius: 12px; background: var(--sky); border: 0; color: var(--iris); }
+.pf .pf-banner-fade { background: linear-gradient(to top, rgba(10, 13, 18, .18), transparent 70%); }
+
+/* How It Works: cloud banks above the first step and under the last */
+.how-outro { position: relative; overflow: hidden; }

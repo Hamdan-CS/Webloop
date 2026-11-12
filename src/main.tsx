@@ -10,6 +10,7 @@ import '@fontsource-variable/bricolage-grotesque/opsz.css';
 import '@fontsource-variable/figtree';
 import App from './App.tsx';
 import './index.css';
+import './design-system/styles/pages.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

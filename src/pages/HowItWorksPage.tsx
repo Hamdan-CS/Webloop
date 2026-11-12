@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { HowItWorksStage } from '@/components/how-it-works/HowItWorksStage';
+import { CloudBank } from '@/design-system/illustrations/CloudBank';
 
 interface Step {
   title: string;
@@ -70,6 +71,7 @@ export function HowItWorksPage() {
               <h1>{set.h1}</h1>
               <p>{set.intro}</p>
             </header>
+            <div className="how-page-clouds" aria-hidden="true"><CloudBank side="top" density={5} parallax /></div>
             {set.steps.map((step, i) => {
               const last = i === set.steps.length - 1;
               return (
@@ -90,7 +92,7 @@ export function HowItWorksPage() {
                 </section>
               );
             })}
-            <div className="how-outro" />
+            <div className="how-outro"><CloudBank side="bottom" density={5} parallax /></div>
           </div>
         ))}
       </main>

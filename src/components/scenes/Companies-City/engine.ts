@@ -142,10 +142,10 @@ export function createCityEngine(
       c.lineWidth = 3; c.strokeStyle = co.tintCss; c.globalAlpha = 0.9; rr(6, 6, 628, 212, 34); c.stroke(); c.globalAlpha = 1;
       c.fillStyle = '#fff'; rr(30, 32, 160, 160, 34); c.fill();
       if (img) { c.save(); rr(30, 32, 160, 160, 34); c.clip(); c.drawImage(img, 30, 32, 160, 160); c.restore(); }
-      else { c.fillStyle = co.tintCss; c.font = '700 90px Figtree,system-ui,sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(co.initial, 110, 118); }
-      c.fillStyle = '#fff'; c.textAlign = 'left'; c.font = '700 56px Figtree,Segoe UI,Arial,sans-serif'; c.textBaseline = 'alphabetic';
+      else { c.fillStyle = co.tintCss; c.font = '500 90px "Geist Variable",Geist,system-ui,sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(co.initial, 110, 118); }
+      c.fillStyle = '#fff'; c.textAlign = 'left'; c.font = '500 56px "Geist Variable",Geist,Segoe UI,Arial,sans-serif'; c.textBaseline = 'alphabetic';
       c.fillText(co.name.slice(0, 16), 214, 112);
-      c.fillStyle = co.tintCss; c.font = '600 26px Figtree,Segoe UI,Arial,sans-serif'; c.fillText(co.industry.toUpperCase().slice(0, 24), 216, 158);
+      c.fillStyle = co.tintCss; c.font = '500 26px "Geist Mono Variable","Geist Mono",ui-monospace,monospace'; c.fillText(co.industry.toUpperCase().slice(0, 24), 216, 158);
       tx.needsUpdate = true;
     };
     draw(null);

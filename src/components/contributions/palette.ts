@@ -13,19 +13,20 @@ export function isLightTheme(): boolean {
   return document.documentElement.classList.contains('light');
 }
 
-/** 5-step blue scale, reusing the app's own --accent-* tokens (unfilled day -> 5-star day). */
+/** 5-step GitHub-style blue scale from the --heat-* tokens (Genie, F7), lightest -> 5-star day. */
 export function ratingSteps(): string[] {
   return [
-    cssColor('rgb(var(--accent-100))'),
-    cssColor('rgb(var(--accent-300))'),
-    cssColor('rgb(var(--accent-400))'),
-    cssColor('rgb(var(--accent-500))'),
+    cssColor('var(--heat-1)'),
+    cssColor('var(--heat-2)'),
+    cssColor('var(--heat-3)'),
+    cssColor('var(--heat-4)'),
     cssColor('rgb(var(--accent-700))'),
   ];
 }
 
+/** Empty-day tile: the palest blue, not grey. */
 export function tileGrey(): string {
-  return cssColor('rgb(var(--ink-700))');
+  return cssColor('var(--heat-0)');
 }
 
 export function mutedColor(): string {
