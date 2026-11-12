@@ -40,7 +40,7 @@
      Pages never hard-code these values; use var(--x) or the
      matching Tailwind names (bg-sky, text-graphite, rounded-card…).
      ------------------------------------------------------------ */
-  --sky: #ebf5ff; --card: #fafdff; --paper: #ffffff; --mist: #f6f7f8; --stack-bg: #f4f8fd;
+  --sky: #ebf5ff; --card: #fafdff; --paper: #ffffff; --white: #ffffff; --skyblue: #0099ff; --mist: #f6f7f8; --stack-bg: #f4f8fd;
   --ink: #0a0d12; --charcoal: #181d27; --graphite: #535862; --fog: #93979f; --line-hex: #dde8f5;
   --iris: #0069e0; --iris-hi: #479dff; --iris-grad: linear-gradient(71deg, #479dff 11%, #0069e0 78%);
   --lav: #f1e6ff; --mint: #d3f6e3; --powder: #cce7ff; --solar: #fff2be; --peach: #ffe2d1;

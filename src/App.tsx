@@ -186,7 +186,7 @@ function App() {
             <PanelBadgeSync />
             <FloatingPanel />
             <GlobalTip />
-            <Toaster theme="system" richColors position="bottom-right" />
+            <Toaster theme="light" position="bottom-center" />
           </div>
           </FloatingPanelProvider>
           </AuthPromptProvider>
