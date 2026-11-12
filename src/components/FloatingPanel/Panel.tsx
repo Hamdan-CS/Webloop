@@ -5,9 +5,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/utils/cn';
 import { MessagesTab } from './MessagesTab';
 import { TasksTab } from './TasksTab';
+import { NotificationsTab } from './NotificationsTab';
 
 export function Panel() {
-  const { user, profile, unreadMessages, pendingReviews } = useAuth();
+  const { user, profile, unreadMessages, pendingReviews, unreadNotifications } = useAuth();
   const { isOpen, activeTab, setActiveTab, closePanel } = useFloatingPanel();
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -39,6 +40,7 @@ export function Panel() {
       const target = e.target as HTMLElement;
       if (panelRef.current?.contains(target)) return;
       if (target.closest('[data-floating-trigger]')) return;
+      if (target.closest('[data-wl-select-portal]')) return;
       closePanel();
     };
     document.addEventListener('mousedown', handler);
@@ -82,12 +84,13 @@ export function Panel() {
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label={activeTab === 'messages' ? 'Messages' : 'Tasks'}
+        aria-label={activeTab === 'messages' ? 'Messages' : activeTab === 'notifications' ? 'Notifications' : 'Tasks'}
         className={cn('fp-drawer pf', visible && 'show')}
       >
         <div className="fp-head">
           <div className="d-tabs pf-tabs" role="tablist">
             <TabButton active={activeTab === 'messages'} onClick={() => setActiveTab('messages')} label="Messages" count={unreadMessages} />
+            <TabButton active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')} label="Notifications" count={unreadNotifications} />
             <TabButton active={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')} label="Tasks to review" count={pendingReviews} />
           </div>
           <button type="button" onClick={closePanel} aria-label="Close panel" className="fp-close">
@@ -97,6 +100,8 @@ export function Panel() {
         <div className="fp-body">
           {activeTab === 'messages' ? (
             <MessagesTab profileId={profile.id} myProfile={profile} />
+          ) : activeTab === 'notifications' ? (
+            <NotificationsTab profileId={profile.id} />
           ) : (
             <TasksTab profileId={profile.id} />
           )}

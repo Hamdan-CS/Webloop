@@ -7,14 +7,16 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useFloatingPanel } from '@/components/FloatingPanel';
 import {
-  fetchProfileProjects, fetchJoinedProjects, fetchProfilePortfolio, fetchProfileStats, fetchProjectApplicationCount,
+  fetchProfileProjects, fetchJoinedProjects, fetchProfilePortfolio, fetchProfileStats, fetchProjectApplicationsDetailed,
   fetchAssignedTasks, fetchMyApplications, fetchInboxMessages,
 } from '@/services/api';
 import type { Application, Message, PortfolioItem, Project, Task } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
 import { Rating, NoRating } from '@/components/shared/ui/Rating';
 import { ProjectCard } from '@/components/projects/ProjectCard';
-import { Button } from '@/components/shared/ui/Button';
+import { ManagedProjectGrid } from '@/components/projects/ManagedProjectGrid';
+import { ApplicantsInbox } from '@/components/companies/ApplicantsInbox';
+import { Button } from '@/components/shared/ui/Button';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { statusLabel, relativeDate } from '@/utils/labels';
 import { MyTasksPanel } from '@/components/projects/MyTasksPanel';
@@ -22,6 +24,7 @@ import { cn } from '@/utils/cn';
 
 type Tab = 'ov' | 'pj' | 'tk' | 'rq';
 type TaskView = 'all' | 'todo' | 'submitted' | 'approved' | 'changes';
+type AppFilter = 'all' | 'pending' | 'accepted' | 'declined';
 
 const TODO = ['open', 'in_progress'];
 const TASK_VIEWS: { key: TaskView; label: string; test: (t: Task) => boolean }[] = [
@@ -30,6 +33,12 @@ const TASK_VIEWS: { key: TaskView; label: string; test: (t: Task) => boolean }[]
   { key: 'changes', label: 'Needs changes', test: (t) => t.status === 'changes_requested' },
   { key: 'submitted', label: 'In review', test: (t) => t.status === 'submitted' },
   { key: 'approved', label: 'Approved', test: (t) => t.status === 'approved' },
+];
+const APP_FILTERS: { key: AppFilter; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'pending', label: 'Pending' },
+  { key: 'accepted', label: 'Accepted' },
+  { key: 'declined', label: 'Declined' },
 ];
 
 interface FeedItem { id: string; icon: React.ReactNode; text: React.ReactNode; at: string }
@@ -43,9 +52,10 @@ export function StudentDashboard() {
   const [joined, setJoined] = useState<Project[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [stats, setStats] = useState({ avg: 0, count: 0 });
-  const [appCounts, setAppCounts] = useState<Record<string, number>>({});
+  const [incomingApps, setIncomingApps] = useState<Application[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [myApps, setMyApps] = useState<Application[]>([]);
+  const [appFilter, setAppFilter] = useState<AppFilter>('all');
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -68,18 +78,33 @@ export function StudentDashboard() {
       setTasks(tks);
       setMyApps(apps);
       setMessages(msgs);
-      const counts: Record<string, number> = {};
-      await Promise.all(prs.map(async (p) => { counts[p.id] = await fetchProjectApplicationCount(p.id); }));
-      setAppCounts(counts);
+      const perProject = await Promise.all(
+        prs.map(async (p) => {
+          const a = await fetchProjectApplicationsDetailed(p.id).catch(() => [] as Application[]);
+          return a.map((x) => ({ ...x, project: { title: p.title, slug: p.slug, status: p.status } }));
+        }),
+      );
+      setIncomingApps(perProject.flat());
       setLoading(false);
     })();
   }, [profile]);
+
+  const handleAppDecided = (id: string, status: 'accepted' | 'declined') => {
+    setIncomingApps((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
+  };
 
   const approved = tasks.filter((t) => t.status === 'approved').length;
   const inReview = tasks.filter((t) => t.status === 'submitted').length;
   const todo = tasks.filter((t) => TODO.includes(t.status)).length;
   const changes = tasks.filter((t) => t.status === 'changes_requested').length;
   const pct = tasks.length ? Math.round((approved / tasks.length) * 100) : 0;
+  const appCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    incomingApps.forEach((a) => {
+      if (a.status === 'pending') counts[a.project_id] = (counts[a.project_id] ?? 0) + 1;
+    });
+    return counts;
+  }, [incomingApps]);
   const requests = Object.values(appCounts).reduce((a, b) => a + b, 0);
   const allProjects = [...projects, ...joined];
   const activeProjects = allProjects.filter((p) => p.status === 'recruiting' || p.status === 'in_progress').length;
@@ -207,7 +232,7 @@ export function StudentDashboard() {
               )}
               <div className="sd-quick mt-4">
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => openPanel('messages')}><Inbox size={14} /> Messages{unreadMessages > 0 && <span className="pf-count amber">{unreadMessages}</span>}</button>
-                <Link to="/my-applications" className="btn btn-ghost btn-sm"><Briefcase size={14} /> My applications</Link>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setTab('rq')}><Briefcase size={14} /> My applications</button>
                 <Link to={`/creators/${profile.handle}`} className="btn btn-ghost btn-sm"><UserCircle2 size={14} /> View profile</Link>
                 <Link to="/settings/profile" className="btn btn-ghost btn-sm"><Pencil size={14} /> Edit profile</Link>
               </div>
@@ -294,19 +319,19 @@ export function StudentDashboard() {
               <Link to="/publish" className="mt-4 inline-block"><Button variant="ghost" className="btn-sm"><Plus size={14} /> Publish your first project</Button></Link>
             </div>
           ) : (
-            <div className="pc-grid grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {projects.map((p) => (
-                <div key={p.id}>
-                  <ProjectCard project={p} />
+            <ManagedProjectGrid
+              projects={projects}
+              onProjectsChange={setProjects}
+              renderFooter={(p) =>
+                appCounts[p.id] > 0 ? (
                   <div className="sd-proj-foot">
-                    <span className="ref-tag">{statusLabel[p.status]}</span>
-                    {appCounts[p.id] > 0 && (
-                      <Link to={`/creators/${profile.handle}?tab=applications`} className="sd-link amber"><Inbox size={11} /> {appCounts[p.id]} request{appCounts[p.id] !== 1 ? 's' : ''}</Link>
-                    )}
+                    <button type="button" className="sd-link amber" onClick={() => setTab('rq')}>
+                      <Inbox size={11} /> {appCounts[p.id]} request{appCounts[p.id] !== 1 ? 's' : ''}
+                    </button>
                   </div>
-                </div>
-              ))}
-            </div>
+                ) : null
+              }
+            />
           )}
         </div>
       )}
@@ -330,41 +355,38 @@ export function StudentDashboard() {
       {tab === 'rq' && (
         <div className="dpane mt-6 grid gap-6 lg:grid-cols-2">
           <section className="surface pf-card p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="pf-h4">Join requests on your projects</h2>
-              <Link to={`/creators/${profile.handle}?tab=applications`} className="sd-link">Manage <ArrowRight size={12} /></Link>
-            </div>
-            {requests === 0 ? <p className="text-sm text-slate-500">No pending requests right now.</p> : (
-              <ul className="sd-list">
-                {projects.filter((p) => appCounts[p.id] > 0).map((p) => (
-                  <li key={p.id}>
-                    <Link to={`/creators/${profile.handle}?tab=applications`}>
-                      <span className="sd-list-t"><b>{p.title}</b><small>{appCounts[p.id]} waiting for your decision</small></span>
-                      <span className="pf-count amber">{appCounts[p.id]}</span><ArrowRight size={14} />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+            <h2 className="pf-h4 mb-3">Join requests on your projects</h2>
+            {projects.length === 0 ? (
+              <p className="text-sm text-slate-500">Publish a project to start receiving join requests.</p>
+            ) : (
+              <ApplicantsInbox me={profile} projects={projects} applications={incomingApps} onDecided={handleAppDecided} />
             )}
           </section>
           <section className="surface pf-card p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="pf-h4">My applications</h2>
-              <Link to="/my-applications" className="sd-link">View all <ArrowRight size={12} /></Link>
-            </div>
+            <h2 className="pf-h4 mb-3">My applications</h2>
             {myApps.length === 0 ? (
               <div className="sd-empty"><Users size={22} /><p>You haven't applied to a project yet.</p><Link to="/explore" className="btn btn-ghost btn-sm">Find a project</Link></div>
             ) : (
-              <ul className="sd-list">
-                {myApps.slice(0, 6).map((a) => (
-                  <li key={a.id}>
-                    <Link to={a.project ? `/projects/${a.project.slug}` : '/my-applications'}>
-                      <span className="sd-list-t"><b>{a.project?.title ?? 'Project'}</b><small>{a.role_title ?? 'General application'} · {relativeDate(a.created_at)}</small></span>
-                      <span className={cn('ref-tag', a.status === 'accepted' && 'sd-ok', a.status === 'declined' && 'sd-no')}>{a.status}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <>
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  {APP_FILTERS.map((f) => (
+                    <button key={f.key} type="button" className={cn('pill', appFilter === f.key && 'on')} onClick={() => setAppFilter(f.key)}>
+                      {f.label}
+                      <span className="sd-pill-n">{f.key === 'all' ? myApps.length : myApps.filter((a) => a.status === f.key).length}</span>
+                    </button>
+                  ))}
+                </div>
+                <ul className="sd-list max-h-[420px] overflow-y-auto pr-1">
+                  {(appFilter === 'all' ? myApps : myApps.filter((a) => a.status === appFilter)).map((a) => (
+                    <li key={a.id}>
+                      <Link to={a.project ? `/projects/${a.project.slug}` : '/explore'}>
+                        <span className="sd-list-t"><b>{a.project?.title ?? 'Project'}</b><small>{a.role_title ?? 'General application'} · {relativeDate(a.created_at)}</small></span>
+                        <span className={cn('ref-tag', a.status === 'accepted' && 'sd-ok', a.status === 'declined' && 'sd-no')}>{a.status}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
           </section>
         </div>

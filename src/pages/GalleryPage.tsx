@@ -59,7 +59,8 @@ export function GalleryPage() {
         </p>
       </div>
 
-      {loading ? (
+      <div className={loading ? undefined : 'reveal'}>
+{loading ? (
         <div className="flex h-[40vh] items-center justify-center">
           <LoopLoader size={28} />
         </div>
@@ -99,6 +100,7 @@ export function GalleryPage() {
           )}
         </>
       )}
+</div>
 
       {work && !studentId && (
         <WorkDetail item={work} onClose={() => setWork(null)} onOpenStudent={(id) => setStudentId(id)} />

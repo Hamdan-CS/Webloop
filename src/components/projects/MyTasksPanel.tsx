@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { toast } from 'sonner';
 import {
   Loader2,
   Send,
@@ -63,8 +64,9 @@ export function MyTasksPanel({ profileId, filter, onTasks }: Props) {
         notes: notes || undefined,
       });
       await loadData();
+      toast.success('Work submitted for review');
     } catch {
-      // ignore
+      toast.error("Couldn't submit your work. Please try again.");
     }
     setSubmittingFor(null);
   };
@@ -74,8 +76,9 @@ export function MyTasksPanel({ profileId, filter, onTasks }: Props) {
     try {
       await reportCannotComplete(taskId, profileId, reason);
       await loadData();
+      toast.success('Reported as not completed');
     } catch {
-      // ignore
+      toast.error("Couldn't send that report. Please try again.");
     }
     setSubmittingFor(null);
   };

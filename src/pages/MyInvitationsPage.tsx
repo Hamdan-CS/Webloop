@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowRight, Clock, CheckCircle2, XCircle, Briefcase, Check, X, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,13 +53,17 @@ export function MyInvitationsPage() {
       if (status === 'accepted') {
         await acceptInvite(invite.id);
         setJustJoined(invite);
+        toast.success(`Joined ${invite.project?.title ?? 'the project'}`);
       } else {
         await respondToInvite(invite.id, 'declined');
+        toast.success('Invitation declined');
       }
       setInvites(invites.map((i) => (i.id === invite.id ? { ...i, status } : i)));
       refreshCounts();
     } catch (err) {
-      setRespondError(err instanceof Error ? err.message : 'Failed to respond to invitation');
+      const message = err instanceof Error ? err.message : 'Failed to respond to invitation';
+      setRespondError(message);
+      toast.error(message);
     } finally {
       setRespondingId(null);
     }

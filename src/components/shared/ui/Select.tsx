@@ -91,6 +91,7 @@ export function Select({ label, value, options, onChange, className, disabled, s
             <div
               ref={panelRef}
               role="listbox"
+              data-wl-select-portal=""
               style={{ position: 'fixed', top: position.top, left: position.left, width: position.width }}
               className="z-[90] max-h-60 overflow-auto rounded-lg border border-white/10 bg-ink-900/95 backdrop-blur-md py-1 shadow-card animate-fade-in-up"
             >

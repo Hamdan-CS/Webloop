@@ -3,6 +3,7 @@ import type {
   Application,
   Invitation,
   Message,
+  Notification,
   PortfolioItem,
   Profile,
   Project,
@@ -710,6 +711,44 @@ export async function markMessageRead(messageId: string): Promise<void> {
     .from('messages')
     .update({ is_read: true })
     .eq('id', messageId);
+  if (error) throw error;
+}
+
+export async function fetchNotifications(profileId: string, limit = 30): Promise<Notification[]> {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('recipient_id', profileId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []) as unknown as Notification[];
+}
+
+export async function fetchUnreadNotificationCount(profileId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('recipient_id', profileId)
+    .is('read_at', null);
+  if (error) return 0;
+  return count ?? 0;
+}
+
+export async function markNotificationRead(notificationId: string): Promise<void> {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('id', notificationId);
+  if (error) throw error;
+}
+
+export async function markAllNotificationsRead(profileId: string): Promise<void> {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('recipient_id', profileId)
+    .is('read_at', null);
   if (error) throw error;
 }
 

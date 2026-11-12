@@ -1,4 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { toast } from 'sonner';
 import {
   Plus,
   Trash2,
@@ -9,7 +11,6 @@ import {
   AlertCircle,
   ListChecks,
   Star,
-  X,
   Send,
   User,
 } from 'lucide-react';
@@ -117,8 +118,10 @@ export function TaskManagementPanel({ projectId, profileId, onChange }: Props) {
       setShowCreate(false);
       await loadData();
       onChange?.();
+      toast.success('Task created');
     } catch {
       setActionError("Couldn't create the task. Please try again.");
+      toast.error("Couldn't create the task. Please try again.");
     }
     setBusy(false);
   };
@@ -135,8 +138,10 @@ export function TaskManagementPanel({ projectId, profileId, onChange }: Props) {
       if (assigneeId) await notifyAssignee(assigneeId, task);
       await loadData();
       onChange?.();
+      toast.success(assigneeId ? `Reassigned "${task.title}"` : `Unassigned "${task.title}"`);
     } catch {
       setActionError(`Couldn't reassign "${task.title}". Please try again.`);
+      toast.error(`Couldn't reassign "${task.title}". Please try again.`);
     }
   };
 
@@ -147,8 +152,10 @@ export function TaskManagementPanel({ projectId, profileId, onChange }: Props) {
       await deleteTask(task.id);
       setTasks(tasks.filter((t) => t.id !== task.id));
       onChange?.();
+      toast.success(`Deleted "${task.title}"`);
     } catch {
       setActionError(`Couldn't delete "${task.title}". Please try again.`);
+      toast.error(`Couldn't delete "${task.title}". Please try again.`);
     }
   };
 
@@ -169,8 +176,11 @@ export function TaskManagementPanel({ projectId, profileId, onChange }: Props) {
       await loadData();
       await refreshCounts();
       onChange?.();
+      const reviewLabel = status === 'approved' ? 'Approved' : status === 'changes_requested' ? 'Requested changes' : status === 'not_completed' ? 'Marked as not completed' : 'Rejected';
+      toast.success(reviewLabel);
     } catch {
       setActionError("Couldn't save the review. Please try again.");
+      toast.error("Couldn't save the review. Please try again.");
     }
     setReviewing(null);
   };
@@ -199,6 +209,26 @@ export function TaskManagementPanel({ projectId, profileId, onChange }: Props) {
         </div>
       )}
 
+      <AnimatePresence initial={false}>
+        {showCreate && (
+          <motion.div
+            key="create-task"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+            style={{ overflow: 'hidden' }}
+          >
+            <CreateTaskForm
+              members={members}
+              onClose={() => setShowCreate(false)}
+              onCreate={handleCreate}
+              busy={busy}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {tasks.length === 0 ? (
         <div className="surface p-8 text-center">
           <ListChecks size={32} className="mx-auto text-slate-600" />
@@ -220,15 +250,6 @@ export function TaskManagementPanel({ projectId, profileId, onChange }: Props) {
             />
           ))}
         </div>
-      )}
-
-      {showCreate && (
-        <CreateTaskModal
-          members={members}
-          onClose={() => setShowCreate(false)}
-          onCreate={handleCreate}
-          busy={busy}
-        />
       )}
     </div>
   );
@@ -418,7 +439,7 @@ function SubmissionReview({
   );
 }
 
-function CreateTaskModal({
+function CreateTaskForm({
   members,
   onClose,
   onCreate,
@@ -434,6 +455,11 @@ function CreateTaskModal({
   const [criteria, setCriteria] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const formRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, []);
 
   const handleSubmit = () => {
     if (!title.trim()) return;
@@ -441,14 +467,8 @@ function CreateTaskModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/80 backdrop-blur-sm animate-fade-in-up">
-      <div className="surface-raised shadow-card w-full max-w-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-xl font-bold text-white">Create Task</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:text-white hover:bg-white/5 transition-colors">
-            <X size={18} />
-          </button>
-        </div>
+    <div ref={formRef} className="surface-raised p-5 mb-3">
+      <h3 className="font-display text-base font-semibold text-white mb-4">New Task</h3>
 
         <div className="space-y-4">
           <label className="block">
@@ -522,7 +542,6 @@ function CreateTaskModal({
           </Button>
           <Button variant="ghost" onClick={onClose} className="px-5">Cancel</Button>
         </div>
-      </div>
     </div>
   );
 }

@@ -237,3 +237,27 @@ export interface Message {
   project?: { title: string; slug: string; owner_id?: string } | null;
   task?: MessageTaskRef | null;
 }
+
+export type NotificationType =
+  | 'application_received'
+  | 'application_accepted'
+  | 'application_declined'
+  | 'invitation_accepted'
+  | 'post_comment'
+  | 'post_like'
+  | 'post_removed'
+  | 'post_restored'
+  | 'post_verified'
+  | 'warning';
+
+export interface Notification {
+  id: string;
+  recipient_id: string;
+  type: NotificationType;
+  /** Shape depends on `type`; see the trigger functions in migration 022 for exactly
+   * which keys each type writes (e.g. application_received carries project_title/
+   * applicant_name, post_comment carries post_title/commenter_name). */
+  payload: Record<string, string | number | boolean | null>;
+  read_at: string | null;
+  created_at: string;
+}

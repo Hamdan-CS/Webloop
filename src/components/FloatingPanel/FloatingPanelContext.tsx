@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 
-export type PanelTab = 'messages' | 'tasks';
+export type PanelTab = 'messages' | 'tasks' | 'notifications';
 
 interface FloatingPanelContextValue {
   isOpen: boolean;

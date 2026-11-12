@@ -40,6 +40,12 @@ export function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, signOut, pendingInvites } = useAuth();
+  const shownName: string =
+    profile?.display_name ||
+    (user?.user_metadata?.display_name as string | undefined) ||
+    (user?.user_metadata?.full_name as string | undefined) ||
+    user?.email?.split('@')[0] ||
+    'User';
   const visibleNavItems = user ? AUTHED_NAV_ITEMS : GUEST_NAV_ITEMS;
   const [indicator, setIndicator] = useState({ left: 0, width: 0, opacity: 0 });
 
@@ -78,7 +84,9 @@ export function Navbar() {
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-wl-select-portal]')) return;
+      if (menuRef.current && !menuRef.current.contains(target)) setMenuOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -98,10 +106,9 @@ export function Navbar() {
   }, []);
 
   const handleSignOut = async () => {
-    await signOut();
     setMenuOpen(false);
     setMobileOpen(false);
-    navigate('/');
+    try { await signOut(); } finally { navigate('/'); }
   };
 
   return (
@@ -145,9 +152,9 @@ export function Navbar() {
                   onClick={() => setMenuOpen((v) => !v)}
                   className="hdr-user"
                 >
-                  <Avatar src={profile?.avatar_url} name={profile?.display_name ?? 'User'} size="sm" />
+                  <Avatar src={profile?.avatar_url} name={shownName} size="sm" />
                   <span className="hdr-user-n">
-                    {profile?.display_name ?? 'User'}
+                    {shownName}
                   </span>
                 </button>
                 {menuOpen && (

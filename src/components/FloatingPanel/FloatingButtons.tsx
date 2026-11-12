@@ -16,6 +16,7 @@ export function PanelBadgeSync() {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient_id=eq.${profile.id}` }, () => refreshCounts())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'task_submissions' }, () => refreshCounts())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'invitations', filter: `invitee_id=eq.${profile.id}` }, () => refreshCounts())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `recipient_id=eq.${profile.id}` }, () => refreshCounts())
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -24,25 +25,28 @@ export function PanelBadgeSync() {
   return null;
 }
 
-/** One header button for Messages, Tasks & Invitations: combined badge, opens the side drawer (or the invitations page when that's the only thing pending). */
+/** One header button for Messages, Notifications, Tasks & Invitations: combined badge, opens the side drawer (or the invitations page when that's the only thing pending). */
 export function NotificationBell() {
-  const { user, profile, unreadMessages, pendingReviews, pendingInvites } = useAuth();
+  const { user, profile, unreadMessages, pendingReviews, pendingInvites, unreadNotifications } = useAuth();
   const { isOpen, openPanel, closePanel } = useFloatingPanel();
   const navigate = useNavigate();
   if (!user || !profile) return null;
-  const total = unreadMessages + pendingReviews + pendingInvites;
+  const total = unreadMessages + unreadNotifications + pendingReviews + pendingInvites;
   const parts = [
     unreadMessages > 0 && `${unreadMessages} unread message${unreadMessages !== 1 ? 's' : ''}`,
+    unreadNotifications > 0 && `${unreadNotifications} notification${unreadNotifications !== 1 ? 's' : ''}`,
     pendingReviews > 0 && `${pendingReviews} task${pendingReviews !== 1 ? 's' : ''} to review`,
     pendingInvites > 0 && `${pendingInvites} project invitation${pendingInvites !== 1 ? 's' : ''}`,
   ].filter(Boolean);
   const handleClick = () => {
     if (isOpen) { closePanel(); return; }
-    if (unreadMessages === 0 && pendingReviews === 0 && pendingInvites > 0) {
+    if (unreadMessages === 0 && unreadNotifications === 0 && pendingReviews === 0 && pendingInvites > 0) {
       navigate('/my-invitations');
       return;
     }
-    openPanel(unreadMessages === 0 && pendingReviews > 0 ? 'tasks' : 'messages');
+    if (unreadMessages > 0) { openPanel('messages'); return; }
+    if (unreadNotifications > 0) { openPanel('notifications'); return; }
+    openPanel(pendingReviews > 0 ? 'tasks' : 'messages');
   };
   return (
     <button

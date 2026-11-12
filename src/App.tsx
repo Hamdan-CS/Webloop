@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { lazy, Suspense, useEffect } from 'react';
+import { Toaster } from 'sonner';
 import { AuthPromptProvider } from '@/components/auth/AuthPrompt';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
@@ -51,6 +52,31 @@ function SettingsRoute() {
   if (loading) return <RouteLoading />;
   if (profile?.creator_type === 'student') return <BuildProfilePage mode="edit" />;
   return <EditProfilePage />;
+}
+
+/**
+ * My Projects / My Applications now live inline on the student dashboard
+ * (Projects and Requests tabs), with fuller functionality than these standalone
+ * pages had (owner status/delete controls, join-request accept/decline). A
+ * student/team account is sent straight there; company/university accounts
+ * keep using these pages as before, since that merge is student-dashboard-only.
+ */
+function MyProjectsRoute() {
+  const { profile, loading } = useAuth();
+  if (loading) return <RouteLoading />;
+  if (profile && (profile.creator_type === 'student' || profile.creator_type === 'team')) {
+    return <Navigate to="/dashboard/student" replace />;
+  }
+  return <MyProjectsPage />;
+}
+
+function MyApplicationsRoute() {
+  const { profile, loading } = useAuth();
+  if (loading) return <RouteLoading />;
+  if (profile && (profile.creator_type === 'student' || profile.creator_type === 'team')) {
+    return <Navigate to="/dashboard/student" replace />;
+  }
+  return <MyApplicationsPage />;
 }
 
 function RouteLoading() {
@@ -156,9 +182,9 @@ function App() {
                   <Route path="/projects/:slug" element={<ProjectDetailPage />} />
                   <Route path="/creators/:handle" element={<CreatorProfilePage />} />
                   <Route path="/publish" element={<PublishProjectPage />} />
-                  <Route path="/my-applications" element={<MyApplicationsPage />} />
+                  <Route path="/my-applications" element={<MyApplicationsRoute />} />
                   <Route path="/my-invitations" element={<MyInvitationsPage />} />
-                  <Route path="/my-projects" element={<MyProjectsPage />} />
+                  <Route path="/my-projects" element={<MyProjectsRoute />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/settings/profile" element={<SettingsRoute />} />
                   <Route path="/build-profile" element={<BuildProfilePage />} />
@@ -173,6 +199,7 @@ function App() {
             <PanelBadgeSync />
             <FloatingPanel />
             <GlobalTip />
+            <Toaster theme="system" richColors position="bottom-right" />
           </div>
           </FloatingPanelProvider>
           </AuthPromptProvider>
