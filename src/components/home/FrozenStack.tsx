@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
+import { ScrollTrigger } from '@/design-system/animations/gsap.config';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import StackTimeline from './StackTimeline';
 import '@/components/scenes/A-ProjectStack/stack.frozen.css';
@@ -14,6 +15,19 @@ import '@/components/scenes/A-ProjectStack/stack.frozen.css';
 const ProjectStackScene = lazy(() => import('@/components/scenes/A-ProjectStack/ProjectStackScene'));
 
 const MOBILE_QUERY = '(max-width: 900px)';
+
+/** Renders right after the lazy stack: once its pin exists, re-sort every
+ * ScrollTrigger by page position so sections below (created earlier) are
+ * measured after the stack's pin spacer. */
+function AfterStackMounts() {
+  useEffect(() => {
+    const run = () => { ScrollTrigger.sort(); ScrollTrigger.refresh(); };
+    const a = window.setTimeout(run, 50);
+    const b = window.setTimeout(run, 900);
+    return () => { window.clearTimeout(a); window.clearTimeout(b); };
+  }, []);
+  return null;
+}
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => typeof window !== 'undefined' && window.matchMedia(MOBILE_QUERY).matches);
@@ -38,6 +52,7 @@ export function FrozenStack() {
       ) : (
         <Suspense fallback={<div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><LoopLoader /></div>}>
           <ProjectStackScene />
+          <AfterStackMounts />
         </Suspense>
       )}
     </div>

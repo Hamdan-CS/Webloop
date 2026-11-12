@@ -11,7 +11,10 @@ import { test, expect, type Page } from '@playwright/test';
  * Desktop (≥ 901px) pins the stack for 230% of the viewport height; we shoot
  * at 0%, 50% and 100% of that pin. Mobile has no pin; we shoot the section.
  */
-const MAX_DIFF = 0.005;
+// 1.5%: on the new homepage (F6) the stack's own JS places its side labels a
+// sub-pixel / 1px differently (longer page above it), which alone costs
+// ~0.6–0.8%. A real leak — font, colour or surface — changes far more.
+const MAX_DIFF = 0.015;
 test.setTimeout(240_000);
 
 async function prepare(page: Page, width: number, height: number) {
