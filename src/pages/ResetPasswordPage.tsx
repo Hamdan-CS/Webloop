@@ -4,6 +4,7 @@ import { Loader2, AlertCircle, Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-re
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/shared/ui/Button';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
+import { AuthLayout } from '@/components/layout/AuthLayout';
 
 export function ResetPasswordPage() {
   const { session, loading: authLoading, updatePassword } = useAuth();
@@ -37,8 +38,8 @@ export function ResetPasswordPage() {
   };
 
   return (
-    <div className="container-page py-16">
-      <div className="mx-auto max-w-md">
+    <AuthLayout>
+      <div>
         <div className="card-g auth-fm">
           <div>
             <h3>Set a new password</h3>
@@ -125,6 +126,6 @@ export function ResetPasswordPage() {
           )}
         </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

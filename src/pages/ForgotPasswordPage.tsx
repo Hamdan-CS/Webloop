@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Loader2, AlertCircle, Mail, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/shared/ui/Button';
+import { AuthLayout } from '@/components/layout/AuthLayout';
 
 export function ForgotPasswordPage() {
   const { resetPasswordForEmail } = useAuth();
@@ -25,8 +26,8 @@ export function ForgotPasswordPage() {
   };
 
   return (
-    <div className="container-page py-16">
-      <div className="mx-auto max-w-md">
+    <AuthLayout>
+      <div>
         <div className="card-g auth-fm">
           <div>
             <h3>Reset your password</h3>
@@ -80,6 +81,6 @@ export function ForgotPasswordPage() {
           )}
         </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

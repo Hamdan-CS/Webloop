@@ -22,7 +22,7 @@ const ICONS: Record<string, typeof Compass> = {
 export function MobileTabBar({ items, hasUnseenFeed }: { items: NavItem[]; hasUnseenFeed: boolean }) {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 grid border-t border-white/10 bg-ink-950/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-md md:hidden"
+      className="mtab fixed inset-x-3 z-40 grid rounded-[24px] px-1 md:hidden"
       style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
       aria-label="Primary"
     >
@@ -33,11 +33,11 @@ export function MobileTabBar({ items, hasUnseenFeed }: { items: NavItem[]; hasUn
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              cn('flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-slate-500', isActive && 'text-accent-300')
+              cn('flex flex-col items-center justify-center gap-1 py-2 text-center text-[10.5px] font-medium leading-tight text-graphite', isActive && 'text-ink')
             }
           >
             {item.isFeed ? (
-              <span className="flex h-7 w-10 items-center justify-center rounded-full bg-accent-500/15">
+              <span className="flex h-7 w-10 items-center justify-center rounded-full bg-sky">
                 <FeedNavIcon hasUnseen={hasUnseenFeed} />
               </span>
             ) : (

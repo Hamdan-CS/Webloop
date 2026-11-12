@@ -114,7 +114,7 @@ export function Navbar() {
   return (
     <>
     <header className={cn('site-header', hidden && 'hdr-hide')}>
-      <div className="container-page flex h-16 items-center justify-between gap-4">
+      <div className="hdr-in flex items-center justify-between gap-4">
         <Link to="/" className="hdr-logo flex items-center" aria-label="WebLoop home">
           <Wordmark />
         </Link>
@@ -211,7 +211,7 @@ Join the Platform
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden px-5 py-4 reveal" style={{ borderTop: '1px solid var(--hdr-line)', background: 'var(--panel-solid)', boxShadow: 'var(--glass-shadow)' }}>
+        <div className="hdr-mobile md:hidden reveal">
           <nav className="flex flex-col gap-1">
             {visibleNavItems.map((item) => (
               <NavLink

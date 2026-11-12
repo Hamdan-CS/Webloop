@@ -150,8 +150,8 @@ function App() {
           <NewStudentOnboardingRedirect />
           <div className="flex min-h-dvh flex-col">
             <Navbar />
-            {/* the header is now position:fixed (so it can hide on scroll), so push content below it */}
-            <main className="flex-1 pt-16 pb-16 md:pb-0">
+            {/* the floating header sits 16px down and is 64px tall: leave room under it */}
+            <main className="flex-1 pt-24 pb-24 md:pb-0">
               <AuthErrorBanner />
               <PageTransition fallback={<RouteLoading />}>
                 <Routes>
