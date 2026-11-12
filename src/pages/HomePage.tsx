@@ -5,9 +5,9 @@ import { CompaniesCityScene } from '@/components/scenes/Companies-City/Companies
 import { CompaniesGrid } from '@/components/scenes/Companies-City/CompaniesGrid';
 import { COMPANIES } from '@/data/homeDemo';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
+import { FrozenStack } from '@/components/home/FrozenStack';
 
 const EcosystemScene = lazy(() => import('@/components/scenes/Home-Ecosystem/EcosystemScene'));
-const ProjectStackScene = lazy(() => import('@/components/scenes/A-ProjectStack/ProjectStackScene'));
 const LiveDashboardScene = lazy(() => import('@/components/scenes/C-LiveDashboard/LiveDashboardScene'));
 const ProjectShowcaseScene = lazy(() => import('@/components/scenes/F-ProjectShowcase/ProjectShowcaseScene'));
 const ExplorePreview = lazy(() => import('@/components/scenes/H-ExplorePreview/ExplorePreview'));
@@ -75,10 +75,8 @@ export function HomePage() {
         <EcosystemScene />
       </Suspense>
 
-      {/* 2 — Project Stack */}
-      <Suspense fallback={<SceneLoading />}>
-        <ProjectStackScene />
-      </Suspense>
+      {/* 2 — Project Stack (3D on desktop, timeline at ≤ 900px) */}
+      <FrozenStack />
 
       {/* 3 — Live Dashboard */}
       <Suspense fallback={<SceneLoading />}>
