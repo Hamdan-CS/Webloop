@@ -6,8 +6,7 @@ import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { DesignProvider } from '@/design-system/DesignProvider';
 import { FloatingPanelProvider, PanelBadgeSync, FloatingPanel } from '@/components/FloatingPanel';
-import { Navbar } from '@/components/navigation/Navbar';
-import { Footer } from '@/components/layout/Footer';
+import { SiteFrame } from '@/components/layout/SiteFrame';
 import { RoleRoute } from '@/components/auth/RoleRoute';
 import { GuestOnlyRoute } from '@/components/auth/GuestOnlyRoute';
 import { HomeRoute } from '@/components/auth/HomeRoute';
@@ -148,10 +147,7 @@ function App() {
           <FloatingPanelProvider>
           <ScrollToTop />
           <NewStudentOnboardingRedirect />
-          <div className="flex min-h-dvh flex-col">
-            <Navbar />
-            {/* the floating header sits 16px down and is 64px tall: leave room under it */}
-            <main className="flex-1 pt-24 pb-24 md:pb-0">
+          <SiteFrame>
               <AuthErrorBanner />
               <PageTransition fallback={<RouteLoading />}>
                 <Routes>
@@ -181,13 +177,11 @@ function App() {
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </PageTransition>
-            </main>
-            <Footer />
-            <PanelBadgeSync />
-            <FloatingPanel />
-            <GlobalTip />
-            <Toaster theme="light" position="bottom-center" />
-          </div>
+          </SiteFrame>
+          <PanelBadgeSync />
+          <FloatingPanel />
+          <GlobalTip />
+          <Toaster theme="light" position="bottom-center" />
           </FloatingPanelProvider>
           </AuthPromptProvider>
         </AuthProvider>

@@ -11,6 +11,7 @@ import { checkIsAdmin, fetchLatestPostTimestamp } from '@/features/feed/services
 import { LAST_FEED_VISIT_KEY } from '@/features/feed/constants';
 import { useLenis } from '@/design-system/motion/lenisContext';
 import './nav.css';
+import { setSiteView } from '@/components/app/siteView';
 
 /*
  * Site nav — the v4 demo's floating bar (.nav / .nav-pill / .nav-sheet):
@@ -190,8 +191,8 @@ export function Navbar() {
               <>
                 <NotificationBell />
                 {profile && (
-                  <button type="button" className="gh-si" onClick={() => navigate(getDashboardPath(profile.creator_type))} title={getDashboardLabel(profile.creator_type)}>
-                    <LayoutDashboard size={16} style={{ marginRight: 6 }} /> {getDashboardLabel(profile.creator_type).replace(' Dashboard', '')}
+                  <button type="button" className="gh-pill gh-dark" onClick={() => { setSiteView(false); navigate(getDashboardPath(profile.creator_type)); }} title={getDashboardLabel(profile.creator_type)}>
+                    <LayoutDashboard size={16} /> Open app
                   </button>
                 )}
                 <div className="relative" ref={menuRef}>
