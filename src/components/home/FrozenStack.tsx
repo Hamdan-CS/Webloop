@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import StackTimeline from './StackTimeline';
+import '@/components/scenes/A-ProjectStack/stack.frozen.css';
 
 /**
  * Wrapper for the protected Project Stack.
