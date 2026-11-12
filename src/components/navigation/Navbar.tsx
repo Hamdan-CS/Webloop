@@ -119,7 +119,7 @@ export function Navbar() {
           <Wordmark />
         </Link>
 
-        <nav ref={navRef} className="hdr-nav hidden md:flex items-center gap-[clamp(10px,1.8vw,30px)]">
+        <nav ref={navRef} className="hdr-nav hidden lg:flex items-center gap-[clamp(10px,1.8vw,30px)]">
           {visibleNavItems.map((item) => (
             <NavLink
               key={item.to}
@@ -137,7 +137,7 @@ export function Navbar() {
           />
         </nav>
 
-        <div className="hidden md:flex items-center gap-2 lg:gap-3">
+        <div className="hidden lg:flex items-center gap-2 lg:gap-3">
           <ThemeToggle />
           <NotificationBell />
           {user ? (
@@ -187,7 +187,7 @@ Join the Platform
           )}
         </div>
 
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-2 lg:hidden">
         {user && profile && (
           <button
             type="button"
@@ -201,7 +201,7 @@ Join the Platform
         )}
         <NotificationBell />
         <button
-          className="hdr-theme hdr-burger md:hidden"
+          className="hdr-theme hdr-burger lg:hidden"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
         >
@@ -211,7 +211,7 @@ Join the Platform
       </div>
 
       {mobileOpen && (
-        <div className="hdr-mobile md:hidden reveal">
+        <div className="hdr-mobile lg:hidden reveal">
           <nav className="flex flex-col gap-1">
             {visibleNavItems.map((item) => (
               <NavLink

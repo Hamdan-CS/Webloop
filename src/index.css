@@ -41,14 +41,13 @@
     @apply bg-ink-950 text-slate-200 font-sans antialiased;
     background-color: var(--body-bg);
   }
-  ::selection {
-    @apply bg-accent-500/30;
-  }
+  /* Genie focus ring (F9): a 2px iris outline that follows each element's own
+     radius (pills stay pills), offset so it reads on sky, white and bone. */
   *:focus-visible {
-    @apply outline-none ring-2 ring-accent-400 rounded;
-    --tw-ring-offset-color: var(--body-bg);
-    --tw-ring-offset-width: 2px;
+    outline: 2px solid var(--iris);
+    outline-offset: 3px;
   }
+  ::selection { background: rgba(0, 105, 224, .18); }
 }
 
 @layer components {
@@ -1867,7 +1866,7 @@ html[data-hdr="hidden"] .toolbar { top: 0; }
 .light .pf .btn-ghost { background: #fff; }
 
 /* ---- header: notification bell (replaces the two floating buttons) + burger fix ---- */
-@media (min-width: 768px) { .site-header .hdr-burger { display: none; } }
+@media (min-width: 1024px) { .site-header .hdr-burger { display: none; } }
 .site-header .hdr-bell { position: relative; cursor: pointer; }
 .site-header .hdr-bell.on { border-color: var(--hdr-accent); }
 .site-header .hdr-bell-n { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 10.5px; font-weight: 700; display: grid; place-items: center; border: 2px solid var(--hdr-bg, var(--panel-solid)); }

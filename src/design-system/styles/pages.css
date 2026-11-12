@@ -131,3 +131,7 @@
 .fp-backdrop { background: rgba(235, 245, 255, .6) !important; backdrop-filter: blur(6px) !important; -webkit-backdrop-filter: blur(6px) !important; }
 .fpanel input[type="checkbox"] { accent-color: var(--iris); }
 .nf .g-loop { display: block; margin: 0 auto; }
+
+/* no sideways scroll from decorative overflow (clip keeps sticky/fixed working) */
+html, body { overflow-x: clip; }
+.how-page { overflow-x: clip; }
