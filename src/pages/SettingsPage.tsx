@@ -35,7 +35,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="container-page pf py-8 max-w-5xl">
+    <div className="container-page pf py-8 max-w-5xl w-forms">
       <div className="mb-6">
         <span className="label-overline">Settings</span>
         <h1 className="mt-2 font-display text-3xl font-bold pf-name">Your settings</h1>

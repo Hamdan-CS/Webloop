@@ -224,7 +224,7 @@ export function ConversationThread({ myProfile, otherProfile, projectId, project
           rows={1}
           placeholder="Type a reply… (Shift+Enter for a new line)"
           className={cn(
-            'flex-1 resize-none rounded-lg border border-white/10 bg-ink-900/60 placeholder:text-slate-600 focus:border-accent-400/40 transition-colors',
+            'wl-chat-in flex-1 resize-none rounded-lg border border-white/10 bg-ink-900/60 placeholder:text-slate-600 focus:border-accent-400/40 transition-colors',
             compact ? 'px-3 py-2 text-xs text-white' : 'px-3.5 py-2.5 text-sm text-white',
           )}
         />
@@ -315,7 +315,8 @@ function MessageBubble({
       )}
       <div
         className={cn(
-          'rounded-lg px-3 py-2',
+          'wl-bub rounded-lg px-3 py-2',
+          isMine && 'me',
           compact ? 'text-xs' : 'text-sm',
           isMine ? 'bg-accent-500/20 text-slate-100 border border-accent-400/20' : 'bg-white/[0.04] text-slate-300 border border-white/8',
         )}

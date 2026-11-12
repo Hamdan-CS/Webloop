@@ -6,6 +6,8 @@ import type { PortfolioItem } from '@/types';
 import { WorkCard } from '@/components/gallery/WorkCard';
 import { WorkDetail, StudentDetail } from '@/components/gallery/GalleryOverlays';
 import { Select } from '@/components/shared/ui/Select';
+import { WPageHeader } from '@/components/app/ui';
+import { useWorkspaceMaybe } from '@/components/app/workspaceContext';
 
 const SORT_OPTIONS = [
   { value: 'act', label: 'Most active' },
@@ -17,6 +19,7 @@ type Sort = 'act' | 'new' | 'az';
 const ALL = 'All works';
 
 export function GalleryPage() {
+  const ws = useWorkspaceMaybe();
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [cat, setCat] = useState(ALL);
@@ -51,6 +54,9 @@ export function GalleryPage() {
 
   return (
     <div className="container-page py-8">
+      {ws ? (
+        <WPageHeader title="Student work" subtitle="Every finished task is reviewed by a project owner and becomes verified career evidence." />
+      ) : (
       <div className="sec-hd" style={{ marginBottom: 28 }}>
         <h1 className="gal-title">Student work <span className="hl">gallery</span></h1>
         <p className="gal-sub">
@@ -58,6 +64,7 @@ export function GalleryPage() {
           Companies hire from demonstrated work, not self-reported skills.
         </p>
       </div>
+      )}
 
       <div className={loading ? undefined : 'reveal'}>
 {loading ? (

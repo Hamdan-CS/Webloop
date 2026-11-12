@@ -578,7 +578,7 @@ export function BuildProfilePage({ mode = 'build' }: { mode?: 'build' | 'edit' }
   const uploading = avatarUploading || bannerUploading;
 
   return (
-    <div className="container-page py-6">
+    <div className="container-page py-6 w-forms">
       <div className="bp-root" data-view={mobileView}>
         <div className="bp-shell">
           {/* LEFT — form */}

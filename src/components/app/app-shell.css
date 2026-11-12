@@ -48,7 +48,7 @@
 .w-app{position:fixed;inset:0;z-index:300;display:grid;grid-template-columns:var(--sbw,248px) 1fr;background:var(--mist);color:var(--ink);font-family:var(--f-ui);opacity:0;visibility:hidden;transition:opacity .45s var(--ease),visibility 0s .45s,grid-template-columns .5s var(--ease)}
 .w-app{opacity:1;visibility:visible;transition:opacity .45s var(--ease),grid-template-columns .5s var(--ease)}
 .w-app.w-collapsed{--sbw:76px}
-.w-app button{font:inherit;color:inherit;cursor:pointer}
+:where(.w-app) :where(button){font:inherit;color:inherit;cursor:pointer}
 .w-app :focus-visible{outline:none;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--iris)}
 .w-sb{display:flex;flex-direction:column;gap:6px;padding:16px 14px 14px;min-width:0;overflow:hidden}
 .w-sb-top{display:flex;align-items:center;justify-content:space-between;height:40px;padding:0 4px 0 8px;margin-bottom:10px}

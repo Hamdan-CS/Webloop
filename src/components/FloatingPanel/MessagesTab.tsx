@@ -151,7 +151,8 @@ export function MessagesTab({ profileId, myProfile }: Props) {
                       key={c.other.id}
                       onClick={() => openConversation(c)}
                       className={cn(
-                        'w-full text-left rounded-xl border p-3 transition-colors',
+                        'wl-thr w-full text-left rounded-xl border p-3 transition-colors',
+                        c.unreadCount > 0 && 'unread',
                         c.unreadCount > 0
                           ? 'border-accent-400/20 bg-accent-500/5 hover:border-accent-400/40'
                           : 'border-white/5 bg-white/[0.02] hover:border-white/15',

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Users, GitBranch, Inbox, Plus, Sparkles, Star, ArrowRight, Briefcase, FolderGit2,
+  Users, GitBranch, Inbox, Plus, ArrowRight, Briefcase,
   ClipboardList, CheckCircle2, Clock, MessageSquare, FileText, Pencil, UserCircle2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,8 +11,6 @@ import {
   fetchAssignedTasks, fetchMyApplications, fetchInboxMessages,
 } from '@/services/api';
 import type { Application, Message, PortfolioItem, Project, Task } from '@/types';
-import { Avatar } from '@/components/shared/ui/Avatar';
-import { Rating, NoRating } from '@/components/shared/ui/Rating';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { ManagedProjectGrid } from '@/components/projects/ManagedProjectGrid';
 import { ApplicantsInbox } from '@/components/companies/ApplicantsInbox';
@@ -21,6 +19,9 @@ import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { statusLabel, relativeDate } from '@/utils/labels';
 import { MyTasksPanel } from '@/components/projects/MyTasksPanel';
 import { cn } from '@/utils/cn';
+import { WBox, WKpis, WPageHeader } from '@/components/app/ui';
+import { WContribHeat } from '@/components/app/ui/WContribHeat';
+import { projectDot, useWorkspaceMaybe } from '@/components/app/workspaceContext';
 
 type Tab = 'ov' | 'pj' | 'tk' | 'rq';
 type TaskView = 'all' | 'todo' | 'submitted' | 'approved' | 'changes';
@@ -44,7 +45,8 @@ const APP_FILTERS: { key: AppFilter; label: string }[] = [
 interface FeedItem { id: string; icon: React.ReactNode; text: React.ReactNode; at: string }
 
 export function StudentDashboard() {
-  const { profile, unreadMessages } = useAuth();
+  const { profile, unreadMessages, pendingInvites } = useAuth();
+  const ws = useWorkspaceMaybe();
   const { openPanel } = useFloatingPanel();
   const [tab, setTab] = useState<Tab>('ov');
   const [taskView, setTaskView] = useState<TaskView>('all');
@@ -143,145 +145,131 @@ export function StudentDashboard() {
   const view = TASK_VIEWS.find((v) => v.key === taskView) ?? TASK_VIEWS[0];
   const pendingApps = myApps.filter((a) => a.status === 'pending').length;
 
+  const first = profile.display_name.split(' ')[0];
+  const hour = new Date().getHours();
+  const hi = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const subtitle = [
+    `${activeProjects} active project${activeProjects !== 1 ? 's' : ''}`,
+    inReview ? `${inReview} in review` : null,
+    todo + changes ? `${todo + changes} to do` : null,
+    requests ? `${requests} join request${requests !== 1 ? 's' : ''} waiting on you` : null,
+    portfolio.length ? `${portfolio.length} portfolio item${portfolio.length !== 1 ? 's' : ''}` : null,
+  ].filter(Boolean).join(' · ');
+
   return (
     <div className="container-page py-8 pf sdash">
-      {/* Header + tabs */}
-      <div className="surface-raised pf-card pf-head p-5 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <Avatar src={profile.avatar_url} name={profile.display_name} size="xl" />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="pf-name">Welcome back, {profile.display_name.split(' ')[0]}</h1>
-              <span className="ref-tag pf-type">Student</span>
-            </div>
-            <p className="mt-1 text-sm text-slate-400">
-              @{profile.handle} · {projects.length} project{projects.length !== 1 ? 's' : ''}{joined.length > 0 && ` · member of ${joined.length}`} · {portfolio.length} portfolio item{portfolio.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Link to="/publish"><Button className="btn-sm"><Plus size={15} /> New Project</Button></Link>
-            <Link to="/explore"><Button variant="ghost" className="btn-sm"><Sparkles size={15} /> Explore</Button></Link>
-          </div>
-        </div>
-        <div className="d-tabs pf-tabs sd-tabs mt-5" role="tablist">
-          {([
-            ['ov', 'Overview', null],
-            ['pj', 'My Projects', allProjects.length],
-            ['tk', 'Tasks', todo + changes],
-            ['rq', 'Requests', requests + pendingApps],
-          ] as [Tab, string, number | null][]).map(([k, label, n]) => (
-            <button key={k} type="button" role="tab" aria-selected={tab === k} className={cn('pf-tab', tab === k && 'on')} onClick={() => setTab(k)}>
-              {label}
-              {n ? <span className={cn('pf-count', k === 'rq' && 'amber')}>{n}</span> : null}
-            </button>
-          ))}
-        </div>
+      {/* Header (demo Home: greeting, one line of context, actions right) + tabs */}
+      <WPageHeader
+        title={`${hi}, ${first}`}
+        subtitle={subtitle}
+        actions={<>
+          {ws && <button type="button" className="w-btn-l" onClick={ws.openPalette}>Search <kbd>⌘K</kbd></button>}
+          <Link to="/publish" className="w-btn-d"><Plus size={16} /> New project</Link>
+        </>}
+      />
+      <div className="d-tabs pf-tabs sd-tabs w-gtabs-r" role="tablist">
+        {([
+          ['ov', 'Overview', null],
+          ['pj', 'My Projects', allProjects.length],
+          ['tk', 'Tasks', todo + changes],
+          ['rq', 'Requests', requests + pendingApps],
+        ] as [Tab, string, number | null][]).map(([k, label, n]) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} className={cn('pf-tab', tab === k && 'on')} onClick={() => setTab(k)}>
+            {label}
+            {n ? <span className={cn('pf-count', k === 'rq' && 'amber')}>{n}</span> : null}
+          </button>
+        ))}
       </div>
 
-      {/* OVERVIEW */}
+      {/* OVERVIEW — the demo's Home grid */}
       {tab === 'ov' && (
-        <div className="dpane mt-6 space-y-6">
-          <div className="grid gap-6 lg:grid-cols-[1fr_1.25fr]">
-            <section className="surface pf-card p-5">
-              <h2 className="pf-h4 mb-4">Your progress <small>approved tasks</small></h2>
-              <div className="donut-wrap">
-                <button type="button" className="donut" aria-label="Your progress. Open tasks" onClick={() => goTasks('all')}>
-                  <svg viewBox="0 0 120 120">
-                    <defs><linearGradient id="sdg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--cyan)" /><stop offset="1" stopColor="var(--blue)" /></linearGradient></defs>
-                    <circle className="bg" cx="60" cy="60" r="50" />
-                    <circle className="fg" cx="60" cy="60" r="50" style={{ stroke: 'url(#sdg)', strokeDashoffset: 314 * (1 - pct / 100) }} />
-                  </svg>
-                  <b>{pct}<span>%</span></b>
-                </button>
-                <div className="kpis sd-kpis">
-                  <button type="button" onClick={() => goTasks('all')}><b>{tasks.length}</b>Assigned</button>
-                  <button type="button" onClick={() => goTasks('approved')}><b className="c1">{approved}</b>Approved</button>
-                  <button type="button" onClick={() => goTasks('todo')}><b className="c2">{todo + changes}</b>To do</button>
-                  <button type="button" onClick={() => goTasks('submitted')}><b>{inReview}</b>In review</button>
-                </div>
-              </div>
-              <div className="sd-mini mt-5">
-                <button type="button" onClick={() => setTab('pj')}><FolderGit2 size={15} /><b>{activeProjects}</b> active project{activeProjects !== 1 ? 's' : ''}</button>
-                <button type="button" onClick={() => setTab('rq')}><Inbox size={15} /><b>{requests}</b> join request{requests !== 1 ? 's' : ''}</button>
-                <span><Star size={15} />{stats.count > 0 ? <><b>{stats.avg.toFixed(1)}</b> avg rating</> : 'No ratings yet'}</span>
-              </div>
-            </section>
-
-            <section className="surface pf-card p-5">
-              <h2 className="pf-h4 mb-3">Next up <small>closest deadline first</small></h2>
+        <div className="dpane mt-6 w-grid2">
+          <div className="w-col">
+            <WBox title="This week" meta={`${nextUp.length} task${nextUp.length !== 1 ? 's' : ''}`}>
               {loading ? (
                 <div className="flex justify-center py-3"><LoopLoader size={22} /></div>
               ) : nextUp.length === 0 ? (
-                <div className="sd-empty">
+                <div className="w-inner w-empty">
                   <ClipboardList size={22} />
-                  <p>Nothing waiting on you. Join a project to get tasks from its owner.</p>
-                  <Link to="/explore" className="btn btn-ghost btn-sm">Explore projects</Link>
+                  <span>Nothing waiting on you. Join a project to get tasks from its owner.</span>
+                  <Link to="/explore" className="w-btn-l w-btn-sm">Explore projects</Link>
                 </div>
               ) : (
-                <ul className="sd-next">
+                <div className="w-tasks">
                   {nextUp.map((t) => (
-                    <li key={t.id}>
-                      <button type="button" onClick={() => goTasks('all')}>
-                        <span className={cn('sd-dot', t.status === 'changes_requested' && 'warn')} />
-                        <span className="sd-next-t"><b>{t.title}</b><small>{t.project?.title ?? 'Project'}{t.due_date ? ` · due ${t.due_date}` : ''}</small></span>
-                        {t.status === 'changes_requested' ? <span className="ref-tag">Needs changes</span> : <ArrowRight size={14} />}
-                      </button>
-                    </li>
+                    <button key={t.id} type="button" className="w-task text-left" onClick={() => goTasks('all')}>
+                      <span className={cn('w-dot', t.status === 'changes_requested' && 'warn')} />
+                      <span className="min-w-0 truncate">{t.title}</span>
+                      <small>{t.status === 'changes_requested' ? 'needs changes' : t.due_date ? `due ${t.due_date}` : t.project?.title ?? ''}</small>
+                    </button>
                   ))}
-                </ul>
+                </div>
               )}
-              <div className="sd-quick mt-4">
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => openPanel('messages')}><Inbox size={14} /> Messages{unreadMessages > 0 && <span className="pf-count amber">{unreadMessages}</span>}</button>
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setTab('rq')}><Briefcase size={14} /> My applications</button>
-                <Link to={`/creators/${profile.handle}`} className="btn btn-ghost btn-sm"><UserCircle2 size={14} /> View profile</Link>
-                <Link to="/settings/profile" className="btn btn-ghost btn-sm"><Pencil size={14} /> Edit profile</Link>
+            </WBox>
+
+            <WBox title="My projects" meta={<button type="button" className="sd-link" onClick={() => setTab('pj')}>View all <ArrowRight size={12} /></button>}>
+              {loading ? <div className="flex justify-center py-3"><LoopLoader size={22} /></div> : allProjects.length === 0 ? (
+                <div className="w-inner w-empty">
+                  <GitBranch size={22} />
+                  <span>You haven't published or joined a project yet.</span>
+                  <Link to="/publish" className="w-btn-l w-btn-sm"><Plus size={14} /> Publish your first project</Link>
+                </div>
+              ) : (
+                <div className="w-list">
+                  {allProjects.slice(0, 4).map((p) => (
+                    <Link key={p.id} to={`/projects/${p.slug}`} className="w-lrow">
+                      <span className="w-dot" style={{ background: projectDot(p.id) }} />
+                      <span><b>{p.title}</b><small>{statusLabel[p.status]}{joinedIds.has(p.id) ? ' · Member' : ' · Owner'}</small></span>
+                      {appCounts[p.id] > 0 && <span className="w-ct">{appCounts[p.id]}</span>}
+                      <ArrowRight size={14} />
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </WBox>
+
+            <WBox title="Shortcuts">
+              <div className="w-links">
+                <button type="button" className="w-btn-l w-btn-sm" onClick={() => openPanel('messages')}><Inbox size={14} /> Messages{unreadMessages > 0 && <span className="w-ct">{unreadMessages}</span>}</button>
+                <button type="button" className="w-btn-l w-btn-sm" onClick={() => setTab('rq')}><Briefcase size={14} /> My applications</button>
+                <Link to={`/creators/${profile.handle}`} className="w-btn-l w-btn-sm"><UserCircle2 size={14} /> View profile</Link>
+                <Link to="/settings/profile" className="w-btn-l w-btn-sm"><Pencil size={14} /> Edit profile</Link>
               </div>
-            </section>
+            </WBox>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[1.25fr_1fr]">
-            <section className="surface pf-card p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="pf-h4">My projects</h2>
-                <button type="button" className="sd-link" onClick={() => setTab('pj')}>View all <ArrowRight size={12} /></button>
-              </div>
-              {loading ? <div className="flex justify-center py-3"><LoopLoader size={22} /></div> : allProjects.length === 0 ? (
-                <div className="sd-empty">
-                  <GitBranch size={22} />
-                  <p>You haven't published or joined a project yet.</p>
-                  <Link to="/publish" className="btn btn-ghost btn-sm"><Plus size={14} /> Publish your first project</Link>
-                </div>
-              ) : (
-                <ul className="sd-list">
-                  {allProjects.slice(0, 4).map((p) => (
-                    <li key={p.id}>
-                      <Link to={`/projects/${p.slug}`}>
-                        <span className="sd-list-t"><b>{p.title}</b><small>{statusLabel[p.status]}{joinedIds.has(p.id) ? ' · Member' : ' · Owner'}</small></span>
-                        {appCounts[p.id] > 0 && <span className="pf-count amber">{appCounts[p.id]} request{appCounts[p.id] !== 1 ? 's' : ''}</span>}
-                        <ArrowRight size={14} />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section className="surface pf-card p-5">
-              <h2 className="pf-h4 mb-3">Recent activity</h2>
+          <div className="w-col">
+            <WKpis items={[
+              { label: 'Verified', value: approved },
+              { label: 'In review', value: inReview },
+              { label: 'Projects', value: allProjects.length },
+              { label: 'Rating', value: stats.count > 0 ? stats.avg.toFixed(1) : '—' },
+            ]} />
+            <WBox title="Contributions" meta="Last 26 weeks">
+              <WContribHeat studentId={profile.id} />
+            </WBox>
+            <WBox title="Recent activity" meta={`${pct}% of tasks approved`}>
               {feed.length === 0 ? (
-                <p className="text-sm text-slate-500">Activity from your tasks, applications and messages will show up here.</p>
+                <p className="w-muted">Activity from your tasks, applications and messages will show up here.</p>
               ) : (
-                <div className="dash-feed" style={{ maxHeight: 'none' }}>
+                <div className="w-feed">
                   {feed.map((f) => (
-                    <div key={f.id} className="fi">
-                      <span className="sd-fi-ic">{f.icon}</span>
-                      <div>{f.text}<small>{relativeDate(f.at)}</small></div>
+                    <div key={f.id} className="w-frow">
+                      <span className="w-av" style={{ background: 'var(--sky)', color: 'var(--iris)' }}>{f.icon}</span>
+                      <span className="w-frow-t">{f.text}</span>
+                      <small>{relativeDate(f.at)}</small>
                     </div>
                   ))}
                 </div>
               )}
-              <div className="mt-4">{stats.count > 0 ? <Rating value={stats.avg} count={stats.count} /> : <NoRating label="No reviews yet" />}</div>
-            </section>
+            </WBox>
+            <WBox title="Invitations" meta={pendingInvites ? `${pendingInvites} new` : 'None waiting'}>
+              <div className="w-inner w-inv">
+                <span className="w-logo" style={{ background: pendingInvites ? '#12996a' : '#c3c9d2' }}><Users size={16} /></span>
+                <div className="min-w-0"><b>{pendingInvites ? `${pendingInvites} team${pendingInvites !== 1 ? 's' : ''} invited you` : 'No invitations right now'}</b><small>Project owners can invite you to join their team</small></div>
+                <Link to="/my-invitations" className="w-btn-d">{pendingInvites ? 'Review' : 'Open'}</Link>
+              </div>
+            </WBox>
           </div>
         </div>
       )}

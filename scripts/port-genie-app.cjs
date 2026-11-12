@@ -28,5 +28,9 @@ const root = [];
 css.walkRules((r) => { if (r.selector.trim() === ':root') r.walkDecls((d) => root.push(`  ${d.prop}:${d.value};`)); });
 let text = `/* =====================================================================\n   WORKSPACE SHELL — GENERATED from docs/redesign/webloop-genie-demo.html (v4)\n   by scripts/port-genie-app.cjs. Exact values; demo classes carry a w- prefix.\n   The demo toggles .app with html.in-app; here the shell is only rendered\n   when it should show, so it is always visible (see app-shell-app.css).\n   ===================================================================== */\n.w-app,.w-cmdk{\n${root.join('\n')}\n}\n` + keep.join('\n') + '\n';
 text = text.replace(/'Geist Mono'/g, "'Geist Mono Variable','Geist Mono'").replace(/'Geist'(?! Mono)/g, "'Geist Variable','Geist'");
+// The demo's `#app button{font:inherit;color:inherit}` reset would otherwise beat every
+// page's own classes (Tailwind utilities, .pill, .w-chip …) on buttons inside the panel.
+// Zero specificity keeps it a pure reset: any class on a button wins, as in the demo.
+text = text.replace(/^\.w-app button\{([^}]*)\}$/m, ':where(.w-app) :where(button){$1}');
 fs.writeFileSync(out, text);
 console.log('rules', keep.length);

@@ -19,3 +19,8 @@ export function useWorkspace(): WorkspaceApi {
 /** Stable colour dot for a project (the demo's YOUR PROJECTS palette). */
 const DOTS = ['#3d8ef5', '#12996a', '#8f6be8', '#f0a92a', '#e7743a', '#0069e0'];
 export const projectDot = (seed: string) => DOTS[[...seed].reduce((a, c) => a + c.charCodeAt(0), 0) % DOTS.length];
+
+/** Same as useWorkspace, but null when the page renders outside the shell (site view). */
+export function useWorkspaceMaybe(): WorkspaceApi | null {
+  return useContext(WorkspaceContext);
+}

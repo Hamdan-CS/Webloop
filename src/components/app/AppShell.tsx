@@ -18,6 +18,7 @@ import { WIcon, type IconName } from './icons';
 import { WAvatar } from './ui';
 import './app-shell.css';
 import './app-shell-app.css';
+import './workspace-pages.css';
 
 type View = { key: string; label: string; icon: IconName; to?: string; count?: number; dot?: number; action?: () => void; match: (p: string) => boolean };
 

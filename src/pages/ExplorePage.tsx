@@ -8,6 +8,8 @@ import type { Project } from '@/types';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { Select } from '@/components/shared/ui/Select';
 import { cn } from '@/utils/cn';
+import { WPageHeader } from '@/components/app/ui';
+import { useWorkspaceMaybe } from '@/components/app/workspaceContext';
 import { statusLabel, statusTone } from '@/utils/labels';
 import { Badge } from '@/components/shared/ui/Badge';
 
@@ -27,6 +29,7 @@ const SORTS = [
 
 export function ExplorePage() {
   const navigate = useNavigate();
+  const ws = useWorkspaceMaybe();
   const [searchParams, setSearchParams] = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +88,8 @@ export function ExplorePage() {
   return (
     <div className="container-page py-8">
       {/* Fan hero — 3 angled project cards, matches the reference's ex-hero */}
-      {!loading && fan.length >= 3 && (
+      {ws && <WPageHeader title="Explore projects" subtitle="Briefs from companies and universities, and student projects looking for teammates." />}
+      {!ws && !loading && fan.length >= 3 && (
         <div className="ex-hero">
           <div className="sec-hd">
             <h1 className="ex-hero-h1">Explore <span className="hl">Projects</span></h1>
