@@ -61,7 +61,7 @@ export function Select({ label, value, options, onChange, className, disabled, s
   return (
     <div className={cn('block', className)} ref={rootRef}>
       {label && (
-        <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">
+        <span className="label-overline block mb-1.5">
           {label}
         </span>
       )}
@@ -74,9 +74,9 @@ export function Select({ label, value, options, onChange, className, disabled, s
           aria-haspopup="listbox"
           aria-expanded={open}
           className={cn(
-            'wl-select-btn flex w-full items-center justify-between gap-2 rounded-lg border bg-ink-900/60 text-left text-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
-            size === 'sm' ? 'px-2 py-1 text-xs' : 'px-3 py-2.5 text-sm',
-            open ? 'border-accent-400/40' : 'border-white/10 hover:border-white/20',
+            'wl-select-btn flex w-full items-center justify-between gap-2 rounded-input border bg-paper text-left text-ink transition-[border-color,box-shadow] disabled:opacity-50 disabled:cursor-not-allowed',
+            size === 'sm' ? 'h-9 px-3 text-[13px]' : 'h-12 px-4 text-[15px]',
+            open ? 'border-iris' : 'border-line hover:border-[#c9dcf2]',
           )}
         >
           <span className="truncate">{current?.label ?? 'Select…'}</span>
@@ -93,7 +93,7 @@ export function Select({ label, value, options, onChange, className, disabled, s
               role="listbox"
               data-wl-select-portal=""
               style={{ position: 'fixed', top: position.top, left: position.left, width: position.width }}
-              className="z-[90] max-h-60 overflow-auto rounded-lg border border-white/10 bg-ink-900/95 backdrop-blur-md py-1 shadow-card animate-fade-in-up"
+              className="z-[90] max-h-60 overflow-auto rounded-input border border-line bg-paper p-1 shadow-float animate-fade-in-up"
             >
               {options.map((o) => {
                 const isSelected = o.value === value;
@@ -108,8 +108,8 @@ export function Select({ label, value, options, onChange, className, disabled, s
                       setOpen(false);
                     }}
                     className={cn(
-                      'flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors',
-                      isSelected ? 'bg-accent-500/15 text-accent-200' : 'text-slate-300 hover:bg-white/5 hover:text-white',
+                      'flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors',
+                      isSelected ? 'bg-sky text-ink font-medium' : 'text-graphite hover:bg-sky hover:text-ink',
                     )}
                   >
                     <span className="truncate">{o.label}</span>

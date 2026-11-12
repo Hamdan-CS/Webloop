@@ -15,8 +15,15 @@ export function usePreset() {
   return ctx;
 }
 
+/**
+ * Look presets (glass / minimal) are switched off for the Genie redesign:
+ * a preset saved by a visitor would override the new surfaces. Flip to
+ * true to bring them back (presets.css is untouched).
+ */
+export const PRESETS_ENABLED = false;
+
 function getInitialPreset(): PresetId {
-  if (typeof window === 'undefined') return 'default';
+  if (typeof window === 'undefined' || !PRESETS_ENABLED) return 'default';
   const stored = localStorage.getItem('webloop-preset');
   if (stored && stored in presets) return stored as PresetId;
   return 'default';
@@ -35,6 +42,7 @@ export function PresetProvider({ children }: { children: ReactNode }) {
   }, [preset]);
 
   const setPreset = useCallback((p: PresetId) => {
+    if (!PRESETS_ENABLED) p = 'default';
     setPresetState(p);
     localStorage.setItem('webloop-preset', p);
   }, []);

@@ -1,0 +1,71 @@
+/* ============================================================
+   LAYOUT — page frame and section rhythm (F3, BLUEPRINT section B).
+   Plain CSS imported before Tailwind's layers, so utility classes on
+   the same element still win. Uses tokens.css values only.
+   ============================================================ */
+
+/* A page's outer frame: sits on the sky canvas under the floating nav. */
+.page {
+  min-height: 100%;
+  padding-bottom: clamp(56px, 8vw, 120px);
+}
+
+/* Page hero: eyebrow → headline → lead (→ actions), centred by default. */
+.page-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: clamp(48px, 8vw, 112px) 20px clamp(32px, 5vw, 64px);
+  text-align: center;
+  isolation: isolate;
+}
+.page-hero.left { align-items: flex-start; text-align: left; }
+.page-hero h1 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(40px, 6vw, 88px);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  text-wrap: balance;
+  max-width: 16ch;
+}
+.page-hero p {
+  font-size: clamp(16px, 1.4vw, 19px);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: var(--graphite);
+  max-width: 52ch;
+}
+.page-hero .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 8px; }
+.page-hero.left .actions { justify-content: flex-start; }
+
+/* Vertical rhythm between page sections (80–120px, per the reference). */
+.section { padding-block: clamp(56px, 8vw, 120px); }
+.section + .section { padding-top: 0; }
+.section-tight { padding-block: clamp(32px, 5vw, 64px); }
+
+/* Key facts as label / value rows (Baselayer pattern). */
+.facts { display: grid; gap: 0; }
+.facts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line-hex);
+  font-size: 14px;
+}
+.facts > div:last-child { border-bottom: 0; }
+.facts dt,
+.facts .k {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+.facts dd,
+.facts .v { color: var(--ink); font-weight: 500; text-align: right; }
