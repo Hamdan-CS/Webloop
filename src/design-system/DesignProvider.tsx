@@ -3,6 +3,7 @@ import { ThemeProvider } from './components/ThemeProvider';
 import { PresetProvider } from './components/PresetProvider';
 import { BackgroundProvider } from './components/BackgroundProvider';
 import { configureGsapDefaults } from './animations/gsap.config';
+import { SmoothScroll } from './motion/SmoothScroll';
 import './themes/presets.css';
 
 /**
@@ -21,7 +22,9 @@ export function DesignProvider({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
       <PresetProvider>
-        <BackgroundProvider>{children}</BackgroundProvider>
+        <BackgroundProvider>
+          <SmoothScroll>{children}</SmoothScroll>
+        </BackgroundProvider>
       </PresetProvider>
     </ThemeProvider>
   );
