@@ -1,81 +1,134 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { gsap } from '@/design-system/animations/gsap.config';
-import { useScrollScene, SCENE_MEDIA } from '@/design-system/motion/useScrollScene';
-import { RING_PROJECTS, RING_BG, type RingTone } from './homeContent';
+import { useScrollScene } from '@/design-system/motion/useScrollScene';
+import { fetchFeaturedProjects } from '@/services/api';
+import { art, type ArtKind } from '@/data/homeArt';
+import type { Project } from '@/types';
 
-const N = 20;
-const GLYPH: Record<RingTone, JSX.Element> = {
-  aqua: <><rect x="4" y="5" width="16" height="14" rx="3" fill="#3d8ef5" /><path d="M4 9h16" stroke="#fff" strokeWidth="1.6" /></>,
-  peach: <><rect x="7" y="3" width="10" height="18" rx="3" fill="#e7743a" /><circle cx="12" cy="17.5" r="1.2" fill="#fff" /></>,
-  lav: <path d="M5 18V11M10 18V6M15 18v-9M20 18V13" stroke="#8f6be8" strokeWidth="2.6" strokeLinecap="round" />,
-  solar: <><rect x="4" y="7" width="16" height="11" rx="4" fill="#e8a920" /><circle cx="9" cy="12.5" r="1.6" fill="#fff" /><path d="M14.5 11.5h2.5M15.7 10.3v2.5" stroke="#fff" strokeWidth="1.4" /></>,
-  mint: <><circle cx="12" cy="12" r="7.5" fill="#1fa968" /><path d="M8.6 12.2l2.4 2.4 4.4-4.6" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" /></>,
-};
+const NT = 28;
+const FRAMES = ['linear-gradient(135deg,#bfe3ff,#e7d6ff)', 'linear-gradient(135deg,#ffd1b8,#fff2be)', 'linear-gradient(135deg,#c9f1dc,#bfe3ff)', 'linear-gradient(135deg,#e4ccff,#ffd1e8)', 'linear-gradient(135deg,#fff2be,#c9f1dc)'];
+const ART_KINDS: ArtKind[] = ['mountain', 'campus', 'city', 'code', 'cubes', 'dash', 'neural', 'notes', 'office', 'orb', 'phones', 'pixel', 'rays', 'sunset'] as ArtKind[];
+const TYPE_LABEL: Record<string, string> = { student: 'Student project', company: 'Company brief', university: 'University lab' };
+
+type Tile = { title: string; img: string; line: string; tags: string[]; href: string };
+const sstep = (x: number) => { const t = Math.min(1, Math.max(0, x)); return t * t * (3 - 2 * t); };
+
+function toTile(p: Project, i: number): Tile {
+  const owner = (p as unknown as { owner?: { display_name?: string } }).owner?.display_name;
+  const members = (p as unknown as { members?: unknown[] }).members?.length ?? 0;
+  const status = String(p.status ?? '').replace(/_/g, ' ');
+  return {
+    title: p.title,
+    img: p.cover_image_url || art(ART_KINDS[i % ART_KINDS.length], (i % 5) + 1),
+    line: [TYPE_LABEL[String(p.project_type)] ?? 'Project', owner].filter(Boolean).join(' · ') + ` · ${members || p.team_size || 1} ${((members || p.team_size || 1) === 1) ? 'member' : 'members'}${status ? ` · ${status}` : ''}`,
+    tags: [p.category, ...(((p as unknown as { skills?: { name?: string }[] }).skills ?? []).map((s) => s.name))].filter(Boolean).slice(0, 2) as string[],
+    href: `/projects/${p.slug}`,
+  };
+}
 
 /**
- * 7 · Project ring (pinned 120%, scrub .6). Twenty pastel project tiles on
- * a circle that turns as you scroll; hovering or focusing a tile shows that
- * project in the centre. Mobile: the ring turns with scroll, no pin.
+ * 7 · Curved project carousel (pinned 260%, scrub .8). The demo's renderArc
+ * maths, unchanged: the arc opens up as it travels, tiles enter right and
+ * leave left, the focal tile is largest; hover peeks, click selects. Fed by
+ * the real published projects (fetchFeaturedProjects); tiles without a
+ * cover use the site's own project artwork.
  */
-export function ProjectArc() {
+export function ProjectArc({ reduced }: { reduced: boolean }) {
   const ref = useRef<HTMLElement>(null);
-  const ringRef = useRef<HTMLDivElement>(null);
-  const [sel, setSel] = useState(0);
-  const [R, setR] = useState(360);
+  const arcRef = useRef<HTMLDivElement>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [shown, setShown] = useState(0);
+  const [swap, setSwap] = useState(0);
+  const state = useRef({ p: 0, enter: 1, sel: -1, hover: -1, focal: 0, shown: -2 });
 
+  useEffect(() => { let live = true; fetchFeaturedProjects(16).then((d) => { if (live) setProjects(d); }).catch(() => {}); return () => { live = false; }; }, []);
+  const base = useMemo(() => projects.map(toTile), [projects]);
+  const tiles = useMemo(() => (base.length ? Array.from({ length: NT }, (_, i) => base[i % base.length]) : []), [base]);
+
+  // per-frame layout (demo renderArc), redrawn only when inputs change
   useEffect(() => {
-    const place = () => setR(Math.min(innerWidth * 0.4, innerHeight * 0.36, 520));
-    place();
-    window.addEventListener('resize', place);
-    return () => window.removeEventListener('resize', place);
-  }, []);
+    const arc = arcRef.current;
+    if (!arc || !tiles.length) return;
+    const els = [...arc.querySelectorAll<HTMLElement>('.gh-at')];
+    const arcEase = gsap.parseEase('power1.inOut');
+    const showInfo = (i: number) => { const st = state.current; if (i === st.shown) return; st.shown = i; setShown(i); setSwap((n) => n + 1); };
+    const render = (p: number, enter = 1) => {
+      const st = state.current;
+      const W = innerWidth, H = arc.clientHeight || innerHeight, mob = W < 768;
+      const ts = mob ? 104 : Math.min(172, Math.max(124, W * 0.108));
+      arc.style.setProperty('--ts', `${ts}px`);
+      const e = arcEase(p);
+      const R = (mob ? W * 1.1 : W * 0.44) * (1 + 0.7 * e);
+      const yF = H * ((mob ? 0.56 : 0.6) - 0.05 * e) + (1 - enter) * H * 0.4;
+      const cx = W / 2, cy = yF + R;
+      const stepDeg = ((ts * 1.18) / R) * 180 / Math.PI;
+      const c = 3 + 17 * p;
+      let best = 1e9, bi = 0;
+      els.forEach((t, i) => {
+        const phi = (i - c) * stepDeg, d = Math.abs(phi);
+        if (d > 100) { t.style.visibility = 'hidden'; return; }
+        t.style.visibility = 'visible';
+        const rad = (phi * Math.PI) / 180;
+        const x = cx + R * Math.sin(rad), y = cy - R * Math.cos(rad);
+        const f = sstep(1 - d / (32 + 18 * e));
+        const s = (0.56 + 0.72 * f) * (i === st.sel ? 1.06 : 1);
+        const o = d < 66 ? 1 : Math.max(0, 1 - (d - 66) / 24);
+        t.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) rotate(${(phi * 0.85).toFixed(2)}deg) rotateY(${(-phi * 0.5).toFixed(1)}deg) scale(${s.toFixed(3)})`;
+        t.style.opacity = o.toFixed(3);
+        t.style.zIndex = String(Math.round(f * 100) + (i === st.hover ? 200 : 0));
+        if (d < best) { best = d; bi = i; }
+      });
+      st.focal = bi;
+      showInfo(st.sel >= 0 ? st.sel : st.hover >= 0 ? st.hover : st.focal);
+    };
+    let key = '';
+    const tick = () => {
+      const st = state.current;
+      const k = `${st.p.toFixed(4)}|${st.enter.toFixed(3)}|${innerWidth}|${innerHeight}|${st.hover}|${st.sel}`;
+      if (k !== key) { key = k; render(st.p, st.enter); }
+    };
+    if (reduced) { state.current.p = 0.45; state.current.enter = 1; }
+    gsap.ticker.add(tick);
+    const onOver = (ev: PointerEvent) => { const t = (ev.target as HTMLElement).closest<HTMLElement>('.gh-at'); state.current.hover = t ? Number(t.dataset.i) : -1; };
+    const onLeave = () => { state.current.hover = -1; };
+    const onFocus = (ev: FocusEvent) => { const t = (ev.target as HTMLElement).closest<HTMLElement>('.gh-at'); if (t) state.current.hover = Number(t.dataset.i); };
+    const onClick = (ev: MouseEvent) => { const t = (ev.target as HTMLElement).closest<HTMLElement>('.gh-at'); if (!t) return; const i = Number(t.dataset.i), st = state.current; st.sel = st.sel === i ? -1 : i; els.forEach((x) => x.classList.toggle('gh-sel', Number(x.dataset.i) === st.sel)); };
+    arc.addEventListener('pointerover', onOver); arc.addEventListener('pointerleave', onLeave); arc.addEventListener('focusin', onFocus); arc.addEventListener('click', onClick);
+    return () => { gsap.ticker.remove(tick); arc.removeEventListener('pointerover', onOver); arc.removeEventListener('pointerleave', onLeave); arc.removeEventListener('focusin', onFocus); arc.removeEventListener('click', onClick); };
+  }, [tiles, reduced]);
 
   useScrollScene(ref, (mm) => {
-    mm.add(SCENE_MEDIA.desktop, () => {
-      gsap.fromTo(ringRef.current, { rotate: 40 }, { rotate: -100, ease: 'none', scrollTrigger: { trigger: ref.current, start: 'top top', end: '+=120%', pin: true, scrub: 0.6 } });
-      gsap.from('.gh-rt', { scale: 0, stagger: 0.03, duration: 0.6, ease: 'back.out(2)', scrollTrigger: { trigger: ref.current, start: 'top 70%' } });
+    const st = state.current;
+    mm.add('(min-width: 768px) and (prefers-reduced-motion: no-preference)', () => {
+      gsap.to(st, { p: 1, ease: 'none', scrollTrigger: { trigger: ref.current, start: 'top top', end: '+=260%', pin: true, scrub: 0.8 } });
+      gsap.fromTo(st, { enter: 0 }, { enter: 1, ease: 'none', scrollTrigger: { trigger: ref.current, start: 'top bottom', end: 'top top', scrub: 0.8 } });
     });
-    mm.add(SCENE_MEDIA.mobile, () => {
-      gsap.fromTo(ringRef.current, { rotate: 40 }, { rotate: -60, ease: 'none', scrollTrigger: { trigger: ref.current, start: 'top bottom', end: 'bottom top', scrub: 0.6 } });
+    mm.add('(max-width: 767px) and (prefers-reduced-motion: no-preference)', () => {
+      st.enter = 1;
+      gsap.fromTo(st, { p: 0 }, { p: 1, ease: 'none', scrollTrigger: { trigger: ref.current, start: 'top bottom', end: 'bottom top', scrub: 0.6 } });
     });
   });
 
-  const p = RING_PROJECTS[sel];
+  const info = tiles[shown] ?? tiles[0];
   return (
-    <section ref={ref} className="gh-ring-sec" aria-labelledby="gh-ring-h">
-      <div className="gh-ring-hd">
-        <span className="gh-mono">Explore</span>
-        <h2 id="gh-ring-h" className="gh-display" style={{ marginTop: 12 }}>Projects from every field</h2>
-        <p className="gh-lead">Scroll to turn the ring. Hover a project to peek inside.</p>
+    <section ref={ref} className="gh-arc-sec" id="explore">
+      <div className="gh-arc-hd"><span className="gh-mono">Explore</span><h2 className="gh-h-display" style={{ marginTop: 12 }}>Projects from every field</h2><p className="gh-lead">Scroll to move through them. Hover to peek, click to select.</p></div>
+      <div ref={arcRef} className="gh-arc">
+        {tiles.map((t, i) => (
+          <button key={i} type="button" className="gh-at" data-i={i} aria-label={t.title}>
+            <span className="gh-at-fr" style={{ ['--fr' as string]: FRAMES[i % FRAMES.length] }}><img alt="" src={t.img} decoding="async" loading="lazy" /></span>
+          </button>
+        ))}
       </div>
-      <div ref={ringRef} className="gh-ring">
-        {Array.from({ length: N }, (_, i) => {
-          const idx = i % RING_PROJECTS.length;
-          const [name, , , tone] = RING_PROJECTS[idx];
-          const a = (i / N) * Math.PI * 2 - Math.PI / 2;
-          return (
-            <button
-              key={i}
-              type="button"
-              className="gh-rt"
-              aria-label={name}
-              onPointerEnter={() => setSel(idx)}
-              onFocus={() => setSel(idx)}
-              style={{ left: Math.cos(a) * R, top: Math.sin(a) * R, transform: `rotate(${(a * 180) / Math.PI + 90}deg)` }}
-            >
-              <span className="gh-rt-in" style={{ background: RING_BG[tone] }}>
-                <svg viewBox="0 0 24 24" aria-hidden="true">{GLYPH[tone]}</svg>
-                <small>{name}</small>
-              </span>
-            </button>
-          );
-        })}
-      </div>
-      <div className="gh-ring-info" aria-live="polite">
-        <b>{p[0]}</b>
-        <span>{p[1]}</span>
-        <span className="gh-chip">{p[2]}</span>
-      </div>
+      {info && (
+        <div key={swap} className={`gh-arc-info${swap > 1 ? ' gh-swap' : ''}`}>
+          <img alt="" src={info.img} />
+          <div className="gh-t"><b>{info.title}</b><small>{info.line}</small><div className="gh-tags">{info.tags.map((t) => <span key={t}>{t}</span>)}</div></div>
+          <Link className="gh-go" to={info.href}>Open project →</Link>
+        </div>
+      )}
+      <span className="gh-arc-hint">Scroll ↓</span>
     </section>
   );
 }

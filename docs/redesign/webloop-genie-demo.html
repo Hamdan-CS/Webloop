@@ -52,12 +52,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* ---------- intro curtain ---------- */
 #intro{position:fixed;inset:0;z-index:200;pointer-events:none;overflow:hidden}
 #intro .veil{position:absolute;inset:0;background:var(--sky)}
-#intro .side{position:absolute;top:-10%;bottom:-10%;width:75%;will-change:transform}
-#intro .side.l{left:-12%} #intro .side.r{right:-12%}
-#intro .side .cloud{position:absolute}
-#intro .mark{position:absolute;left:50%;top:50%;translate:-50% -50%;display:flex;flex-direction:column;align-items:center;gap:14px;z-index:3}
-#intro .mark svg path{stroke-dasharray:1;stroke-dashoffset:1}
-#intro .mark span{font:500 15px var(--f-ui);color:var(--graphite);opacity:0}
+#introClouds{position:absolute;inset:0}
+#intro .ic{position:absolute;will-change:transform,opacity}
 html.no-intro #intro{display:none}
 
 /* ---------- nav (v3): floating bar, sliding active pill, hides on scroll down ---------- */
@@ -108,26 +104,36 @@ html.no-intro #intro{display:none}
 #orb[data-form="badge"] .badge{opacity:1}
 @keyframes spin{to{rotate:360deg}}
 
-/* ---------- story sentence ---------- */
-.story{position:relative;height:100vh;display:grid;place-items:center;background:var(--sky);overflow:hidden}
-.story-in{width:min(1100px,100% - 48px);text-align:center}
-.story .label{font:500 18px var(--f-ui);color:var(--graphite);margin-bottom:28px}
-.sentence{margin:0;font:500 clamp(34px,4.6vw,66px)/1.22 var(--f-display);letter-spacing:-.035em}
-.sentence .w{opacity:.14;transition:opacity .2s}
-.sentence .w.lit{opacity:1}
-.ico{display:inline-grid;place-items:center;width:1.05em;height:1.05em;border-radius:.3em;vertical-align:-.16em;margin:0 .12em;box-shadow:0 10px 20px -10px rgba(0,60,150,.35);will-change:transform}
-.ico svg{width:56%;height:56%}
-.ico.peach{background:var(--g-peach)}.ico.lav{background:var(--g-violet)}.ico.mint{background:linear-gradient(#ecfbf3,#bdeed4)}.ico.solar{background:var(--g-solar)}.ico.aqua{background:var(--g-aqua)}
-.ico.slot{background:transparent;box-shadow:inset 0 0 0 2px rgba(242,155,26,.35);border-radius:50%}
+/* ---------- story (v4): clouds slide in, text + stickers form, ends as the app icon ---------- */
+.story{position:relative;height:100vh;overflow:hidden;background:linear-gradient(180deg,var(--sky) 0%,#f7fbff 30%,#fff 100%)}
+.story-in{position:absolute;left:50%;top:50%;translate:-50% -50%;width:min(1100px,100% - 48px);text-align:center;z-index:3}
+.story .label{font:500 18px var(--f-ui);color:var(--graphite);margin-bottom:26px}
+.sentence{margin:0;font:500 clamp(34px,4.6vw,68px)/1.2 var(--f-display);letter-spacing:-.035em}
+.sentence .ln{display:block}
+.sentence .w{display:inline-block;will-change:transform}
+.ico{display:inline-grid;place-items:center;width:1.12em;height:1.12em;border-radius:50%;vertical-align:-.2em;margin:0 .06em;box-shadow:0 0 0 .05em #fff,0 .1em .26em rgba(30,70,140,.16);will-change:transform;position:relative;z-index:2}
+.ico svg{width:68%;height:68%}
+.ico.slot{background:transparent;box-shadow:inset 0 0 0 2px rgba(242,155,26,.3)}
+.st-cloud{position:absolute;z-index:1;pointer-events:none;will-change:transform}
+.st-cloud.l{left:3%;top:9%;width:min(320px,24vw)}
+.st-cloud.r{right:-2%;bottom:6%;width:min(380px,28vw);opacity:.95}
+.story .stage{position:absolute;inset:0;display:grid;place-items:center;z-index:4;pointer-events:none}
+.story .stage .xcard{pointer-events:auto}
+.xcard{position:relative;width:120px;height:120px;border-radius:34px;padding:3px;background:var(--iris-grad);will-change:width,height;box-shadow:0 40px 80px -40px rgba(0,80,190,.45)}
+.xcard-in{position:relative;width:100%;height:100%;border-radius:31px;background:var(--card);overflow:hidden}
+.xseed{position:absolute;inset:0;z-index:2;display:grid;place-items:center;background:var(--g-aqua)}
+html.rm .sentence .w{opacity:1}
+@media (max-width:767px){
+  .story{height:auto;min-height:100vh;padding:120px 0 80px}
+  .story-in{position:relative;left:auto;top:auto;translate:none;margin:0 auto}
+  .story .stage{position:relative;inset:auto;margin-top:48px}
+  .st-cloud.l{width:40vw}.st-cloud.r{width:46vw}
+}
+html.rm .story{height:auto;min-height:100vh;padding:120px 0 80px}
+html.rm .story-in{position:relative;left:auto;top:auto;translate:none;margin:0 auto}
+html.rm .story .stage{position:relative;inset:auto;margin-top:48px}
+html.rm #flood{display:none}
 
-/* ---------- expanding card ---------- */
-.expand{position:relative;height:100vh;overflow:hidden;background:var(--sky)}
-.expand .stage{position:absolute;inset:0;display:grid;place-items:center}
-.xcard{position:relative;width:240px;height:160px;border-radius:40px;padding:3px;background:var(--iris-grad);will-change:width,height;box-shadow:0 60px 100px -50px rgba(0,80,190,.55)}
-.xcard-in{position:relative;width:100%;height:100%;border-radius:37px;background:var(--card);overflow:hidden}
-.xseed{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:10px;text-align:center}
-.xseed .plus{width:52px;height:52px;border-radius:16px;background:var(--powder);display:grid;place-items:center;color:var(--iris);font:500 30px var(--f-ui)}
-.xseed small{font:500 14px var(--f-ui);color:var(--graphite)}
 .xapp{position:absolute;inset:0;opacity:0;display:grid;grid-template-columns:220px 1fr;font-family:var(--f-ui)}
 .xside{border-right:1px solid var(--line);padding:22px 16px;display:flex;flex-direction:column;gap:6px;background:#f7fbff}
 .xside .logo{font-size:17px;margin:0 0 18px 6px}
@@ -227,11 +233,12 @@ html.no-intro #intro{display:none}
 .hero h1 .ln>span{display:inline-flex;align-items:center;justify-content:center;flex-wrap:wrap;column-gap:.22em;max-width:100%}
 .hero h1 .ln>span>span{line-height:1.12}
 .rot{position:relative;display:inline-grid;justify-items:start;overflow:hidden;height:1.12em;line-height:1.12em;transition:width .7s var(--ease)}
-.rot b{grid-area:1/1;font-weight:500;padding-right:.04em;transition:transform .8s var(--ease),opacity .6s;transform:translateY(110%);opacity:0;white-space:nowrap}
-.rot b.on{transform:none;opacity:1}.rot b.out{transform:translateY(-110%);opacity:0}
-.faces{display:inline-flex;align-items:center;align-self:center}
-.faces i{width:.6em;height:.6em;border-radius:50%;margin-left:-.17em;border:.06em solid var(--sky);display:block;transition:background .6s,transform .6s var(--ease)}
-.faces i:first-child{margin-left:0}
+.rot .rw{grid-area:1/1;white-space:nowrap;display:inline-block;padding-right:.04em}
+.rot .ch{display:inline-block;will-change:transform}
+.bubs{display:inline-flex;align-items:center;align-self:center;height:1em}
+.bubs i{width:.82em;height:.82em;border-radius:50%;margin-left:-.2em;display:grid;place-items:center;flex:none;box-shadow:0 0 0 .055em #fff,0 .08em .2em rgba(30,70,140,.18)}
+.bubs i:first-child{margin-left:0}
+.bubs i svg{width:74%;height:74%}
 .hero .lead{position:relative;z-index:3;max-width:560px;margin:28px auto 0}
 .hero .ctas{position:relative;z-index:3;display:flex;gap:12px;justify-content:center;margin-top:36px;flex-wrap:wrap}
 .hero .float{z-index:1}
@@ -241,7 +248,7 @@ html.no-intro #intro{display:none}
 @media (max-width:640px){
   .hero h1{font-size:clamp(40px,12vw,64px)}
   .rot{flex-basis:100%;width:auto!important;justify-items:center;order:3}
-  .faces{order:2}
+  .bubs{order:2}
 }
 
 /* ---------- feature cards that expand (v2) ---------- */
@@ -346,31 +353,41 @@ html.no-intro #intro{display:none}
 .qa.open .ans{grid-template-rows:1fr}
 .qa .ans>div{overflow:hidden}
 .qa .ans p{margin:0 0 26px;color:var(--fog);font-size:16px;max-width:62ch}
-.trail{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
 .stk{position:absolute;left:0;top:0;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;display:grid;place-items:center;will-change:transform,opacity;box-shadow:inset -3px -5px 8px rgba(0,30,90,.12),inset 3px 4px 6px rgba(255,255,255,.7)}
 .stk svg{width:58%;height:58%}
 .faq-hint{display:block;margin-top:14px;font:400 12px var(--f-mono);color:var(--fog)}
 @media (max-width:900px){.faq .wrap{grid-template-columns:1fr}.faq-side{position:static}}
 
-/* ---------- ending (v3): particle clouds condense into the WebLoop wordmark ---------- */
-.end{position:relative;height:100vh;min-height:700px;overflow:hidden;background:linear-gradient(180deg,#ffffff 0%,#f4f9ff 38%,var(--sky) 100%)}
-.end-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1}
-.end-copy{position:absolute;left:0;right:0;top:13vh;text-align:center;z-index:3;padding:0 24px}
-.end-copy h2{margin:0;font:500 clamp(44px,5.6vw,84px)/1 var(--f-display);letter-spacing:-.045em}
+/* ---------- ending (v4): clouds close in and a 3D particle loop rises between them ---------- */
+.end{position:relative;height:100vh;min-height:700px;overflow:hidden;background:linear-gradient(180deg,#ffffff 0%,#eef6ff 30%,#d9eaff 72%,#eaf4ff 88%,#ffffff 100%)}
+.end-copy{position:absolute;left:0;right:0;top:12vh;text-align:center;z-index:6;padding:0 24px}
+.end-copy h2{margin:0;font:500 clamp(46px,6vw,92px)/1 var(--f-display);letter-spacing:-.045em}
 .end-copy .lead{margin:16px auto 0;max-width:520px}
 .end-copy .ctas{display:flex;gap:12px;justify-content:center;margin-top:26px;flex-wrap:wrap}
-.end-mark{position:absolute;left:50%;top:69%;width:10px;height:10px;margin:-5px 0 0 -5px;z-index:2;pointer-events:none}
-.end-cap{position:absolute;left:0;right:0;bottom:6vh;z-index:3;display:flex;justify-content:center;gap:10px;align-items:center;font:500 12px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--graphite);opacity:0}
+.end .back{position:absolute;bottom:20vh;width:58%;height:34vh;z-index:1;will-change:transform}
+.end .back.l{left:-8%}.end .back.r{right:-8%}
+.end .back .cloud,.end .front .cloud{position:absolute;bottom:0}
+.end-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:2}
+.end .front{position:absolute;bottom:-16vh;width:66vw;height:40vw;z-index:3;will-change:transform}
+.end .front .cloud{width:100%;left:0;filter:drop-shadow(0 -10px 30px rgba(60,120,200,.12))}
+.end .front.l{left:-22vw}.end .front.r{right:-22vw}
+.end-fade{position:absolute;left:0;right:0;bottom:0;height:12vh;z-index:4;background:linear-gradient(rgba(255,255,255,0),#fff 70%)}
+.end-mark{position:absolute;left:50%;top:62%;width:10px;height:10px;margin:-5px 0 0 -5px;z-index:5;pointer-events:none}
+.end-cap{position:absolute;left:0;right:0;bottom:4vh;z-index:6;display:flex;justify-content:center;gap:10px;align-items:center;font:500 12px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--graphite);opacity:0}
 .end-cap i{width:22px;height:1px;background:currentColor;opacity:.4;display:block}
+@media (max-width:767px){.end .front{width:110vw;height:66vw}.end .front.l{left:-60vw}.end .front.r{right:-60vw}.end .back{width:90%}}
 
-/* footer continues the ending's sky, no seam */
-footer{position:relative;z-index:2;background:var(--sky);padding:24px 0 32px}
-.ft{display:grid;grid-template-columns:1.6fr repeat(3,1fr);gap:32px;padding:40px;border-radius:28px;background:rgba(255,255,255,.62);box-shadow:0 0 0 1px rgba(10,13,18,.04)}
+/* footer: white, continuing the ending's white base; no dividing lines */
+footer{position:relative;z-index:2;background:#fff;padding:8px 0 32px}
+.ft{display:grid;grid-template-columns:1.6fr repeat(3,1fr);gap:32px;padding:40px;border-radius:28px;background:#f5f9ff}
 .ft p{color:var(--graphite);font-size:14.5px;max-width:32ch;margin:14px 0 0}
 .ft h4{margin:0 0 12px;font:500 12px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--fog)}
 .ft a{display:block;padding:5px 0;color:var(--graphite);font-size:15px;transition:color .2s}.ft a:hover{color:var(--iris)}
 .ft-bot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:18px;padding:0 8px;font-size:13px;color:#6f7c8f}
 @media (max-width:900px){.ft{grid-template-columns:1fr 1fr;padding:28px}}
+
+/* FAQ sticker trail lives at page level, so stickers can cross section edges */
+.trail{position:absolute;left:0;top:0;width:100%;height:0;overflow:visible;z-index:1;pointer-events:none}
 
 /* =====================================================================
    Signed-in app shell (#app) — calm workspace: mist sidebar, white canvas
@@ -532,8 +549,9 @@ html.in-app body{overflow:hidden}
 .toast.show{opacity:1;transform:none}
 .tabbar{display:none}
 @media (max-width:860px){
-  .app{grid-template-columns:1fr}
+  .app{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr)}
   .sb{display:none}
+  .ws{min-height:0}
   .ws{padding:8px 8px 76px}
   .ws-panel{border-radius:20px;padding:24px 18px 40px}
   .grid2,.kb3,.msgs{grid-template-columns:1fr}
@@ -546,6 +564,40 @@ html.in-app body{overflow:hidden}
   .tabbar button{border:0;background:none;display:grid;justify-items:center;gap:3px;font-size:10.5px;color:var(--fog);padding:6px 10px;border-radius:12px}
   .tabbar button.on{color:var(--ink)}
 }
+
+/* feed */
+.feedg{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+.pc-row{display:flex;gap:12px;align-items:flex-start}.pc-row .av{flex:none}
+.post{background:#fff;border-radius:20px;box-shadow:0 0 0 1px var(--line);padding:18px 20px;margin-top:14px}
+.post.fresh{animation:postIn .6s var(--ease)}
+@keyframes postIn{from{opacity:0;transform:translateY(-10px)}}
+.post-h{display:flex;gap:12px;align-items:center}
+.post-h b{font-weight:500;font-size:15px}
+.post-h small{display:block;color:var(--fog);font-size:13px;margin-top:1px}
+.vchip{font:500 10.5px var(--f-mono);font-style:normal;color:#12996a;background:#e3f7ec;padding:2px 7px;border-radius:7px;margin-left:8px;vertical-align:1px}
+.post p{margin:12px 0 0;font-size:15px;line-height:1.55;color:var(--ink)}
+.pmedia{margin-top:12px;border-radius:14px;overflow:hidden;position:relative;aspect-ratio:16/8}
+.pmedia img{width:100%;height:100%;object-fit:cover;display:block}
+.pmedia span{position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,.92);border-radius:9px;padding:5px 10px;font-size:12.5px}
+.pcode{margin:12px 0 0;padding:14px 16px;border-radius:12px;background:#0f1420;color:#cfe3ff;font:500 12.5px/1.6 var(--f-mono);overflow:auto;white-space:pre}
+.pfoot{display:flex;gap:4px;margin:12px -8px -6px}
+.pa{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:10px;border:0;background:transparent;color:var(--graphite);font-size:13.5px}
+.pa:hover{background:var(--mist)}
+.pa svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pa.on{color:#e0446f}.pa.on svg{fill:#e0446f;stroke:#e0446f}
+.trend,.people{display:grid;gap:14px;padding:14px 16px}
+.tr,.ppl{display:flex;gap:12px;align-items:center}
+.tr img{width:52px;height:38px;border-radius:9px;object-fit:cover;flex:none}
+.tr b,.ppl b{display:block;font-weight:500;font-size:14px}.tr small,.ppl small{color:var(--fog);font-size:12.5px}
+.ppl button{margin-left:auto}.ppl button.on{color:var(--fog)}
+.side-col{position:sticky;top:0}
+@media (max-width:900px){.feedg{grid-template-columns:minmax(0,1fr)}.side-col{position:static}}
+/* nav: live dot on Feed */
+.nav .live{width:6px;height:6px;border-radius:50%;background:#1fa968;margin-left:7px;display:inline-block;animation:live 2.2s infinite}
+@keyframes live{0%{box-shadow:0 0 0 0 rgba(31,169,104,.45)}70%,100%{box-shadow:0 0 0 6px rgba(31,169,104,0)}}
+.ppl .btn-l{height:34px;padding:0 14px;font-size:13px}
+.pc-row textarea{flex:1;min-width:0;width:auto}.feedg .comp-row{flex-wrap:wrap;row-gap:8px}.feedg .col{min-width:0}
+.feedg .col{grid-template-columns:minmax(0,1fr)}.feedg .filters{overflow-x:auto;scrollbar-width:none}
 
 /* ---------- demo dock ---------- */
 .dock{position:fixed;left:16px;bottom:16px;z-index:150;display:flex;gap:6px;padding:6px;border-radius:999px;background:rgba(24,29,39,.88);backdrop-filter:blur(10px)}
@@ -591,25 +643,7 @@ html.rm .bob,html.rm .marq-t,html.rm .tst-row{animation:none}
 </svg>
 
 <!-- 0 · Cloud intro -->
-<div id="intro" aria-hidden="true">
-  <div class="veil"></div>
-  <div class="side l">
-    <svg viewBox="0 0 200 120" class="cloud" style="left:-4%;top:6%;width:62%"><use href="#cloudW" width="200" height="120"/></svg>
-    <svg viewBox="0 0 200 120" class="cloud" style="left:20%;top:30%;width:70%"><use href="#cloudB" width="200" height="120"/></svg>
-    <svg viewBox="0 0 200 120" class="cloud" style="left:-10%;top:52%;width:80%"><use href="#cloudW" width="200" height="120"/></svg>
-    <svg viewBox="0 0 200 120" class="cloud" style="left:30%;top:70%;width:66%"><use href="#cloudB" width="200" height="120"/></svg>
-  </div>
-  <div class="side r">
-    <svg viewBox="0 0 200 120" class="cloud" style="right:-6%;top:2%;width:64%"><use href="#cloudB" width="200" height="120"/></svg>
-    <svg viewBox="0 0 200 120" class="cloud" style="right:22%;top:24%;width:66%"><use href="#cloudW" width="200" height="120"/></svg>
-    <svg viewBox="0 0 200 120" class="cloud" style="right:-8%;top:46%;width:78%"><use href="#cloudB" width="200" height="120"/></svg>
-    <svg viewBox="0 0 200 120" class="cloud" style="right:26%;top:68%;width:70%"><use href="#cloudW" width="200" height="120"/></svg>
-  </div>
-  <div class="mark">
-    <svg width="120" height="60" viewBox="0 0 64 32"><path pathLength="1" d="M16 6a10 10 0 1 0 0 20c6 0 10-6 16-10s10-10 16-10a10 10 0 1 1 0 20c-6 0-10-6-16-10S22 6 16 6z" fill="none" stroke="url(#loopG)" stroke-width="5" stroke-linecap="round"/></svg>
-    <span>Opening the loop…</span>
-  </div>
-</div>
+<div id="intro" aria-hidden="true"><div class="veil"></div><div id="introClouds"></div></div>
 
 <!-- traveller: "the idea" -->
 <div id="orb" data-form="spark" aria-hidden="true">
@@ -621,10 +655,10 @@ html.rm .bob,html.rm .marq-t,html.rm .tst-row{animation:none}
 <nav class="nav" aria-label="Main">
   <div class="nav-in">
     <a class="logo" href="#top" aria-label="WebLoop home">WebL<svg width="26" height="14"><use href="#loop"/></svg>p</a>
-    <div class="nav-links"><span class="nav-pill" aria-hidden="true"></span><a href="#how">How it works</a><a href="#projects">Features</a><a href="#explore">Projects</a><a href="#companies">Companies</a><a href="#faq">FAQ</a></div>
+    <div class="nav-links"><span class="nav-pill" aria-hidden="true"></span><a href="#app" data-view="feed">Feed<i class="live" aria-hidden="true"></i></a><a href="#how">How it works</a><a href="#projects">Features</a><a href="#explore">Projects</a><a href="#companies">Companies</a><a href="#faq">FAQ</a></div>
     <div class="nav-r"><a class="si" href="#app">Sign in</a><a class="pill dark" href="#app">Join WebLoop</a><button class="nav-burger" type="button" aria-label="Menu" aria-expanded="false"><i></i></button></div>
   </div>
-  <div class="nav-sheet"><a href="#how">How it works</a><a href="#projects">Features</a><a href="#explore">Projects</a><a href="#companies">Companies</a><a href="#faq">FAQ</a><a href="#app">Sign in</a><a class="pill dark" href="#app">Join WebLoop</a></div>
+  <div class="nav-sheet"><a href="#app" data-view="feed">Feed<i class="live" aria-hidden="true"></i></a><a href="#how">How it works</a><a href="#projects">Features</a><a href="#explore">Projects</a><a href="#companies">Companies</a><a href="#faq">FAQ</a><a href="#app">Sign in</a><a class="pill dark" href="#app">Join WebLoop</a></div>
 </nav>
 
 <main>
@@ -638,7 +672,7 @@ html.rm .bob,html.rm .marq-t,html.rm .tst-row{animation:none}
   <div class="float hc side-obj" data-px=".8" style="right:4%;top:66%"><div class="bob clay" style="animation-delay:-3s;width:62px;height:70px;border-radius:16px;background:radial-gradient(circle at 30% 20%,#f4fff9,#c6f0da 70%,#a8e2c4);rotate:9deg;gap:7px;padding:0 14px;display:flex;flex-direction:column;justify-content:center"><i style="display:block;height:5px;width:100%;border-radius:3px;background:rgba(8,116,67,.32)"></i><i style="display:block;height:5px;width:100%;border-radius:3px;background:rgba(8,116,67,.32)"></i><i style="display:block;height:5px;width:55%;border-radius:3px;background:rgba(8,116,67,.32)"></i></div></div>
 
   <h1 aria-label="Where students, companies and universities build real projects.">
-    <span class="ln" aria-hidden="true"><span><span>Where</span><span class="rot"><b class="on">students</b><b>companies</b><b>universities</b></span><span class="faces"><i></i><i></i><i></i></span></span></span>
+    <span class="ln" aria-hidden="true"><span><span>Where</span><span class="rot" id="rot"></span><span class="bubs" id="bubs"></span></span></span>
     <span class="ln" aria-hidden="true"><span><span>build</span><span class="acc">real projects.</span></span></span>
   </h1>
   <p class="lead hero-fade">Team up on real briefs. Every contribution is reviewed and verified, so your portfolio proves what you actually built.</p>
@@ -646,33 +680,31 @@ html.rm .bob,html.rm .marq-t,html.rm .tst-row{animation:none}
   <div class="orb-home hero-fade" data-orb="spark" data-orb-scale="1"><span class="chip orb-tag">this is your idea</span></div>
 </section>
 
-<!-- 2 · Story sentence (pinned) -->
+<!-- 2+3 · Story → app icon → outline → app window → click → flood (one pinned scene, like Geniestudio's "how") -->
 <section class="story" id="how">
+  <svg class="st-cloud l" viewBox="0 0 260 120" aria-hidden="true"><defs><linearGradient id="stW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dcecff"/></linearGradient></defs>
+    <g fill="#3a9bff"><circle cx="70" cy="70" r="40"/><circle cx="118" cy="52" r="44"/><circle cx="160" cy="78" r="26"/><rect x="30" y="70" width="156" height="40" rx="20"/></g>
+    <g fill="url(#stW)"><circle cx="150" cy="86" r="30"/><circle cx="196" cy="96" r="16"/><rect x="118" y="88" width="104" height="22" rx="11"/></g></svg>
+  <svg class="st-cloud r" viewBox="0 0 260 120" aria-hidden="true"><g fill="url(#stW)"><circle cx="96" cy="64" r="44"/><circle cx="150" cy="54" r="40"/><circle cx="196" cy="78" r="28"/><circle cx="58" cy="84" r="26"/><rect x="32" y="74" width="190" height="40" rx="20"/></g></svg>
   <div class="story-in">
     <div class="label">Start with a brief. Not a blank page.</div>
-    <p class="sentence" id="sentence">
-      <span class="w">WebLoop takes your</span> <span class="ico slot" data-orb="spark" data-orb-scale=".62"></span> <span class="w">idea,</span>
-      <span class="w">finds the</span> <span class="ico peach" data-ico><svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.4" fill="#e7743a"/><circle cx="16.5" cy="10" r="2.6" fill="#f2a06e"/><path d="M3.5 19c.8-3.2 3-5 5.5-5s4.7 1.8 5.5 5M13.5 18.5c.5-2.3 1.8-3.6 3.3-3.6s2.8 1.3 3.3 3.6" stroke="#e7743a" stroke-width="2" fill="none" stroke-linecap="round"/></svg></span> <span class="w">people,</span>
-      <span class="w">a</span> <span class="ico aqua" data-ico><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="3" fill="#3d8ef5"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7" stroke="#0069e0" stroke-width="2" fill="none"/></svg></span> <span class="w">company brief</span>
-      <span class="w">and a</span> <span class="ico lav" data-ico><svg viewBox="0 0 24 24"><path d="M12 4 2.5 9 12 14l9.5-5z" fill="#8f6be8"/><path d="M6.5 11.5v4c1.6 1.6 3.4 2.4 5.5 2.4s3.9-.8 5.5-2.4v-4" stroke="#8f6be8" stroke-width="2" fill="none"/></svg></span> <span class="w">mentor,</span>
-      <span class="w">then turns the work into</span> <span class="ico mint" data-ico><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="#1fa968"/><path d="M8 12.3l2.7 2.7L16 9.6" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span> <span class="w">verified</span> <span class="acc w">proof.</span>
+    <p class="sentence" id="sentence" data-orb-fade aria-label="WebLoop turns your idea, a team, a brief and a mentor into verified proof.">
+      <span class="ln"><span class="w">WebLoop</span> <span class="w">turns</span> <span class="w">your</span> <span class="ico slot" data-orb="spark" data-orb-scale=".62"></span> <span class="w">idea,</span></span>
+      <span class="ln"><span class="ico" data-ico="team"></span> <span class="w">a</span> <span class="w">team,</span> <span class="ico" data-ico="brief"></span> <span class="w">a</span> <span class="w">brief</span></span>
+      <span class="ln"><span class="w">and</span> <span class="w">a</span> <span class="ico" data-ico="cap"></span> <span class="w">mentor</span> <span class="w">into</span></span>
+      <span class="ln"><span class="ico" data-ico="check" id="stCheck"></span> <span class="w">verified</span> <span class="w acc">proof.</span></span>
     </p>
   </div>
-</section>
-
-<!-- 3 · Expanding card → full-screen transition into the protected stack -->
-<section class="expand" id="expand">
   <div class="stage">
     <div class="xcard" id="xcard">
       <div class="xcard-in">
-        <div class="xseed" id="xseed"><div class="plus">+</div><small>New project</small></div>
         <div class="xapp" id="xapp">
           <aside class="xside">
             <span class="logo">WebL<svg width="22" height="12"><use href="#loop"/></svg>p</span>
             <a class="on"><i></i>Studyflow</a><a><i></i>Briefs</a><a><i></i>Team</a><a><i></i>Portfolio</a><a><i></i>Settings</a>
           </aside>
           <div class="xmain">
-            <div class="xtop"><h4>Studyflow</h4><span class="chip">Sprint 4 of 6</span><span data-orb="brief" data-orb-scale=".5" data-orb-alt="#xseed .plus" style="width:84px;height:42px;display:block"></span><button class="start" id="startBtn">Start project</button></div>
+            <div class="xtop"><h4>Studyflow</h4><span class="chip">Sprint 4 of 6</span><button class="start" id="startBtn">Start project</button></div>
             <div class="xtabs"><button class="on">Activity</button><button>Brief</button><button>Team</button><button>Tasks</button><button>Result</button></div>
             <div class="xgrid">
               <div class="feed" id="feed"></div>
@@ -680,13 +712,14 @@ html.rm .bob,html.rm .marq-t,html.rm .tst-row{animation:none}
             </div>
           </div>
         </div>
+        <div class="xseed" id="xseed"><svg width="56%" viewBox="0 0 64 32"><use href="#loop"/></svg></div>
       </div>
     </div>
     <svg class="cursor" id="cursor" viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L9.6 19z" fill="#0a0d12" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
-    <p class="xcap" id="xcap">A brief becomes a project the moment a team starts it.</p>
     <div class="flood" id="flood"><div><h2>A project is more <br>than an <em>idea.</em></h2><p>Here's what one is made of.</p></div></div>
   </div>
 </section>
+
 
 <!-- 4 · PROTECTED: existing 3D Project Stack mounts here, unchanged -->
 <section class="protected" id="stack" aria-label="Reserved for the existing Project Stack">
@@ -795,27 +828,37 @@ html.rm .bob,html.rm .marq-t,html.rm .tst-row{animation:none}
 
 <!-- 10 · FAQ with a playful cursor trail -->
 <section class="faq" id="faq">
-  <div class="trail" id="trail" aria-hidden="true"></div>
   <div class="wrap">
     <div class="faq-side"><h2 class="h-display">Questions</h2><span class="faq-hint">Move your cursor around this section.</span></div>
     <div class="faq-list" id="faqList"></div>
   </div>
 </section>
 
-<!-- 11 · Ending: particle clouds drift in from both sides (the intro, reversed) and condense into the WebLoop wordmark -->
+<!-- 11 · Ending: clouds close in (the intro, reversed) and a particle loop rises between them -->
 <section class="end" id="end">
-  <canvas class="end-canvas" id="endCanvas" aria-hidden="true"></canvas>
   <div class="end-copy">
     <span class="mono" style="color:#2a5a97">Open beta</span>
     <h2 style="margin-top:14px">Close the <span class="acc">loop.</span></h2>
     <p class="lead">Bring the idea. We'll bring the team, the brief and the proof.</p>
     <div class="ctas"><a class="pill dark" href="#app">Join WebLoop <span class="arr">→</span></a><a class="pill light" href="#projects">Browse projects</a></div>
   </div>
+  <div class="back l" id="endL">
+    <svg viewBox="0 0 200 120" class="cloud" style="left:0;width:70%"><use href="#cloudB" width="200" height="120"/></svg>
+    <svg viewBox="0 0 200 120" class="cloud" style="left:38%;bottom:14%;width:54%"><use href="#cloudW" width="200" height="120"/></svg>
+  </div>
+  <div class="back r" id="endR">
+    <svg viewBox="0 0 200 120" class="cloud" style="right:0;width:72%"><use href="#cloudW" width="200" height="120"/></svg>
+    <svg viewBox="0 0 200 120" class="cloud" style="right:40%;bottom:12%;width:52%"><use href="#cloudB" width="200" height="120"/></svg>
+  </div>
+  <canvas class="end-canvas" id="endCanvas" aria-hidden="true"></canvas>
+  <div class="front l" id="frontL"><svg viewBox="0 0 200 120" class="cloud"><use href="#cloudW" width="200" height="120"/></svg></div>
+  <div class="front r" id="frontR"><svg viewBox="0 0 200 120" class="cloud"><use href="#cloudW" width="200" height="120"/></svg></div>
+  <div class="end-fade"></div>
   <span class="end-mark" id="endMark" data-orb="hide"></span>
-  <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">WebLoop</h2>
   <div class="end-cap" id="endCap"><span>Idea</span><i></i><span>Team</span><i></i><span>Verified work</span></div>
 </section>
 </main>
+<div class="trail" id="trail" aria-hidden="true"></div>
 
 <footer>
   <div class="wrap">
@@ -828,6 +871,7 @@ html.rm .bob,html.rm .marq-t,html.rm .tst-row{animation:none}
     <div class="ft-bot"><span>© 2026 WebLoop</span><span>Demo build · sample content</span></div>
   </div>
 </footer>
+
 
 <div class="dock"><button id="replay">↺ Replay intro</button><button id="toEnd">Jump to ending</button><button id="toApp">Open signed-in app</button></div>
 <!-- ===== Signed-in app (#app): what a student sees after signing in ===== -->
@@ -1022,125 +1066,104 @@ const FAQ = [['Is WebLoop free for students?', 'Yes. Students join, team up and 
 $('#faqList').innerHTML = FAQ.map((f, i) => `<div class="qa ${i ? '' : 'open'}"><button aria-expanded="${!i}">${f[0]}<i>+</i></button><div class="ans"><div><p>${f[1]}</p></div></div></div>`).join('');
 $$('.qa button').forEach(b => b.addEventListener('click', () => { const q = b.parentElement, o = !q.classList.contains('open'); $$('.qa').forEach(x => { x.classList.remove('open'); x.querySelector('button').setAttribute('aria-expanded', false); }); q.classList.toggle('open', o); b.setAttribute('aria-expanded', o); }));
 
-/* hero word rotation + faces: the word box eases to each word's width, so nothing clips */
-{ const rot = $('.rot'), ws = $$('.rot b'), fs = $$('.faces i'), sets = [['#ffd1b8', '#cce7ff', '#d3f6e3'], ['#3d8ef5', '#12996a', '#7c3aed'], ['#e4ccff', '#fff2be', '#cce7ff']]; let k = 0;
-  const fit = () => { rot.style.width = Math.ceil(ws[k].getBoundingClientRect().width) + 2 + 'px'; };
-  const paint = () => fs.forEach((f, i) => { f.style.background = sets[k][i]; f.style.transform = `translateY(${i % 2 ? -4 : 4}px)`; setTimeout(() => f.style.transform = '', 300); });
-  paint(); fit(); addEventListener('resize', fit); document.fonts && document.fonts.ready.then(fit);
-  setInterval(() => { ws[k].classList.replace('on', 'out'); const p = ws[k]; setTimeout(() => p.classList.remove('out'), 800); k = (k + 1) % ws.length; ws[k].classList.add('on'); fit(); paint(); }, 2600); }
+/* illustrated round stickers (hero bubbles, story icons) — WebLoop's own set */
+const STICK = {
+  cap: ['#cce7ff', '<path d="M24 12 6 20l18 8 18-8z" fill="#1d3557"/><path d="M14 24v8c3 3 6.5 4.5 10 4.5s7-1.5 10-4.5v-8l-10 4.5z" fill="#2a4a78"/><path d="M38 20v10" stroke="#f2b31b" stroke-width="2.4" stroke-linecap="round"/><circle cx="38" cy="31.5" r="2.6" fill="#f2b31b"/>'],
+  laptop: ['#e4ccff', '<rect x="10" y="13" width="28" height="18" rx="3" fill="#3d3a8c"/><rect x="13" y="16" width="22" height="12" rx="1.5" fill="#cfe6ff"/><path d="M17 20l-2.5 2 2.5 2M22 20l2.5 2-2.5 2" stroke="#5b4be0" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M7 33h34l-2 3H9z" fill="#5a57b8"/>'],
+  brief: ['#ffe2d1', '<rect x="9" y="17" width="30" height="20" rx="4" fill="#e07a3f"/><path d="M19 17v-3a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3" stroke="#a5532a" stroke-width="2.4" fill="none"/><rect x="9" y="23" width="30" height="3" fill="#c0612f"/><rect x="21" y="21.5" width="6" height="6" rx="1.5" fill="#ffd27a"/>'],
+  campus: ['#d3f6e3', '<path d="M24 9 8 17h32z" fill="#2f8f5b"/><rect x="11" y="18" width="26" height="3" fill="#3fae72"/><rect x="13" y="22" width="3.5" height="11" fill="#fff"/><rect x="22.25" y="22" width="3.5" height="11" fill="#fff"/><rect x="31.5" y="22" width="3.5" height="11" fill="#fff"/><rect x="9" y="33" width="30" height="4" rx="1" fill="#2f8f5b"/>'],
+  book: ['#f1e6ff', '<path d="M10 14c5-2 10-1 14 2v20c-4-3-9-4-14-2z" fill="#7c3aed"/><path d="M38 14c-5-2-10-1-14 2v20c4-3 9-4 14-2z" fill="#a78bfa"/><path d="M24 16v20" stroke="#5b21b6" stroke-width="1.2"/>'],
+  team: ['#fff2be', '<path d="M14 33a7 7 0 0 1 .6-14 9.5 9.5 0 0 1 18.2-1.6A7.8 7.8 0 0 1 34 33z" fill="#4d9dff"/><path d="M18.5 25.5q1.6-1.8 3.2 0M26.5 25.5q1.6-1.8 3.2 0" stroke="#0b2a55" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M20.5 28.5q3.5 3.2 7 0" stroke="#0b2a55" stroke-width="1.8" fill="none" stroke-linecap="round"/>'],
+  check: ['#d3f6e3', '<circle cx="24" cy="24" r="12" fill="#1fa968"/><path d="M18.5 24.5l3.8 3.8 7.5-8" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'],
+};
+const stickerSVG = k => `<svg viewBox="0 0 48 48" aria-hidden="true">${STICK[k][1]}</svg>`;
+
+/* fill the story stickers */
+$$('[data-ico]').forEach(el => { const k = el.dataset.ico; if (!STICK[k]) return; el.style.background = STICK[k][0]; el.innerHTML = stickerSVG(k); });
+
+/* hero: letters of the word roll out/in, and the sticker bubbles change count (1 → 2 → 3) */
+{ const rot = $('#rot'), bubs = $('#bubs');
+  const SETS = [['students', ['cap']], ['companies', ['brief', 'laptop']], ['universities', ['campus', 'book', 'cap']]];
+  let k = 0, cur = null;
+  const word = w => { const el = document.createElement('span'); el.className = 'rw'; el.innerHTML = [...w].map(c => `<span class="ch">${c}</span>`).join(''); return el; };
+  const bub = ic => { const i = document.createElement('i'); i.style.background = STICK[ic][0]; i.innerHTML = stickerSVG(ic); return i; };
+  const fit = () => { if (cur) rot.style.width = Math.ceil(cur.getBoundingClientRect().width) + 2 + 'px'; };
+  const show = (n, first) => {
+    const [w, ics] = SETS[n], el = word(w), old = cur; rot.appendChild(el); cur = el; fit();
+    const olds = $$('i', bubs), fresh = ics.map(bub);
+    if (first || RM) { if (old) old.remove(); olds.forEach(o => o.remove()); fresh.forEach(f => bubs.appendChild(f)); return; }
+    gsap.to($$('.ch', old), { yPercent: -110, stagger: .02, duration: .42, ease: 'power2.in', onComplete: () => old.remove() });
+    gsap.fromTo($$('.ch', el), { yPercent: 110 }, { yPercent: 0, stagger: .03, duration: .85, ease: 'expo.out', delay: .18 });
+    gsap.to(olds, { scale: 0, duration: .28, stagger: { each: .04, from: 'end' }, ease: 'back.in(2)', onComplete: () => {
+      olds.forEach(o => o.remove()); fresh.forEach(f => bubs.appendChild(f));
+      gsap.fromTo(fresh, { scale: 0, rotate: -30 }, { scale: 1, rotate: 0, duration: .6, stagger: .09, ease: 'back.out(2.4)' }); } });
+  };
+  show(0, true); addEventListener('resize', fit); document.fonts && document.fonts.ready.then(fit);
+  setInterval(() => { if (document.hidden) return; k = (k + 1) % SETS.length; show(k); }, 2800);
+}
 
 /* =========================================================
-   11 · Ending: particle clouds close in and condense into the WebLoop wordmark.
-   The "oo" is a live particle loop; letters resolve into solid type.
+   11 · Ending: particles drift up out of the cloud bank and gather into a 3D WebLoop loop
    ========================================================= */
-function createEndParticles() {
+function createEndLoop() {
   const cv = $('#endCanvas'), sec = $('.end'), g = cv.getContext('2d');
-  const MOB = innerWidth < 768, N = MOB ? 2600 : 5600;
+  const MOB = innerWidth < 768, N = MOB ? 1900 : 3400;
   const mul = (a) => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const rnd = mul(20261113), gauss = () => (rnd() + rnd() + rnd() - 1.5) * .8;
-  const FAM = "Geist, 'Helvetica Neue', Arial, sans-serif";
-  const kind = new Uint8Array(N), tx = new Float32Array(N), ty = new Float32Array(N), nrm = new Float32Array(N);
-  const cxs = new Float32Array(N), cys = new Float32Array(N), side = new Int8Array(N);
-  const u = new Float32Array(N), spd = new Float32Array(N), delay = new Float32Array(N), seed = new Float32Array(N);
-  const px = new Float32Array(N), py = new Float32Array(N), bucket = new Uint8Array(N);
-  let WM = null, W = 0, H = 0, DPR = 1, S = 1, CX = 0, CY = 0, loopC = [0, 0], loopHW = 1, first = true;
-  let mx = -1e4, my = -1e4, active = false, progress = 0, t0 = performance.now(), last = t0;
-  const lem = (t) => { const d = 1 + Math.sin(t) ** 2; return [Math.cos(t) / d, Math.sin(t) * Math.cos(t) / d]; };
-
-  /* wordmark targets from text pixels (units: px at a 200px font) */
-  function buildTargets() {
-    const oc = document.createElement('canvas'); oc.width = 1500; oc.height = 380;
-    const o = oc.getContext('2d', { willReadFrequently: true });
-    o.font = `600 200px ${FAM}`; o.textBaseline = 'alphabetic';
-    const wWebL = o.measureText('WebL').width, wOO = o.measureText('oo').width * 1.04, wP = o.measureText('p').width;
-    const xh = o.measureText('o').actualBoundingBoxAscent, cap = o.measureText('W').actualBoundingBoxAscent;
-    const x0 = 80, base = 270; o.fillStyle = '#000'; o.fillText('WebL', x0, base); o.fillText('p', x0 + wWebL + wOO, base);
-    const id = o.getImageData(0, 0, 1500, 380).data, cand = [];
-    for (let y = 0; y < 380; y += 2) for (let x = 0; x < 1500; x += 2) if (id[(y * 1500 + x) * 4 + 3] > 140) cand.push(x, y);
-    const total = wWebL + wOO + wP, xc = x0 + total / 2, yc = base - cap / 2;
-    WM = { total, x0: x0 - xc, base: base - yc, wWebL, wOO, lx: x0 + wWebL + wOO / 2 - xc, ly: base - xh / 2 - yc, hw: wOO * .5 * .97 };
-    for (let i = 0; i < N; i++) {
-      seed[i] = rnd(); delay[i] = rnd();
-      if (rnd() < .66 && cand.length) { const j = Math.floor(rnd() * cand.length / 2) * 2; kind[i] = 0; tx[i] = cand[j] - xc + (rnd() - .5) * 2; ty[i] = cand[j + 1] - yc + (rnd() - .5) * 2; }
-      else { kind[i] = 1; u[i] = rnd() * Math.PI * 2; spd[i] = .22 + rnd() * .2; nrm[i] = gauss() * .07; }
-      side[i] = rnd() < .5 ? -1 : 1;
-      // cumulus cloud made of blobs (in units of the wordmark width)
-      // cumulus cloud: a flat base row of puffs with taller puffs on top (units of the cloud size)
-      const blobs = [[-.32, .06, .16], [-.12, .04, .2], [.1, .05, .18], [.3, .07, .13], [-.2, -.1, .17], [.02, -.16, .22], [.2, -.08, .15]];
-      let acc = 0, pick = rnd() * blobs.reduce((s, b) => s + b[2] * b[2], 0), b = blobs[0];
-      for (const bb of blobs) { acc += bb[2] * bb[2]; if (pick <= acc) { b = bb; break; } }
-      const r = Math.sqrt(rnd()) * b[2], a = rnd() * Math.PI * 2;
-      cxs[i] = b[0] + Math.cos(a) * r; cys[i] = Math.min(b[1] + Math.sin(a) * r, .17);
-    }
+  const T = new Float32Array(N), SP = new Float32Array(N), JX = new Float32Array(N), JY = new Float32Array(N), JZ = new Float32Array(N);
+  const SX = new Float32Array(N), SY = new Float32Array(N), DL = new Float32Array(N), SD = new Float32Array(N);
+  const PX = new Float32Array(N), PY = new Float32Array(N), BK = new Uint8Array(N);
+  for (let i = 0; i < N; i++) {
+    T[i] = rnd() * Math.PI * 2; SP[i] = .16 + rnd() * .14; SD[i] = rnd(); DL[i] = rnd();
+    JX[i] = gauss() * .05; JY[i] = gauss() * .05; JZ[i] = gauss() * .05;
+    SX[i] = .12 + rnd() * .76; SY[i] = .82 + rnd() * .3;                       // start inside the cloud bank
   }
+  let W = 0, H = 0, DPR = 1, L = 200, CX = 0, CY = 0, active = false, progress = 0, first = true, last = performance.now(), t0 = last;
+  let mx = 0, my = 0, smx = 0, smy = 0;
   function layout() {
     DPR = Math.min(2, devicePixelRatio || 1); W = sec.clientWidth; H = sec.clientHeight;
     cv.width = W * DPR; cv.height = H * DPR;
-    if (!WM) return;
-    const target = Math.min(W * (W < 768 ? .86 : .6), 900);
-    S = target / WM.total; CX = W / 2; CY = H * (W < 768 ? .7 : .69);
-    loopC = [CX + WM.lx * S, CY + WM.ly * S]; loopHW = WM.hw * S;
-    const m = $('#endMark'); m.style.left = loopC[0] + 'px'; m.style.top = loopC[1] + 'px';
+    L = Math.min(W * (W < 768 ? .29 : .21), 290);
   }
-  buildTargets(); layout();
-  document.fonts && document.fonts.load(`600 200px Geist`).then(() => document.fonts.ready).then(() => { buildTargets(); layout(); first = true; }).catch(() => {});
-  addEventListener('resize', layout);
-  sec.addEventListener('pointermove', e => { const r = sec.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top; });
-  sec.addEventListener('pointerleave', () => { mx = my = -1e4; });
+  layout(); addEventListener('resize', layout);
   new IntersectionObserver(es => { active = es[0].isIntersecting; }, { rootMargin: '200px' }).observe(sec);
-
-  const LETTER = ['rgba(118,158,212,.72)', 'rgba(96,120,156,.7)', 'rgba(48,60,80,.8)', 'rgba(10,13,18,.85)'];
-  const LOOPC = ['#a8d0ff', '#6aaeff', '#2f86f0', '#0a62d6', '#0050b8'];
-  const CLOUD = 'rgba(118,158,212,.72)';
+  sec.addEventListener('pointermove', e => { const r = sec.getBoundingClientRect(); mx = (e.clientX - r.left) / W * 2 - 1; my = (e.clientY - r.top) / H * 2 - 1; });
   const ss = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
-
+  const COL = ['rgba(150,196,255,.55)', 'rgba(77,150,245,.8)', 'rgba(16,98,214,.95)', 'rgba(10,64,160,1)', 'rgba(205,229,255,1)', 'rgba(130,165,214,.55)'];
+  const SZ = [1.2, 1.6, 2, 2.3, 2.2, 1.4];
   function frame(now) {
     if (!active && !first) return;
-    const t = RM ? 1 : (now - t0) / 1000, dt = Math.min(.05, (now - last) / 1000 || .016); last = now;
-    const p = progress, shift = ss(p / .45), solid = ss((p - .8) / .18);
-    const cs = Math.min(W, 1200) * (W < 768 ? .7 : .5), k = first ? 1 : 1 - Math.pow(.82, dt * 60);
+    const t = RM ? 2 : (now - t0) / 1000, dt = Math.min(.05, (now - last) / 1000 || .016); last = now;
+    const p = progress, rise = ss((p - .25) / .6);
+    smx += (mx - smx) * .05; smy += (my - smy) * .05;
+    CX = W / 2; CY = H * (.64 - .07 * rise);
+    const m0 = $('#endMark'); m0.style.top = CY + 'px';
+    const ry = (RM ? .25 : Math.sin(t * .35) * .3) + smx * .25, rx = .38 + smy * .12;
+    const cy = Math.cos(ry), sy = Math.sin(ry), cx = Math.cos(rx), sx = Math.sin(rx), D = 4.2;
+    const k = first ? 1 : 1 - Math.pow(.86, dt * 60);
     for (let i = 0; i < N; i++) {
-      // cloud position: clusters start beyond the edges and close in (the intro, reversed)
-      const sd = side[i], baseX = sd < 0 ? -.2 : 1.2, endX = sd < 0 ? .22 : .78;
-      let cxp = (baseX + (endX - baseX) * shift) * W + cxs[i] * cs * sd, cyp = CY - H * .02 + cys[i] * cs;
-      if (!RM) { cxp += Math.sin(t * .4 + seed[i] * 9) * 6; cyp += Math.cos(t * .5 + seed[i] * 7) * 4; }
-      const m = ss((p - .32 - delay[i] * .3) / .38);
-      let gx, gy;
-      if (kind[i] === 0) { gx = CX + tx[i] * S; gy = CY + ty[i] * S; if (!RM) { gx += Math.sin(t * 1.1 + seed[i] * 20) * .5; gy += Math.cos(t * .9 + seed[i] * 20) * .5; } }
-      else { if (!RM) u[i] += dt * spd[i] * (.3 + .7 * m); const q = lem(u[i]); const n = nrm[i] * loopHW; gx = loopC[0] + q[0] * loopHW + n * Math.sin(u[i] * 2); gy = loopC[1] + q[1] * loopHW * 1.05 + n * Math.cos(u[i]); }
-      let x = cxp + (gx - cxp) * m, y = cyp + (gy - cyp) * m;
-      const dx = x - mx, dy = y - my, d2 = dx * dx + dy * dy;                   // gentle cursor repel
-      if (d2 < 8100) { const f = (1 - Math.sqrt(d2) / 90) * 26; const d = Math.sqrt(d2) || 1; x += dx / d * f; y += dy / d * f; }
-      px[i] += (x - px[i]) * k; py[i] += (y - py[i]) * k;
-      if (kind[i] === 0) bucket[i] = Math.min(3, Math.round(m * 3));
-      else bucket[i] = m < .45 ? 9 : 4 + Math.max(0, Math.min(4, Math.floor(2.5 + 2.4 * Math.sin(u[i] - t * 1.6))));
+      if (!RM) T[i] += dt * SP[i] * (.25 + .75 * rise);
+      const s0 = Math.sin(T[i]), c0 = Math.cos(T[i]), d = 1 + s0 * s0;
+      const x = c0 / d * 1.25 + JX[i], y = s0 * c0 / d * 1.25 + JY[i], z = s0 * .3 + JZ[i];   // lemniscate with depth
+      const x1 = x * cy + z * sy, z1 = -x * sy + z * cy, y1 = y * cx - z1 * sx, z2 = y * sx + z1 * cx;
+      const pr = D / (D - z2), gx = CX + x1 * pr * L, gy = CY - y1 * pr * L;
+      const m = ss((p - .28 - DL[i] * .32) / .4);
+      let ox = SX[i] * W + Math.sin(t * .6 + SD[i] * 9) * 10, oy = SY[i] * H - m * 0;
+      const lift = Math.sin(m * Math.PI) * -40;                              // a soft arc as it rises
+      PX[i] += ((ox + (gx - ox) * m) - PX[i]) * k; PY[i] += ((oy + (gy - oy) * m + lift) - PY[i]) * k;
+      if (m < .5) BK[i] = 5;
+      else if (Math.cos(T[i] - t * 1.3) > .985) BK[i] = 4;                   // a light travelling round the loop
+      else BK[i] = z2 > .22 ? 3 : z2 > 0 ? 2 : z2 > -.22 ? 1 : 0;
     }
     first = false;
     g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, W, H);
-    // solid wordmark type fades in once the letters have gathered
-    if (solid > .01 && WM) {
-      g.globalAlpha = solid; g.fillStyle = '#0a0d12'; g.font = `600 ${200 * S}px ${FAM}`; g.textBaseline = 'alphabetic';
-      g.fillText('WebL', CX + WM.x0 * S, CY + WM.base * S); g.fillText('p', CX + (WM.x0 + WM.wWebL + WM.wOO) * S, CY + WM.base * S);
-    }
-    const sz = MOB ? 1.5 : 1.7;
-    for (let b = 0; b < 10; b++) {
-      if (b >= 4 && b <= 8) { g.fillStyle = LOOPC[b - 4]; g.globalAlpha = 1; }
-      else if (b === 9) { g.fillStyle = CLOUD; g.globalAlpha = 1; }
-      else { g.fillStyle = LETTER[b]; g.globalAlpha = b === 3 ? 1 - .82 * solid : 1; }
-      const z = b >= 4 && b <= 8 ? sz * 1.3 : sz;
-      for (let i = 0; i < N; i++) if (bucket[i] === b) g.fillRect(px[i] - z / 2, py[i] - z / 2, z, z);
-    }
-    g.globalAlpha = 1;
+    for (let b = 0; b < 6; b++) { g.fillStyle = COL[b]; const z = SZ[b] * (MOB ? .9 : 1); for (let i = 0; i < N; i++) if (BK[i] === b) g.fillRect(PX[i] - z / 2, PY[i] - z / 2, z, z); }
     $('#endCap').style.opacity = ss((p - .86) / .12);
   }
-  return {
-    set(p) { progress = p; },
-    tick(now) { frame(now); },
-    reset() { first = true; },
-  };
+  return { set(p) { progress = p; }, tick(now) { frame(now); } };
 }
 
-const endFX = createEndParticles();
+const endFX = createEndLoop();
 const endP = { p: RM ? 1 : 0 };
 gsap.ticker.add(() => { endFX.set(endP.p); endFX.tick(performance.now()); });
 /* =========================================================
@@ -1153,10 +1176,11 @@ gsap.ticker.add(() => { endFX.set(endP.p); endFX.tick(performance.now()); });
     proj: '<rect x="3.5" y="5" width="17" height="14" rx="3"/><path d="M3.5 9.5h17"/>',
     expl: '<circle cx="12" cy="12" r="8"/><path d="m15 9-2 4.5L8.5 15l2-4.5z"/>',
     msg: '<path d="M5 6h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4 3v-3H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z"/>',
+    feed: '<rect x="4" y="4" width="16" height="7" rx="2.5"/><rect x="4" y="13" width="16" height="7" rx="2.5"/>',
     port: '<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/>',
   };
   const svg = k => `<svg viewBox="0 0 24 24">${IC[k]}</svg>`;
-  const VIEWS = [['home', 'Home', 'home'], ['projects', 'Projects', 'proj', '4'], ['explore', 'Explore', 'expl'], ['messages', 'Messages', 'msg', null, 3], ['portfolio', 'Portfolio', 'port']];
+  const VIEWS = [['home', 'Home', 'home'], ['feed', 'Feed', 'feed'], ['projects', 'Projects', 'proj', '4'], ['explore', 'Explore', 'expl'], ['messages', 'Messages', 'msg', null, 3], ['portfolio', 'Portfolio', 'port']];
   const MYP = [['Studyflow', '#3d8ef5', 1], ['Carbon Ledger', '#12996a', 0], ['CityMind', '#8f6be8', 2], ['Pixel Realm', '#f0a92a', 3]];
   let view = 'home', ptab = 'tasks', openProj = 0;
   $('#sbNav').innerHTML = VIEWS.map(v => `<button data-v="${v[0]}">${svg(v[2])}<span>${v[1]}</span>${v[3] ? `<em class="ct">${v[3]}</em>` : ''}${v[4] ? `<em class="dot">${v[4]}</em>` : ''}</button>`).join('');
@@ -1203,6 +1227,38 @@ gsap.ticker.add(() => { endFX.set(endP.p); endFX.tick(performance.now()); });
     activity: () => `<div class="feed2">${ACT.concat(ACT.slice(0, 2)).map(r => frow(r)).join('')}</div>`,
     team: () => `<div class="team">${[['MK', 'Mia Khan', 'Frontend'], ['SR', 'Sam Reyes', 'Design'], ['LN', 'Lena Novak', 'Owner · GreenLeaf'], ['MP', 'Maya Patel', 'Backend (you)']].map(m => `<div class="mem"><span class="av" style="background:${TONES[m[0].charCodeAt(0) % 5]}">${m[0]}</span><div><b>${m[1]}</b><small>${m[2]}</small></div></div>`).join('')}</div>`,
   };
+
+  /* Feed: where people post updates, demos and questions */
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const POSTS = [
+    { i: 'LN', c: '#ffd1b8', n: 'Lena Novak', r: 'Owner · GreenLeaf Studios', t: '2 h', v: 1, x: 'We’re opening two backend seats on Carbon Ledger v2. Real users, weekly reviews, and every merged PR counts toward your portfolio.', img: 'carbon', cap: 'Carbon Ledger v2 · recruiting', l: 48, cm: 12 },
+    { i: 'SR', c: '#e4ccff', n: 'Sam Reyes', r: 'Design · Studyflow', t: '5 h', x: 'Onboarding is live. Six screens down to four after testing with twelve students. Huge thanks to everyone who sat through the prototype.', img: 'studyflow', cap: 'Studyflow · sprint 4', l: 31, cm: 7 },
+    { i: 'MK', c: '#d3f6e3', n: 'Mia Khan', r: 'Frontend · CityMind', t: '1 d', v: 1, x: 'Small win: the bus-route layer renders 3× faster after moving clustering into a worker.', code: "const worker = new Worker('cluster.js');\nworker.postMessage(stops);\nworker.onmessage = e => drawClusters(e.data);", l: 64, cm: 9 },
+    { i: 'OH', c: '#fff2be', n: 'Dr. Omar Haddad', r: 'Lecturer · Riverside University', t: '2 d', v: 1, x: 'Final demos for the HCI module are this Friday. Industry mentors are welcome to judge, reply here if you can make it.', l: 22, cm: 15 }];
+  const HEART = '<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
+  const postHTML = (p, fresh) => `<article class="post ${fresh ? 'fresh' : ''}"><div class="post-h"><span class="av" style="background:${p.c}">${p.i}</span><div><b>${p.n}</b>${p.v ? '<em class="vchip">Verified</em>' : ''}<small>${p.r} · ${p.t}</small></div></div>
+    <p>${p.x}</p>${p.img ? `<div class="pmedia"><img alt="" src="${ART[p.img]}"><span>${p.cap}</span></div>` : ''}${p.code ? `<pre class="pcode">${esc(p.code)}</pre>` : ''}
+    <div class="pfoot"><button class="pa" data-like>${HEART}<span>${p.l}</span></button><button class="pa"><svg viewBox="0 0 24 24"><path d="M5 6h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4 3v-3H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z"/></svg><span>${p.cm}</span></button><button class="pa" data-share><svg viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>Share</button></div></article>`;
+  R.feed = () => `<div class="view"><div class="vh"><div><h1>Feed</h1><p>What people are building across WebLoop right now.</p></div></div>
+    <div class="grid2 feedg"><div class="col">
+      <div class="filters" style="margin:0">${['For you', 'Following', 'Projects', 'Hiring'].map((f, i) => `<button class="cchip ${i ? '' : 'on'}" data-f>${f}</button>`).join('')}</div>
+      <div class="box composer"><div class="inner" style="padding:14px 16px"><div class="pc-row"><span class="av" style="background:#cce7ff">MP</span><textarea id="postText" placeholder="Share an update, a demo or a question…" style="min-height:64px"></textarea></div>
+        <div class="comp-row"><button class="cchip" data-chip>+ Image</button><button class="cchip" data-chip>+ Project</button><button class="cchip" data-chip>+ Code</button><button class="btn-d" id="postSend" disabled>Post</button></div></div></div>
+      <div id="posts">${POSTS.map(p => postHTML(p)).join('')}</div>
+    </div><div class="col side-col">
+      <div class="box"><div class="box-h"><b>Trending projects</b><small>This week</small></div><div class="inner trend">${[['Studyflow', 'studyflow', '128 verified contributions'], ['Carbon Ledger', 'carbon', 'Recruiting · 2 seats'], ['CityMind', 'citymind', '3× faster maps'], ['Pixel Realm', 'pixel', 'Demo day Friday']].map(t => `<div class="tr"><img alt="" src="${ART[t[1]]}"><div><b>${t[0]}</b><small>${t[2]}</small></div></div>`).join('')}</div></div>
+      <div class="box"><div class="box-h"><b>People to follow</b></div><div class="inner people">${[['AO', '#cce7ff', 'Ada Okafor', 'ML · Riverside'], ['JT', '#d3f6e3', 'Jonas Thiel', 'PM · GreenLeaf'], ['PR', '#ffe2d1', 'Priya Rao', 'Design · Atlas']].map(u => `<div class="ppl"><span class="av" style="background:${u[1]}">${u[0]}</span><div><b>${u[2]}</b><small>${u[3]}</small></div><button class="btn-l" data-follow>Follow</button></div>`).join('')}</div></div>
+    </div></div></div>`;
+  app.addEventListener('input', e => { if (e.target.id === 'postText') $('#postSend').disabled = !e.target.value.trim(); });
+  app.addEventListener('click', e => {
+    const lk = e.target.closest('[data-like]'), fo = e.target.closest('[data-follow]');
+    if (lk) { const on = lk.classList.toggle('on'), n = $('span', lk); n.textContent = +n.textContent + (on ? 1 : -1); if (on) $('svg', lk).animate([{ transform: 'scale(1)' }, { transform: 'scale(1.45)' }, { transform: 'scale(1)' }], { duration: 380, easing: 'cubic-bezier(.3,1.6,.5,1)' }); return; }
+    if (fo) { const on = fo.classList.toggle('on'); fo.textContent = on ? 'Following' : 'Follow'; return; }
+    if (e.target.closest('[data-share]')) { toast('Link copied'); return; }
+    if (e.target.id === 'postSend') { const t = $('#postText').value.trim(); if (!t) return;
+      $('#posts').insertAdjacentHTML('afterbegin', postHTML({ i: 'MP', c: '#cce7ff', n: 'Maya Patel', r: 'Backend · Studyflow', t: 'just now', x: esc(t), l: 0, cm: 0 }, true));
+      $('#postText').value = ''; e.target.disabled = true; toast('Posted to your feed'); }
+  });
 
   const render = () => { renderBase(); bindKanban(); };
   function placeUl() { const on = $('#gtabs button.on'), ul = $('#gtabs .ul'); if (on && ul) { ul.style.width = on.offsetWidth + 'px'; ul.style.transform = `translateX(${on.offsetLeft}px)`; } }
@@ -1254,34 +1310,41 @@ gsap.ticker.add(() => { endFX.set(endP.p); endFX.tick(performance.now()); });
   /* live activity in the home feed */
   setInterval(() => { const f = $('#homeFeed'); if (!f || !document.documentElement.classList.contains('in-app')) return; const r = [...ACT[Math.floor(Math.random() * ACT.length)]]; r[2] = r[2].replace(/· [^·]+$/, '· just now'); f.insertAdjacentHTML('afterbegin', frow(r, true)); if (f.children.length > 5) f.lastElementChild.remove(); }, 6000);
   /* routing: #app opens the workspace, anything else returns to the site */
-  window.__appRoute = () => { const on = location.hash === '#app'; document.documentElement.classList.toggle('in-app', on); if (on) { render(); window.__lenis && window.__lenis.stop(); } else { window.__lenis && window.__lenis.start(); } };
+  window.__appRoute = () => { const on = location.hash === '#app'; document.documentElement.classList.toggle('in-app', on); if (on) { if (window.__appView) { view = window.__appView; window.__appView = null; } render(); window.__lenis && window.__lenis.stop(); } else { window.__lenis && window.__lenis.start(); } };
   addEventListener('hashchange', window.__appRoute);
 }
 
-if (RM) { renderArc(.45, 1); addEventListener('resize', () => renderArc(.45, 1)); $('#orb').remove(); $('#toApp').onclick = () => { location.hash = 'app'; }; window.__appRoute(); $$('#xapp').forEach(x => x.style.opacity = 1); $('#xseed').style.display = 'none'; $('#xcard').style.cssText = 'width:min(1100px,92vw);height:74vh'; return; }
+if (RM) { $$('[data-view]').forEach(a => a.addEventListener('click', () => { window.__appView = a.dataset.view; })); renderArc(.45, 1); addEventListener('resize', () => renderArc(.45, 1)); $('#orb').remove(); $('#toApp').onclick = () => { location.hash = 'app'; }; window.__appRoute(); $$('#xapp').forEach(x => x.style.opacity = 1); $('#xseed').style.display = 'none'; $('#xcard').style.cssText = 'width:min(1100px,92vw);height:74vh'; return; }
 
 /* =========================================================
-   0 · Cloud intro (and its mirror at the end)
+   0 · Cloud intro: three depths of cloud drift apart like flying out of a cloud bank
    ========================================================= */
+const INTRO_CL = [ // [left %, top %, width vw, depth 0 far … 2 near, tone]
+  [-6, 4, 40, 0, 'B'], [32, -6, 40, 0, 'W'], [68, 6, 42, 0, 'B'], [8, 56, 40, 0, 'W'], [58, 60, 44, 0, 'B'],
+  [-14, 24, 56, 1, 'W'], [40, 18, 58, 1, 'B'], [18, 66, 58, 1, 'B'], [66, 70, 52, 1, 'W'],
+  [-24, 40, 74, 2, 'W'], [36, 44, 78, 2, 'W'], [-12, -14, 62, 2, 'W'], [58, -16, 64, 2, 'W']];
+$('#introClouds').innerHTML = INTRO_CL.map(c => `<svg viewBox="0 0 200 120" class="cloud ic d${c[3]}" data-d="${c[3]}" data-cx="${c[0] + c[2] / 2}" data-cy="${c[1] + c[2] * .3}" style="left:${c[0]}vw;top:${c[1]}vh;width:${c[2]}vw"><use href="#cloud${c[4]}" width="200" height="120"/></svg>`).join('');
 const introTL = () => {
   const tl = gsap.timeline();
-  gsap.set('#intro', { display: 'block' }); gsap.set('#intro .veil', { opacity: 1 }); gsap.set('#intro .side', { xPercent: 0, scale: 1 });
-  gsap.set('#intro .mark path', { strokeDashoffset: 1 }); gsap.set('#intro .mark span', { opacity: 0 });
-  gsap.set('.hero h1 .ln>span', { yPercent: 110 }); gsap.set('.hero-fade', { opacity: 0, y: 24 }); gsap.set('.nav-in', { yPercent: -150 }); gsap.set('.hero .hc', { opacity: 0, scale: .9 });
-  tl.to('#intro .mark path', { strokeDashoffset: 0, duration: 1, ease: 'power2.inOut' })
-    .to('#intro .mark span', { opacity: 1, duration: .4 }, '-=.5')
-    .to('#intro .mark', { opacity: 0, scale: .9, duration: .35 }, '+=.15')
-    .to('#intro .side.l', { xPercent: -95, scale: 1.25, duration: 1.4, ease: 'power3.inOut' }, '<')
-    .to('#intro .side.r', { xPercent: 95, scale: 1.25, duration: 1.4, ease: 'power3.inOut' }, '<')
-    .to('#intro .veil', { opacity: 0, duration: .9, ease: 'power1.out' }, '<.2')
-    .to('.hero .hc', { opacity: 1, scale: 1, duration: 1.2, stagger: .06, ease: 'power3.out' }, '<.3')
-    .to('.hero h1 .ln>span', { yPercent: 0, duration: 1.1, stagger: .12, ease: 'expo.out' }, '<.1')
-    .to('.hero-fade', { opacity: 1, y: 0, duration: .9, stagger: .1, ease: 'expo.out' }, '<.35')
-    .to('.nav-in', { yPercent: 0, duration: .9, ease: 'expo.out' }, '<')
-    .set('#intro', { display: 'none' })
-    .set('#intro .mark', { opacity: 1, scale: 1 });
+  gsap.set('#intro', { display: 'block' }); gsap.set('#intro .veil', { opacity: 1 }); gsap.set('#intro .ic', { x: 0, y: 0, scale: 1, opacity: 1 });
+  gsap.set('.hero h1 .ln>span', { yPercent: 110 }); gsap.set('.hero-fade', { opacity: 0, y: 24 }); gsap.set('.nav-in', { yPercent: -150 }); gsap.set('.hero .hc', { opacity: 0, scale: .94 });
+  // a short, almost still moment, then the bank opens: near clouds move first and furthest
+  $$('#intro .ic').forEach(el => {
+    const d = +el.dataset.d; let vx = +el.dataset.cx - 50, vy = +el.dataset.cy - 50; const len = Math.hypot(vx, vy) || 1; vx /= len; vy /= len;
+    const dist = (.5 + .42 * d) * innerWidth;
+    tl.to(el, { x: `+=${gsap.utils.random(-14, 14)}`, y: '-=8', duration: .5, ease: 'sine.inOut' }, 0)
+      .to(el, { x: vx * dist, y: vy * dist * .5 - innerHeight * .06, scale: 1.08 + .22 * d, duration: 2.1 - .3 * d, ease: 'power2.inOut' }, .32 + (2 - d) * .09)
+      .to(el, { opacity: 0, duration: .9, ease: 'power1.in' }, 1.25 + (2 - d) * .08);
+  });
+  tl.to('#intro .veil', { opacity: 0, duration: 1.3, ease: 'power1.inOut' }, .55)
+    .to('.hero .hc', { opacity: 1, scale: 1, duration: 1.4, stagger: .06, ease: 'power3.out' }, 1.0)
+    .to('.hero h1 .ln>span', { yPercent: 0, duration: 1.2, stagger: .12, ease: 'expo.out' }, 1.15)
+    .to('.hero-fade', { opacity: 1, y: 0, duration: 1, stagger: .1, ease: 'expo.out' }, 1.45)
+    .to('.nav-in', { yPercent: 0, duration: 1, ease: 'expo.out' }, 1.45)
+    .set('#intro', { display: 'none' });
   return tl;
 };
+
 lenis.stop(); scrollTo(0, 0);
 introTL().eventCallback('onComplete', () => { lenis.start(); orbState.ready = true; });
 $('#replay').onclick = () => { lenis.scrollTo(0, { immediate: true }); lenis.stop(); orbState.ready = false; gsap.set('#orb', { opacity: 0 }); introTL().eventCallback('onComplete', () => { lenis.start(); orbState.ready = true; }); };
@@ -1293,43 +1356,59 @@ $$('.hero .hc').forEach(c => gsap.to(c, { xPercent: 40 * parseFloat(c.dataset.px
 const mm = gsap.matchMedia();
 
 /* =========================================================
-   2 · Story sentence: icons fly in, words light up (pinned)
+   2+3 · Story: clouds slide in, stickers pop around the screen, each line rises in as its
+   sticker flies into place; then the check sticker becomes the WebLoop app icon, the icon
+   becomes an outline, the outline grows into the app, a click floods into the stack
    ========================================================= */
 mm.add('(min-width: 768px)', () => {
-  const icos = $$('[data-ico]'), words = $$('#sentence .w');
-  const tl = gsap.timeline({ scrollTrigger: { trigger: '.story', start: 'top top', end: '+=160%', pin: true, scrub: .6 } });
-  icos.forEach((ic, i) => {
-    const a = (i / icos.length) * Math.PI * 2 + .6;
-    tl.fromTo(ic, { x: Math.cos(a) * innerWidth * .38, y: Math.sin(a) * innerHeight * .34 - 40, rotate: (i % 2 ? 1 : -1) * 28, scale: 1.4 }, { x: 0, y: 0, rotate: 0, scale: 1, ease: 'power3.inOut', duration: 1 }, i * .25);
-  });
-  words.forEach((w, i) => tl.to(w, { opacity: 1, duration: .1, ease: 'none' }, .2 + i * (1.6 / words.length)));
-  tl.to('.story .label', { opacity: 0, y: -20, duration: .3 }, '+=.2');
-});
-
-/* =========================================================
-   3 · Expanding card → app → click → flood into next section
-   ========================================================= */
-mm.add('(min-width: 768px)', () => {
+  const sec = $('.story'), lines = $$('#sentence .ln'), icos = $$('#sentence .ico:not(.slot)'), check = $('#stCheck');
   const card = $('#xcard'), btn = $('#startBtn'), cur = $('#cursor'), flood = $('#flood');
-  const W = () => Math.min(1120, innerWidth * .9), H = () => innerHeight * .78;
-  const tl = gsap.timeline({ scrollTrigger: { trigger: '.expand', start: 'top top', end: '+=260%', pin: true, scrub: .8, invalidateOnRefresh: true } });
-  tl.to(card, { width: W, height: H, borderRadius: 32, ease: 'power2.inOut', duration: 1.2 })
-    .to('#xseed', { opacity: 0, scale: .8, duration: .3 }, '<.1')
-    .to('#xapp', { opacity: 1, duration: .4 }, '<.5')
-    .to('#xcap', { opacity: 0, duration: .2 }, '<')
-    .set(cur, { opacity: 0 })
+  const SPOTS = { team: [-.3, -.2], brief: [.28, -.24], cap: [-.24, .22], check: [.3, .2] };
+  const home = el => { const r = el.getBoundingClientRect(), s = sec.getBoundingClientRect(); return [r.left + r.width / 2 - s.left - gsap.getProperty(el, 'x'), r.top + r.height / 2 - s.top - gsap.getProperty(el, 'y')]; };
+  const spotX = el => innerWidth * (.5 + SPOTS[el.dataset.ico][0]) - home(el)[0];
+  const spotY = el => innerHeight * (.5 + SPOTS[el.dataset.ico][1]) - home(el)[1];
+  gsap.set(card, { opacity: 0, scale: .6 }); gsap.set('#xapp', { opacity: 0 }); gsap.set('#xseed', { opacity: 1 });
+  gsap.set($$('#sentence .w'), { opacity: 0, yPercent: 60 });
+  const tl = gsap.timeline({ scrollTrigger: { trigger: sec, start: 'top top', end: '+=640%', pin: true, scrub: .7, invalidateOnRefresh: true } });
+  tl.fromTo('.st-cloud.l', { xPercent: -150, y: -20 }, { xPercent: 0, y: 0, duration: 1, ease: 'power2.out' }, 0)
+    .fromTo('.st-cloud.r', { xPercent: 150, y: 30 }, { xPercent: 0, y: 0, duration: 1, ease: 'power2.out' }, .1)
+    .fromTo('.story .label', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: .4 }, .3);
+  // stickers pop up scattered around the screen
+  icos.forEach((ic, i) => tl.fromTo(ic, { x: () => spotX(ic), y: () => spotY(ic), scale: 0, rotate: i % 2 ? 24 : -24 }, { x: () => spotX(ic), y: () => spotY(ic), scale: 1.3, rotate: i % 2 ? 8 : -8, duration: .45, ease: 'back.out(2.2)' }, .55 + i * .08));
+  // each line rises in while its sticker flies into its slot
+  lines.forEach((ln, li) => {
+    const T = 1.3 + li * .95;
+    tl.to($$('.w', ln), { opacity: 1, yPercent: 0, stagger: .07, duration: .5, ease: 'power3.out' }, T);
+    $$('.ico:not(.slot)', ln).forEach(ic => tl.to(ic, { x: 0, y: 0, scale: 1, rotate: 0, duration: .75, ease: 'power3.inOut' }, T - .15));
+  });
+  // the sentence clears; the check sticker travels to the centre and grows
+  const E = 1.3 + 4 * .95 + .5;
+  tl.to([...$$('#sentence .w'), ...icos.filter(i => i !== check), '#sentence .ico.slot', '.story .label'], { opacity: 0, y: -24, duration: .5, stagger: .012 }, E)
+    .to(check, { x: () => innerWidth / 2 - home(check)[0], y: () => innerHeight / 2 - home(check)[1], scale: 2.3, rotate: 0, duration: .9, ease: 'power3.inOut' }, E)
+    .to('.st-cloud.l', { xPercent: -150, duration: .9, ease: 'power2.in' }, E + .2)
+    .to('.st-cloud.r', { xPercent: 150, duration: .9, ease: 'power2.in' }, E + .2)
+  // sticker → WebLoop app icon → outline
+    .to(check, { scale: 1.4, opacity: 0, duration: .35 }, E + .95)
+    .to(card, { opacity: 1, scale: 1, duration: .5, ease: 'back.out(1.8)' }, E + .95)
+    .to('#xseed', { opacity: 0, duration: .4 }, E + 1.6)
+  // outline → app window → click → flood
+    .to(card, { width: () => Math.min(1120, innerWidth * .9), height: () => innerHeight * .78, borderRadius: 32, ease: 'power2.inOut', duration: 1.2 }, E + 2)
+    .to('#xapp', { opacity: 1, duration: .4 }, E + 2.5)
     .fromTo(cur, { x: () => innerWidth * .2, y: () => innerHeight * .85, opacity: 0 }, {
       x: () => { const r = btn.getBoundingClientRect(); return r.left + r.width * .55; },
-      y: () => { const r = btn.getBoundingClientRect(); return r.top + r.height * .6; }, opacity: 1, duration: .8, ease: 'power2.inOut' }, '+=.3')
+      y: () => { const r = btn.getBoundingClientRect(); return r.top + r.height * .6; }, opacity: 1, duration: .8, ease: 'power2.inOut' }, E + 3.5)
     .to(btn, { scale: .9, duration: .08 }).to(btn, { scale: 1, duration: .12 })
     .fromTo(flood, { clipPath: () => { const r = btn.getBoundingClientRect(); return `circle(0px at ${r.left + r.width / 2}px ${r.top + r.height / 2}px)`; } },
       { clipPath: () => { const r = btn.getBoundingClientRect(); return `circle(${Math.hypot(innerWidth, innerHeight) * 1.1}px at ${r.left + r.width / 2}px ${r.top + r.height / 2}px)`; }, duration: 1, ease: 'power2.in' })
     .to(cur, { opacity: 0, duration: .2 }, '<.3')
     .from('#flood h2, #flood p', { y: 60, opacity: 0, stagger: .1, duration: .5 }, '-=.35')
     .to({}, { duration: .4 });
-  return () => gsap.set(card, { clearProps: 'all' });
+  return () => gsap.set([card, check, ...icos], { clearProps: 'all' });
 });
-mm.add('(max-width: 767px)', () => { gsap.set('#sentence .w', { opacity: 1 }); gsap.set('#xcard', { width: '92vw', height: '70vh' }); gsap.set('#xapp', { opacity: 1 }); gsap.set('#xseed', { opacity: 0 }); gsap.set('#flood', { display: 'none' }); });
+mm.add('(max-width: 767px)', () => {
+  gsap.set($$('#sentence .w, #sentence .ico'), { opacity: 1, yPercent: 0, x: 0, y: 0 });
+  gsap.set('#xcard', { width: '92vw', height: '70vh', opacity: 1, scale: 1 }); gsap.set('#xapp', { opacity: 1 }); gsap.set('#xseed', { opacity: 0 }); gsap.set('#flood', { display: 'none' });
+});
 
 /* =========================================================
    5 · Three words: letters rise, cloud edges slide in, characters pop
@@ -1377,7 +1456,7 @@ if (matchMedia('(pointer: fine)').matches) {
     ['#e5f6ff', '<svg viewBox="0 0 24 24"><path d="M13 2 5 13h6l-1 9 8-11h-6z" fill="#3d8ef5"/></svg>']];
   const sec = $('.faq'), trail = $('#trail'); let lx = null, ly = null, acc = 0, alive = 0, k = 0;
   sec.addEventListener('pointermove', e => {
-    const r = sec.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    const x = e.pageX, y = e.pageY;
     if (lx === null) { lx = x; ly = y; return; }
     const dx = x - lx, dy = y - ly, dist = Math.hypot(dx, dy); acc += dist; lx = x; ly = y;
     const gap = e.target.closest('.qa') ? 64 : 30;                  // calmer over the questions
@@ -1399,7 +1478,12 @@ if (matchMedia('(pointer: fine)').matches) {
    11 · Ending: scroll drives the particle clouds into the wordmark (pinned)
    ========================================================= */
 mm.add('(min-width: 768px)', () => {
-  gsap.to(endP, { p: 1, ease: 'none', scrollTrigger: { trigger: '.end', start: 'top top', end: '+=170%', pin: true, scrub: .8 } });
+  const tl = gsap.timeline({ scrollTrigger: { trigger: '.end', start: 'top top', end: '+=170%', pin: true, scrub: .8 } });
+  tl.to(endP, { p: 1, ease: 'none', duration: 1 }, 0)
+    .fromTo('#endL', { xPercent: -75 }, { xPercent: 0, ease: 'power2.out', duration: .6 }, 0)
+    .fromTo('#endR', { xPercent: 75 }, { xPercent: 0, ease: 'power2.out', duration: .6 }, 0)
+    .fromTo('#frontL', { xPercent: -30, yPercent: 30 }, { xPercent: 0, yPercent: 0, ease: 'power2.out', duration: .7 }, 0)
+    .fromTo('#frontR', { xPercent: 30, yPercent: 30 }, { xPercent: 0, yPercent: 0, ease: 'power2.out', duration: .7 }, 0);
   gsap.fromTo('.end-copy', { y: 40, opacity: 0 }, { y: 0, opacity: 1, ease: 'none', scrollTrigger: { trigger: '.end', start: 'top 75%', end: 'top 10%', scrub: .6 } });
 });
 mm.add('(max-width: 767px)', () => { gsap.fromTo(endP, { p: 0 }, { p: 1, ease: 'none', scrollTrigger: { trigger: '.end', start: 'top 85%', end: 'bottom bottom', scrub: .6 } }); });
@@ -1409,7 +1493,8 @@ mm.add('(max-width: 767px)', () => { gsap.fromTo(endP, { p: 0 }, { p: 1, ease: '
   const movePill = a => { if (!a) { pill.style.opacity = 0; return; } pill.style.opacity = 1; pill.style.width = a.offsetWidth + 'px'; pill.style.transform = `translateX(${a.offsetLeft}px)`; };
   links.forEach(a => a.addEventListener('pointerenter', () => movePill(a)));
   $('.nav-links').addEventListener('pointerleave', () => movePill(cur));
-  const spy = links.map(a => [a, $(a.getAttribute('href'))]).filter(x => x[1]);
+  const spy = links.filter(a => !a.dataset.view).map(a => [a, $(a.getAttribute('href'))]).filter(x => x[1]);
+  $$('[data-view]').forEach(a => a.addEventListener('click', () => { window.__appView = a.dataset.view; }));
   const onScroll = () => {
     const y = scrollY; nav.classList.toggle('compact', y > 120);
     if (!nav.classList.contains('open')) { if (y > lastY + 6 && y > 500) nav.classList.add('hide'); else if (y < lastY - 6 || y < 200) nav.classList.remove('hide'); }
@@ -1450,8 +1535,9 @@ gsap.ticker.add(() => {
   const form = t > .55 ? B.dataset.orb : A.dataset.orb;
   const onScreen = travelling || (y > -60 && y < innerHeight + 60);
   const target = (form === 'hide' || (A.dataset.orb === 'hide' && t < .4) || !onScreen) ? 0 : 1;
+  const fadeA = t > .55 ? 1 : +getComputedStyle(alt(A)).opacity;
   const k = first ? 1 : .22; first = false;
-  ox += (x - ox) * k; oy += (y - oy) * k; os += (s - os) * k; oo += (target - oo) * .18;
+  ox += (x - ox) * k; oy += (y - oy) * k; os += (s - os) * k; oo += (target * fadeA - oo) * .18;
   if (form !== 'hide') orb.dataset.form = form;
   gsap.set(orb, { x: ox - 42, y: oy - 42, scale: os, opacity: oo });
 });

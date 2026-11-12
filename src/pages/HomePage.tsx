@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useReducedMotion } from '@/design-system/motion/useReducedMotion';
+import { useLenis } from '@/design-system/motion/lenisContext';
 import { IntroCurtain, INTRO_KEY } from '@/components/home/IntroCurtain';
 import { HeroGenie } from '@/components/home/HeroGenie';
-import { StorySentence } from '@/components/home/StorySentence';
-import { ExpandingCard } from '@/components/home/ExpandingCard';
+import { StoryScene } from '@/components/home/StoryScene';
 import { FrozenStack } from '@/components/home/FrozenStack';
 import { WordBands } from '@/components/home/WordBands';
 import { FeatureCards } from '@/components/home/FeatureCards';
@@ -11,41 +12,58 @@ import { ProjectArc } from '@/components/home/ProjectArc';
 import { HomeCompanies } from '@/components/home/HomeCompanies';
 import { Testimonials } from '@/components/home/Testimonials';
 import { HomeFaq } from '@/components/home/HomeFaq';
-import { ClosingLoop } from '@/components/home/ClosingLoop';
+import { EndLoop } from '@/components/home/EndLoop';
 import { IdeaOrb } from '@/components/home/IdeaOrb';
-import '@/components/home/home.css';
+import '@/components/home/genie-home.css';
+import '@/components/home/genie-home-app.css';
 
 function introSeen() {
   try { return sessionStorage.getItem(INTRO_KEY) === '1'; } catch { return true; }
 }
 
 /**
- * Homepage — the approved Genie demo (docs/redesign/webloop-genie-demo.html),
- * section by section. The protected 3D Project Stack is mounted unchanged
- * through FrozenStack, straight after the expanding card's flood hands off
- * to it. Guest-only route (signed-in visitors go to /feed via HomeRoute).
+ * Homepage — the approved v4 demo (docs/redesign/webloop-genie-demo.html),
+ * section by section: intro, hero, story (→ app → flood), the protected 3D
+ * Project Stack (unchanged, via FrozenStack), Team/Build/Prove, expanding
+ * feature cards, curved project arc, companies (3D city kept), testimonials,
+ * FAQ with sticker trail, particle-loop ending. Guest-only route.
  */
 export function HomePage() {
   const rootRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
+  const lenis = useLenis();
+  const { hash } = useLocation();
   const [playIntro] = useState(() => !reduced && !introSeen());
   const [ready, setReady] = useState(!playIntro);
 
+  // arriving from another page via /#section: scroll there once laid out
+  useEffect(() => {
+    if (!hash) return;
+    const id = window.setTimeout(() => {
+      const t = document.querySelector(hash);
+      if (t) { if (lenis) lenis.scrollTo(t as HTMLElement, { immediate: true }); else t.scrollIntoView(); }
+    }, 600);
+    return () => window.clearTimeout(id);
+  }, [hash, lenis]);
+
   return (
-    <div ref={rootRef} className="ghome">
+    <div ref={rootRef} className={`ghome${reduced ? ' gh-rm' : ''}`}>
       {playIntro && <IntroCurtain onDone={() => setReady(true)} />}
-      <HeroGenie intro={playIntro} ready={ready} />
-      <StorySentence />
-      <ExpandingCard />
-      <FrozenStack />
+      {!reduced && <IdeaOrb rootRef={rootRef} ready={ready} />}
+      <HeroGenie reduced={reduced} />
+      <StoryScene reduced={reduced} />
+      {/* 4 · protected stack, untouched; the wrapper only carries the orb's resting anchor */}
+      <section className="gh-stack-slot">
+        <FrozenStack />
+        <span data-orb="hide" style={{ display: 'block', width: 10, height: 10, margin: '0 auto' }} />
+      </section>
       <WordBands />
       <FeatureCards />
-      <ProjectArc />
+      <ProjectArc reduced={reduced} />
       <HomeCompanies />
       <Testimonials />
-      <HomeFaq />
-      <ClosingLoop />
-      <IdeaOrb rootRef={rootRef} ready={ready} />
+      <HomeFaq reduced={reduced} />
+      <EndLoop reduced={reduced} />
     </div>
   );
 }
