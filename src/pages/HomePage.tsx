@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { pauseCssLoopsOffscreen } from '@/components/home/offscreen';
 import { useLocation } from 'react-router-dom';
 import { useReducedMotion } from '@/design-system/motion/useReducedMotion';
 import { useLenis } from '@/design-system/motion/lenisContext';
@@ -35,6 +36,14 @@ export function HomePage() {
   const { hash } = useLocation();
   const [playIntro] = useState(() => !reduced && !introSeen());
   const [ready, setReady] = useState(!playIntro);
+
+  // performance: pause the decorative CSS loops (marquees, floating object,
+  // orb ring) while they are off-screen
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || reduced) return;
+    return pauseCssLoopsOffscreen(root, '.gh-marq-t, .gh-tst-row, .gh-xc-obj .gh-mv, #gh-orb .gh-spark');
+  }, [reduced, ready]);
 
   // arriving from another page via /#section: scroll there once laid out
   useEffect(() => {

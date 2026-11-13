@@ -17,3 +17,4 @@
 /* phones: the demo scales its floating objects to .6 under 600px but not the
    word-band faces, which then cover the words; give them the same scale */
 @media (max-width: 600px) { .ghome .gh-band .gh-who { scale: .6; } .ghome .gh-band.gh-b3 .gh-who { top: 8% !important; } }
+.ghome .gh-paused, .ghome .gh-paused::after { animation-play-state: paused !important; }

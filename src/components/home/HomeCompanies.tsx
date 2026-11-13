@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { COMPANIES, companyProjectCount } from '@/data/homeDemo';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
@@ -17,16 +17,29 @@ export function HomeCompanies() {
   const [hoverId, setHoverId] = useState<string | null>(null);
   const city = COMPANIES.map((c) => ({ id: c.id, handle: c.id, display_name: c.name, avatar_url: null, bio: c.desc }));
   const open = (handle: string) => navigate(`/creators/${handle}`);
+  // performance: only boot the 3D city once it is within ~a screen of the viewport
+  const cityRef = useRef<HTMLDivElement>(null);
+  const [near, setNear] = useState(typeof IntersectionObserver === 'undefined');
+  useEffect(() => {
+    const el = cityRef.current;
+    if (!el || near) return;
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setNear(true); io.disconnect(); } }, { rootMargin: '900px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [near]);
+  const cityFallback = <div style={{ height: '40vh', display: 'grid', placeItems: 'center' }}><LoopLoader size={24} /></div>;
 
   return (
     <section className="gh-co" id="companies">
       <div className="gh-marq"><div className="gh-marq-t">{[...LOGOS, ...LOGOS].map((l, i) => <span key={i} aria-hidden={i >= LOGOS.length}><i />{l}</span>)}</div></div>
       <div className="gh-wrap">
         <div className="gh-sec-hd"><span className="gh-mono">For companies</span><h2 className="gh-h-display" style={{ marginTop: 14 }}>Post a brief. <span className="gh-acc">Meet the people</span> who ship it.</h2><p className="gh-lead">Verified companies publish real work. Students apply as teams, and you review what they deliver.</p></div>
-        <div className="gh-city">
-          <Suspense fallback={<div style={{ height: '40vh', display: 'grid', placeItems: 'center' }}><LoopLoader size={24} /></div>}>
-            <CompaniesCityScene companies={city} onOpen={open} hoveredId={hoverId} onHoverId={setHoverId} />
-          </Suspense>
+        <div className="gh-city" ref={cityRef}>
+          {near ? (
+            <Suspense fallback={cityFallback}>
+              <CompaniesCityScene companies={city} onOpen={open} hoveredId={hoverId} onHoverId={setHoverId} />
+            </Suspense>
+          ) : cityFallback}
         </div>
         <div className="gh-co-grid">
           {COMPANIES.map((c) => (

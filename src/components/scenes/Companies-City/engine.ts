@@ -74,7 +74,7 @@ export function createCityEngine(
     return { setHover() {}, dispose() {} };
   }
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap; // three removed PCFSoft and already fell back to PCF: same render, no warning
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.setClearColor(0x000000, 0);
   const SHADOWS = innerWidth > 900;
   renderer.shadowMap.enabled = SHADOWS;

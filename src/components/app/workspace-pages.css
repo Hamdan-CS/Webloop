@@ -272,3 +272,13 @@
 .fp-drawer .wl-chat-in { height: 46px; min-height: 46px; border: 0; border-radius: 999px; padding: 12px 18px; background: #fff; color: var(--ink); box-shadow: 0 0 0 1px rgba(10, 13, 18, .07); outline: none; }
 .fp-drawer .wl-chat-in:focus { box-shadow: 0 0 0 2px var(--powder); }
 .fp-drawer .wl-chat-in + .btn-primary { height: 46px; padding: 0 18px; border-radius: 999px; background: var(--charcoal); }
+
+/* ---- reduced motion: the workspace keeps its states, drops the movement ---- */
+@media (prefers-reduced-motion: reduce) {
+  .w-app, .w-app *, .w-cmdk, .w-cmdk *, .fp-drawer, .fp-drawer *, .fp-backdrop {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
+  .w-ws-panel .w-lrow:hover, .w-ws-panel .w-nt-item:hover, .w-ws-panel .pc:hover,
+  .w-ws-panel .btn:not(:disabled):hover, .w-ws-panel .w-btn-d:hover { transform: none; }
+}

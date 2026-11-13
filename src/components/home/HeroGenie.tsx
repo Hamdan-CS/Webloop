@@ -1,3 +1,4 @@
+import { watchOnScreen } from './offscreen';
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from '@/design-system/animations/gsap.config';
@@ -46,8 +47,9 @@ export function HeroGenie({ reduced }: { reduced: boolean }) {
     show(0, true);
     addEventListener('resize', fit);
     document.fonts?.ready.then(fit);
-    const iv = reduced ? 0 : window.setInterval(() => { if (document.hidden) return; k = (k + 1) % SETS.length; show(k); }, 2800);
-    return () => { window.clearInterval(iv); removeEventListener('resize', fit); rot.replaceChildren(); bubs.replaceChildren(); };
+    const seen = ref.current ? watchOnScreen(ref.current) : null;
+    const iv = reduced ? 0 : window.setInterval(() => { if (document.hidden || seen?.state.on === false) return; k = (k + 1) % SETS.length; show(k); }, 2800);
+    return () => { window.clearInterval(iv); seen?.stop(); removeEventListener('resize', fit); rot.replaceChildren(); bubs.replaceChildren(); };
   }, [reduced]);
 
   // hero clouds drift apart as you leave (first echo of the intro)

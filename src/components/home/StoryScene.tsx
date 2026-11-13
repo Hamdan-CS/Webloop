@@ -1,3 +1,4 @@
+import { watchOnScreen } from './offscreen';
 import { useEffect, useRef } from 'react';
 import { gsap } from '@/design-system/animations/gsap.config';
 import { useScrollScene } from '@/design-system/motion/useScrollScene';
@@ -34,13 +35,15 @@ export function StoryScene({ reduced }: { reduced: boolean }) {
     const onTab = (e: Event) => tabs.forEach((x) => x.classList.toggle('gh-on', x === e.currentTarget));
     tabs.forEach((b) => b.addEventListener('click', onTab));
     let ri = 0, count = 128, flip = 0;
+    const seen = watchOnScreen(sec);
     const iv = reduced ? 0 : window.setInterval(() => {
+      if (document.hidden || !seen.state.on) return;
       const row = [...ROWS[(ri++ + 5) % ROWS.length]] as (typeof ROWS)[number]; row[3] = 'r';
       feed.insertAdjacentHTML('afterbegin', rowHTML(row, true));
       feed.lastElementChild?.remove();
       flip = window.setTimeout(() => { const st = feed.firstElementChild?.querySelector('.gh-st'); if (st) { st.className = 'gh-st gh-v'; st.textContent = 'Verified'; } countEl.textContent = String(++count); }, 1600);
     }, 3800);
-    return () => { window.clearInterval(iv); window.clearTimeout(flip); tabs.forEach((b) => b.removeEventListener('click', onTab)); };
+    return () => { window.clearInterval(iv); window.clearTimeout(flip); seen.stop(); tabs.forEach((b) => b.removeEventListener('click', onTab)); };
   }, [reduced]);
 
   useScrollScene(ref, (mm) => {

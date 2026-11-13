@@ -11,6 +11,17 @@ const level = (r: () => number, bias: number) => { const v = r() + bias; return 
  * Fine pointers open a card on hover after 90ms; click, focus and
  * Enter/Space open it too. The contribution graph shows counts on hover.
  */
+/** The demo's GitHub-style graph: 210 seeded cells, inserted once. */
+function fillGraph(gh: HTMLElement): number[] {
+  const r = seeded(5);
+  const cells = Array.from({ length: 210 }, (_, i) => level(r, (Math.floor(i / 7) / 30) * 0.45));
+  if (!gh.querySelector('i[data-i]')) {
+    gh.querySelectorAll('i').forEach((i) => i.remove());
+    gh.insertAdjacentHTML('afterbegin', cells.map((v, i) => `<i class="gh-l${v}" data-i="${i}"></i>`).join(''));
+  }
+  return cells;
+}
+
 export function FeatureCards() {
   const ref = useRef<HTMLElement>(null);
 
@@ -28,10 +39,8 @@ export function FeatureCards() {
       on(c, 'keydown', ((e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCard(c); } }) as EventListener);
     });
     // GitHub-style graph with hover counts
-    const r = seeded(5), gh = sec.querySelector<HTMLElement>('#gh-gh')!, tip = sec.querySelector<HTMLElement>('#gh-ghtip')!;
-    const cells = Array.from({ length: 210 }, (_, i) => level(r, (Math.floor(i / 7) / 30) * 0.45));
-    gh.querySelectorAll('i').forEach((i) => i.remove());
-    gh.insertAdjacentHTML('afterbegin', cells.map((v, i) => `<i class="gh-l${v}" data-i="${i}"></i>`).join(''));
+    const gh = sec.querySelector<HTMLElement>('#gh-gh')!, tip = sec.querySelector<HTMLElement>('#gh-ghtip')!;
+    const cells = fillGraph(gh);
     on(gh, 'pointerover', ((e: PointerEvent) => {
       const c = (e.target as HTMLElement).closest<HTMLElement>('i'); if (!c) return;
       const i = Number(c.dataset.i), v = cells[i];
@@ -45,6 +54,10 @@ export function FeatureCards() {
   useScrollScene(ref, (mm) => {
     mm.add('(prefers-reduced-motion: no-preference)', () => {
       ScrollTrigger.batch(gsap.utils.toArray<HTMLElement>('.gh-reveal'), { start: 'top 88%', onEnter: (els) => gsap.fromTo(els, { y: 50, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.1, duration: 1, ease: 'expo.out' }) });
+      // the cells are inserted here too (idempotent): this scene runs before the
+      // effect above, and GSAP needs the cells to exist to hide them first
+      const gh = ref.current?.querySelector<HTMLElement>('#gh-gh');
+      if (gh) fillGraph(gh);
       gsap.set('#gh-gh i', { scale: 0, opacity: 0 });
       ScrollTrigger.create({ trigger: '#gh-gh', start: 'top 85%', once: true, onEnter: () => gsap.to('#gh-gh i', { scale: 1, opacity: 1, stagger: { each: 0.003, from: 'start' }, duration: 0.35, ease: 'back.out(2)' }) });
     });
