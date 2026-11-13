@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { WAvatar } from '@/components/app/ui';
 import { projectDot, useWorkspaceMaybe } from '@/components/app/workspaceContext';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -26,6 +25,7 @@ import {
 } from 'lucide-react';
 import { fetchProjectBySlug, fetchProfileStats, createApplication, checkExistingApplication, fetchProjectMembers, updateMemberRole, fetchProjectTasks, removeProjectMember, claimTask } from '@/services/api';
 import { TaskManagementPanel } from '@/components/projects/TaskManagementPanel';
+import { TaskBoard } from '@/components/projects/TaskBoard';
 import { toast } from 'sonner';
 import type { Project, ProjectMember, Task } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
@@ -308,7 +308,7 @@ export function ProjectDetailPage() {
         ))}
       </div>
 
-      <div key={tab} className="reveal mt-6 grid gap-8 lg:grid-cols-[1.6fr_1fr]">
+      <div key={tab} className={`reveal mt-6 grid gap-8 ${tab === 'tk' && ws ? 'w-tk-full' : 'lg:grid-cols-[1.6fr_1fr]'}`}>
         {/* Main column */}
         <div className="space-y-8">
           {tab === 'ov' && (
@@ -391,20 +391,7 @@ export function ProjectDetailPage() {
               <p className="pd-muted">No tasks have been published for this project yet.</p>
             ) : (
               ws ? (
-                /* the demo's kanban: three columns, white task cards */
-                <div className="w-kb">
-                  {([['To do', taskTodo], ['In progress', taskProg], ['Done', taskDone]] as const).map(([h, list]) => (
-                    <div key={h} className="w-kcol">
-                      <h4>{h}<span>{list.length}</span></h4>
-                      {list.map((t, i) => (
-                        <div key={t.id} className="w-kcard">
-                          {t.title}
-                          <small><span>{h === 'Done' ? 'Verified' : t.tag ?? tags[i % 4]}</span>{t.assignee && <WAvatar name={t.assignee.display_name} src={t.assignee.avatar_url} size={22} />}</small>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
+                <TaskBoard tasks={tasks} limit={3} onManage={isOwner ? openManage : undefined} />
               ) : (
               <div className="kan2">
                 {([['To Do', taskTodo, ''], ['In Progress', taskProg, 'b'], ['Completed', taskDone, 'g']] as const).map(([h, list, c]) => (
@@ -429,31 +416,13 @@ export function ProjectDetailPage() {
 
           {tab === 'tk' && (
             <>
-          <section className="card-g pbox">
-            <h4>Recent tasks</h4>
+          <section className={ws ? 'w-tk-board' : 'card-g pbox'}>
+            <h4>{ws ? 'Task board' : 'Recent tasks'}</h4>
             {tasks.length === 0 ? (
               <p className="pd-muted">No tasks have been published for this project yet.</p>
             ) : (
               ws ? (
-                /* the demo's kanban; team members can take open (general) tasks */
-                <div className="w-kb">
-                  {([['To do', taskTodo], ['In progress', taskProg], ['Done', taskDone]] as const).map(([h, list]) => (
-                    <div key={h} className="w-kcol">
-                      <h4>{h}<span>{list.length}</span></h4>
-                      {list.map((t, i) => (
-                        <div key={t.id} className="w-kcard">
-                          {t.title}
-                          <small><span>{h === 'Done' ? 'Verified' : !t.assignee_id ? 'Open to the team' : t.tag ?? tags[i % 4]}</span>{t.assignee && <WAvatar name={t.assignee.display_name} src={t.assignee.avatar_url} size={22} />}</small>
-                          {isMember && !t.assignee_id && t.status === 'open' && (
-                            <button type="button" className="w-btn-d w-btn-sm w-take" disabled={claimingId === t.id} onClick={() => handleClaim(t)}>
-                              {claimingId === t.id ? 'Taking…' : 'Take task'}
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
+                <TaskBoard tasks={tasks} canClaim={isMember} claimingId={claimingId} onClaim={handleClaim} onManage={isOwner ? openManage : undefined} />
               ) : (
               <div className="kan2">
                 {([['To Do', taskTodo, ''], ['In Progress', taskProg, 'b'], ['Completed', taskDone, 'g']] as const).map(([h, list, c]) => (
