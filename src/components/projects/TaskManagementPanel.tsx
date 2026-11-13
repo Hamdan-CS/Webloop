@@ -454,6 +454,7 @@ function CreateTaskForm({
   const [description, setDescription] = useState('');
   const [criteria, setCriteria] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
+  const [mode, setMode] = useState<'open' | 'assign'>('open');
   const [dueDate, setDueDate] = useState('');
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -462,8 +463,8 @@ function CreateTaskForm({
   }, []);
 
   const handleSubmit = () => {
-    if (!title.trim()) return;
-    onCreate({ title: title.trim(), description, acceptance_criteria: criteria, assignee_id: assigneeId, due_date: dueDate });
+    if (!title.trim() || (mode === 'assign' && !assigneeId)) return;
+    onCreate({ title: title.trim(), description, acceptance_criteria: criteria, assignee_id: mode === 'assign' ? assigneeId : '', due_date: dueDate });
   };
 
   return (
@@ -503,19 +504,46 @@ function CreateTaskForm({
             />
           </label>
 
+          {/* two ways to hand out a task: leave it open for the team, or give it to one member */}
+          <div role="radiogroup" aria-label="Who works on this task" className="grid gap-2 sm:grid-cols-2">
+            {([
+              ['open', 'General task', 'Open to the team. Assign it later when someone takes it on.'],
+              ['assign', 'Assign to a member', 'Pick who works on it now.'],
+            ] as const).map(([k, t, d]) => (
+              <button
+                key={k}
+                type="button"
+                role="radio"
+                aria-checked={mode === k}
+                onClick={() => setMode(k)}
+                className={`w-task-mode${mode === k ? ' on' : ''}`}
+              >
+                <b>{t}</b>
+                <small>{d}</small>
+              </button>
+            ))}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
-            <Select
-              label="Assign to"
-              value={assigneeId}
-              onChange={setAssigneeId}
-              options={[
-                { value: '', label: 'Unassigned' },
-                ...members.map((m) => ({
-                  value: m.profile_id,
-                  label: `${m.profile?.display_name} (${m.role ?? 'member'})`,
-                })),
-              ]}
-            />
+            {mode === 'assign' ? (
+              <Select
+                label="Assign to"
+                value={assigneeId}
+                onChange={setAssigneeId}
+                options={[
+                  { value: '', label: members.length ? 'Choose a member' : 'No members yet' },
+                  ...members.map((m) => ({
+                    value: m.profile_id,
+                    label: `${m.profile?.display_name} (${m.role ?? 'member'})`,
+                  })),
+                ]}
+              />
+            ) : (
+              <div className="block">
+                <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">Assign to</span>
+                <p className="text-sm text-slate-400 py-2.5">Anyone on the team (unassigned)</p>
+              </div>
+            )}
 
             <label className="block">
               <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">Due Date</span>
@@ -536,7 +564,7 @@ function CreateTaskForm({
         </div>
 
         <div className="mt-5 flex gap-3">
-          <Button onClick={handleSubmit} disabled={busy || !title.trim()} className="flex-1">
+          <Button onClick={handleSubmit} disabled={busy || !title.trim() || (mode === 'assign' && !assigneeId)} className="flex-1">
             {busy ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
             Create Task
           </Button>

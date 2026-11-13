@@ -20,7 +20,7 @@ interface SelectProps {
 
 export function Select({ label, value, options, onChange, className, disabled, size = 'md' }: SelectProps) {
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [position, setPosition] = useState<{ top?: number; bottom?: number; left: number; width: number; maxHeight: number } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -29,8 +29,15 @@ export function Select({ label, value, options, onChange, className, disabled, s
   useLayoutEffect(() => {
     if (!open || !buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
-    setPosition({ top: rect.bottom + 6, left: rect.left, width: rect.width });
-  }, [open]);
+    // open upward when the menu would run off the bottom of the screen
+    const want = Math.min(240, options.length * 40 + 10);
+    const below = window.innerHeight - rect.bottom - 12, above = rect.top - 12;
+    if (below < want && above > below) {
+      setPosition({ bottom: window.innerHeight - rect.top + 6, left: rect.left, width: rect.width, maxHeight: Math.min(240, above) });
+    } else {
+      setPosition({ top: rect.bottom + 6, left: rect.left, width: rect.width, maxHeight: Math.min(240, Math.max(120, below)) });
+    }
+  }, [open, options.length]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -92,7 +99,7 @@ export function Select({ label, value, options, onChange, className, disabled, s
               ref={panelRef}
               role="listbox"
               data-wl-select-portal=""
-              style={{ position: 'fixed', top: position.top, left: position.left, width: position.width }}
+              style={{ position: 'fixed', top: position.top, bottom: position.bottom, left: position.left, width: position.width, maxHeight: position.maxHeight }}
               className="z-[90] max-h-60 overflow-auto rounded-input border border-line bg-paper p-1 shadow-float animate-fade-in-up"
             >
               {options.map((o) => {

@@ -74,3 +74,9 @@ html.wl-in-app, html.wl-in-app body { overflow: hidden; height: 100%; }
 .w-logo { display: inline-flex; align-items: center; font: 600 21px var(--f-ui); letter-spacing: -.035em; border-radius: 10px; color: var(--ink); white-space: nowrap; }
 .w-logo svg { margin: 0 1px; }
 .w-sb-top .w-logo { font-size: 19px; }
+
+/* sidebar: owned vs joined projects */
+.w-sb-group { min-height: 0; }
+.w-sb-proj button > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.w-sb-role { margin-left: auto; font: 500 10px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; font-style: normal; color: var(--fog); background: #eceef1; border-radius: 6px; padding: 2px 6px; flex: none; }
+.w-app.w-collapsed .w-sb-role, .w-app.w-collapsed .w-sb-sec { display: none; }
