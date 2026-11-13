@@ -162,14 +162,23 @@ export function AppShell({ children }: { children: ReactNode }) {
             ))}
             <button type="button" className="w-sb-newtab" onClick={newTab} title="New tab"><WIcon name="tab" /><span>New tab</span><kbd>⌘ B</kbd></button>
           </nav>
-          {!!projects.length && <div className="w-sb-sec">Your projects</div>}
-          <div className="w-sb-proj">
-            {projects.slice(0, 6).map((p) => (
-              <button key={p.id} type="button" onClick={go({ to: `/projects/${p.slug}` })} onAuxClick={(e) => { if (e.button === 1) go({ to: `/projects/${p.slug}` })(e); }} title={p.title} className={pathname === `/projects/${p.slug}` ? 'w-on' : ''}>
-                <i style={{ background: projectDot(p.slug) }} /><span>{p.title}</span>
-              </button>
-            ))}
-          </div>
+          {/* owned and joined projects are listed apart so it's clear which are yours */}
+          {([
+            ['Your projects', projects.filter((p) => p.owner_id === profile?.id)],
+            ['Member of', projects.filter((p) => p.owner_id !== profile?.id)],
+          ] as const).map(([label, list]) => list.length > 0 && (
+            <div key={label} className="w-sb-group">
+              <div className="w-sb-sec">{label}</div>
+              <div className="w-sb-proj">
+                {list.slice(0, 5).map((p) => (
+                  <button key={p.id} type="button" onClick={go({ to: `/projects/${p.slug}` })} onAuxClick={(e) => { if (e.button === 1) go({ to: `/projects/${p.slug}` })(e); }} title={`${p.title} · ${label === 'Member of' ? 'Member' : 'Owner'}`} className={pathname === `/projects/${p.slug}` ? 'w-on' : ''}>
+                    <i style={{ background: projectDot(p.slug) }} /><span>{p.title}</span>
+                    {label === 'Member of' && <em className="w-sb-role">Member</em>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
           <div className="w-sb-foot" ref={meRef}>
             <button type="button" className="w-me" aria-haspopup="menu" aria-expanded={meOpen} onClick={() => setMeOpen((o) => !o)}>
               <WAvatar name={shownName} src={profile?.avatar_url} />

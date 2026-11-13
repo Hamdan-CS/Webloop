@@ -282,3 +282,12 @@
   .w-ws-panel .w-lrow:hover, .w-ws-panel .w-nt-item:hover, .w-ws-panel .pc:hover,
   .w-ws-panel .btn:not(:disabled):hover, .w-ws-panel .w-btn-d:hover { transform: none; }
 }
+
+/* ---- project Manage tab ---- */
+.w-task-mode { display: grid; gap: 3px; text-align: left; padding: 12px 14px; border-radius: 14px; border: 0; background: #fff; box-shadow: 0 0 0 1px rgba(10, 13, 18, .1); color: var(--ink); cursor: pointer; transition: box-shadow .2s; }
+.w-task-mode b { font-weight: 500; font-size: 14px; }
+.w-task-mode small { font-size: 12.5px; color: var(--fog); line-height: 1.4; }
+.w-task-mode.on { box-shadow: 0 0 0 2px var(--iris); background: var(--sky); }
+.w-danger { color: #c2410c; }
+.w-danger:hover { background: #fdecea !important; color: #b42318; }
+.w-lrow .w-danger { flex: none; }

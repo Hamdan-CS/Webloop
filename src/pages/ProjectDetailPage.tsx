@@ -24,7 +24,9 @@ import {
   Eye,
   GitCommit,
 } from 'lucide-react';
-import { fetchProjectBySlug, fetchProfileStats, createApplication, checkExistingApplication, fetchProjectMembers, updateMemberRole, fetchProjectTasks } from '@/services/api';
+import { fetchProjectBySlug, fetchProfileStats, createApplication, checkExistingApplication, fetchProjectMembers, updateMemberRole, fetchProjectTasks, removeProjectMember } from '@/services/api';
+import { TaskManagementPanel } from '@/components/projects/TaskManagementPanel';
+import { toast } from 'sonner';
 import type { Project, ProjectMember, Task } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
 import { Badge } from '@/components/shared/ui/Badge';
@@ -67,7 +69,8 @@ export function ProjectDetailPage() {
   const [editingRoleFor, setEditingRoleFor] = useState<string | null>(null);
   const [roleDraft, setRoleDraft] = useState('');
   const [roleSaving, setRoleSaving] = useState(false);
-  const [tab, setTab] = useState<'ov' | 'tk' | 'tm'>('ov');
+  const [tab, setTab] = useState<'ov' | 'tk' | 'tm' | 'mg'>('ov');
+  const [removingId, setRemovingId] = useState<string | null>(null);
   const ws = useWorkspaceMaybe();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [starred, setStarred] = useState(false);
@@ -184,6 +187,26 @@ export function ProjectDetailPage() {
     setRoleSaving(false);
   };
 
+  const openManage = () => {
+    setTab('mg');
+    document.getElementById('w-ws-panel')?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleRemoveMember = async (m: ProjectMember) => {
+    if (!project) return;
+    const name = m.profile?.display_name ?? 'this member';
+    if (!window.confirm(`Remove ${name} from "${project.title}"? Their past contributions stay on record.`)) return;
+    setRemovingId(m.id);
+    try {
+      await removeProjectMember(project.id, m.profile_id);
+      setTeamMembers((list) => list.filter((x) => x.id !== m.id));
+      toast.success(`Removed ${name} from the team`);
+    } catch {
+      toast.error(`Couldn't remove ${name}. Please try again.`);
+    }
+    setRemovingId(null);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -266,7 +289,7 @@ export function ProjectDetailPage() {
       )}
 
       <div className="pd-tabs" role="tablist">
-        {([['ov', 'Overview'], ['tk', 'Tasks'], ['tm', 'Team']] as const).map(([k, l]) => (
+        {([['ov', 'Overview'], ['tk', 'Tasks'], ['tm', 'Team'], ...(isOwner ? [['mg', 'Manage']] : [])] as ['ov' | 'tk' | 'tm' | 'mg', string][]).map(([k, l]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
@@ -417,6 +440,50 @@ export function ProjectDetailPage() {
             </>
           )}
 
+          {tab === 'mg' && isOwner && project && profile && (
+            <>
+              {/* Manage: everything the owner edits in one place */}
+              <EditProjectModal
+                inline
+                project={project}
+                onClose={() => setTab('ov')}
+                onSaved={(updated) => { setProject(updated); toast.success('Project saved'); }}
+              />
+
+              <section className="card-g pbox">
+                <TaskManagementPanel
+                  projectId={project.id}
+                  profileId={profile.id}
+                  onChange={() => { fetchProjectTasks(project.id).then(setTasks).catch(() => {}); }}
+                />
+              </section>
+
+              <section className="card-g pbox">
+                <h4>Team members</h4>
+                {teamMembers.length === 0 ? (
+                  <p className="pd-muted">No members yet. Accepted join requests appear here.</p>
+                ) : (
+                  <ul className="w-list">
+                    {teamMembers.map((m) => (
+                      <li key={m.id} className="w-lrow">
+                        <Avatar src={m.profile?.avatar_url} name={m.profile?.display_name ?? ''} size="sm" />
+                        <span><b>{m.profile?.display_name ?? 'Member'}</b><small>{m.role ?? 'Team member'}</small></span>
+                        <button
+                          type="button"
+                          className="w-btn-l w-btn-sm w-danger"
+                          disabled={removingId === m.id}
+                          onClick={() => handleRemoveMember(m)}
+                        >
+                          {removingId === m.id ? 'Removing…' : 'Remove'}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </>
+          )}
+
           {tab === 'tm' && (
             <>
           {/* Team members */}
@@ -498,7 +565,7 @@ export function ProjectDetailPage() {
           {/* Actions */}
           <div className="surface-raised p-5 space-y-2.5">
             {isOwner ? (
-              <Button className="w-full" onClick={() => setShowEditModal(true)}>
+              <Button className="w-full" onClick={openManage}>
                 <Pencil size={15} /> Edit Project
               </Button>
             ) : isMember ? (

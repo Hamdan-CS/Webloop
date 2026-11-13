@@ -62,11 +62,10 @@ function SettingsRoute() {
  * keep using these pages as before, since that merge is student-dashboard-only.
  */
 function MyProjectsRoute() {
-  const { profile, loading } = useAuth();
+  const { loading } = useAuth();
   if (loading) return <RouteLoading />;
-  if (profile && (profile.creator_type === 'student' || profile.creator_type === 'team')) {
-    return <Navigate to="/dashboard/student" replace />;
-  }
+  // every role gets the projects page (owned + joined); students used to be
+  // sent back to their dashboard, which left the sidebar's Projects link with no page
   return <MyProjectsPage />;
 }
 
