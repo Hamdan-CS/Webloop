@@ -29,10 +29,9 @@ import { Rating, NoRating } from '@/components/shared/ui/Rating';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { ManagedProjectGrid } from '@/components/projects/ManagedProjectGrid';
 import { MyTasksPanel } from '@/components/projects/MyTasksPanel';
-import { TaskManagementPanel } from '@/components/projects/TaskManagementPanel';
+import { ReviewInbox } from '@/components/projects/tasks/ReviewInbox';
 import { ApplicantsInbox } from '@/components/companies/ApplicantsInbox';
 import { Button } from '@/components/shared/ui/Button';
-import { Select } from '@/components/shared/ui/Select';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { relativeDate } from '@/utils/labels';
 import { cn } from '@/utils/cn';
@@ -73,7 +72,6 @@ export function CompanyDashboard() {
   const [assignedCount, setAssignedCount] = useState(0);
   const [projectFilter, setProjectFilter] = useState<ProjectFilter>('all');
   const [applicantsProject, setApplicantsProject] = useState<string | undefined>();
-  const [chosenTaskProject, setChosenTaskProject] = useState<string | null>(null);
 
   const reduceMotion = useReducedMotion();
   const paneControls = useAnimationControls();
@@ -132,7 +130,6 @@ export function CompanyDashboard() {
   const pendingFor = (projectId: string) => pending.filter((a) => a.project_id === projectId).length;
   const reviewFor = (projectId: string) => toReview.filter((t) => t.project_id === projectId).length;
 
-  const taskProjectId = chosenTaskProject ?? toReview[0]?.project_id ?? projects[0]?.id ?? '';
   const visibleProjects = projects.filter((p) => {
     const statuses = PROJECT_FILTERS.find((f) => f.key === projectFilter)?.statuses;
     return !statuses || statuses.includes(p.status);
@@ -140,7 +137,7 @@ export function CompanyDashboard() {
   const projectTitle = (id: string) => projects.find((p) => p.id === id)?.title ?? 'Project';
 
   const openApplicants = (projectId?: string) => { setApplicantsProject(projectId); setTab('applicants'); };
-  const openReview = (projectId: string) => { setChosenTaskProject(projectId); setTab('tasks'); };
+  const openReview = (_projectId?: string) => { setTab('tasks'); };
   const handleDecided = (id: string, status: 'accepted' | 'declined') => {
     setApplications((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
     void refreshCounts();
@@ -335,22 +332,9 @@ export function CompanyDashboard() {
               </div>
             ) : (
               <section>
-                {projects.length > 1 && (
-                  <Select
-                    className="mb-5 w-full sm:w-80"
-                    label="Project"
-                    value={taskProjectId}
-                    onChange={setChosenTaskProject}
-                    options={projects.map((p) => {
-                      const n = reviewFor(p.id);
-                      return { value: p.id, label: n ? `${p.title} (${n} to review)` : p.title };
-                    })}
-                  />
-                )}
-                {/* Mounted per visit so someone accepted a moment ago is in the assignee list. */}
-                {tab === 'tasks' && taskProjectId && (
-                  <TaskManagementPanel key={taskProjectId} projectId={taskProjectId} profileId={profile.id} onChange={() => { setChosenTaskProject(taskProjectId); void loadTasks(projects); }} />
-                )}
+                {/* review inbox: creating, assigning and deleting tasks live in each project's Tasks tab */}
+                <h2 className="pf-h4 mb-4">Waiting for your review</h2>
+                {tab === 'tasks' && <ReviewInbox projects={projects} profileId={profile.id} onChange={() => { void loadTasks(projects); }} />}
               </section>
             )}
             <section hidden={assignedCount === 0}>

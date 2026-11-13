@@ -23,11 +23,12 @@ import {
   Eye,
   GitCommit,
 } from 'lucide-react';
-import { fetchProjectBySlug, fetchProfileStats, createApplication, checkExistingApplication, fetchProjectMembers, updateMemberRole, fetchProjectTasks, removeProjectMember, claimTask } from '@/services/api';
-import { TaskManagementPanel } from '@/components/projects/TaskManagementPanel';
-import { TaskBoard } from '@/components/projects/TaskBoard';
+import { fetchProjectBySlug, fetchProfileStats, createApplication, checkExistingApplication, fetchProjectMembers, updateMemberRole, removeProjectMember } from '@/services/api';
+import { ProjectTasks } from '@/components/projects/tasks/ProjectTasks';
+import { useProjectTasks } from '@/components/projects/tasks/useProjectTasks';
+import '@/components/projects/tasks/project-page.css';
 import { toast } from 'sonner';
-import type { Project, ProjectMember, Task } from '@/types';
+import type { Project, ProjectMember } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
 import { Badge } from '@/components/shared/ui/Badge';
 import { Button } from '@/components/shared/ui/Button';
@@ -49,6 +50,8 @@ import {
   creatorTypeLabel,
 } from '@/utils/labels';
 
+type Tab = 'ov' | 'tk' | 'tm' | 'st';
+
 export function ProjectDetailPage() {
   const { slug } = useParams();
   const [project, setProject] = useState<Project | null>(null);
@@ -65,16 +68,16 @@ export function ProjectDetailPage() {
   const [alreadyApplied, setAlreadyApplied] = useState(false);
   const [teamMembers, setTeamMembers] = useState<ProjectMember[]>([]);
   const [showMessageModal, setShowMessageModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [editingRoleFor, setEditingRoleFor] = useState<string | null>(null);
   const [roleDraft, setRoleDraft] = useState('');
   const [roleSaving, setRoleSaving] = useState(false);
-  const [tab, setTab] = useState<'ov' | 'tk' | 'tm' | 'mg'>('ov');
+  const [tab, setTab] = useState<Tab>('ov');
   const [removingId, setRemovingId] = useState<string | null>(null);
-  const [claimingId, setClaimingId] = useState<string | null>(null);
   const ws = useWorkspaceMaybe();
-  const [tasks, setTasks] = useState<Task[]>([]);
   const [starred, setStarred] = useState(false);
+  // the project's tasks and every task action (Tasks tab, header progress)
+  const taskApi = useProjectTasks(project?.id, profile?.id);
+  const tasks = taskApi.tasks;
 
   useEffect(() => {
     if (!slug) return;
@@ -88,7 +91,6 @@ export function ProjectDetailPage() {
         }
         // Load team members for the Team tab
         fetchProjectMembers(p.id).then(setTeamMembers).catch(() => {});
-        fetchProjectTasks(p.id).then(setTasks).catch(() => setTasks([]));
         try { setStarred(localStorage.getItem(`wl-star-${p.id}`) === '1'); } catch { /* storage unavailable */ }
       }
       setLoading(false);
@@ -130,14 +132,11 @@ export function ProjectDetailPage() {
   const isMember = !isOwner && !!profile && teamMembers.some((m) => m.profile_id === profile.id);
   const myRole = isMember ? teamMembers.find((m) => m.profile_id === profile?.id)?.role : null;
   const taskDone = tasks.filter((t) => t.status === 'approved');
-  const taskProg = tasks.filter((t) => ['in_progress', 'submitted', 'changes_requested'].includes(t.status));
-  const taskTodo = tasks.filter((t) => t.status === 'open');
   const progressPct = project.progress && project.progress > 0
     ? project.progress
     : tasks.length ? Math.round((taskDone.length / tasks.length) * 100) : 0;
   const starCount = (project.stars_count ?? 0) + (starred ? 1 : 0);
   const contributors = Math.max(teamMembers.length, project.team_size);
-  const tags = ['Feature', 'Core', 'Docs', 'Perf'];
 
   const handleJoin = () => {
     if (isOwner || isMember) return;
@@ -188,22 +187,21 @@ export function ProjectDetailPage() {
     setRoleSaving(false);
   };
 
-  const openManage = () => {
-    setTab('mg');
+  const openSettings = () => {
+    setTab('st');
     document.getElementById('w-ws-panel')?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleClaim = async (t: Task) => {
-    if (!project) return;
-    setClaimingId(t.id);
-    try {
-      await claimTask(t.id);
-      toast.success(`You took "${t.title}"`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't take this task. Please try again.");
+  const contactTeam = () => {
+    if (!user || !profile) {
+      prompt({
+        title: 'Contact the team',
+        reason: 'Messaging requires a free WebLoop account so communication stays on-platform.',
+        cta: 'Create a free account to message',
+      });
+    } else {
+      setShowMessageModal(true);
     }
-    fetchProjectTasks(project.id).then(setTasks).catch(() => {});
-    setClaimingId(null);
   };
 
   const handleRemoveMember = async (m: ProjectMember) => {
@@ -221,19 +219,50 @@ export function ProjectDetailPage() {
     setRemovingId(null);
   };
 
+  const dashboardPath = profile ? getDashboardPath(profile.creator_type) : '/';
+  const created = new Date(project.published_at ?? project.created_at).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  /* One action row under the header: the only place for these actions. */
+  const actions = (
+    <div className="w-pd-actions">
+      {isOwner ? (
+        <button type="button" className="w-btn-d" onClick={openSettings}><Pencil size={15} /> Edit project</button>
+      ) : isMember ? (
+        <>
+          <span className="w-pd-member"><CheckCircle2 size={15} /> You’re on this team{myRole ? ` · ${myRole}` : ''}</span>
+          <Link to={dashboardPath} className="w-btn-l"><ArrowRight size={15} /> My tasks</Link>
+        </>
+      ) : isCompleted ? (
+        <span className="w-pd-note">Completed showcase</span>
+      ) : alreadyApplied ? (
+        <span className="w-pd-note amber">Application submitted</span>
+      ) : (
+        <button type="button" className="w-btn-d" onClick={handleJoin}>
+          <Sparkles size={15} /> {openRoles.length > 0 ? `Apply to join (${openRoles.length} role${openRoles.length !== 1 ? 's' : ''})` : 'Apply to join'}
+        </button>
+      )}
+      {project.demo_url && <a href={project.demo_url} target="_blank" rel="noopener noreferrer" className="w-btn-l"><Play size={15} /> Demo</a>}
+      {project.repo_url && <a href={project.repo_url} target="_blank" rel="noopener noreferrer" className="w-btn-l"><GitBranch size={15} /> Repository</a>}
+      {!isOwner && <button type="button" className="w-btn-l" onClick={contactTeam}><Send size={15} /> Contact team</button>}
+      <button type="button" className={`w-btn-l w-star${starred ? ' on' : ''}`} onClick={toggleStar} aria-pressed={starred}>
+        <Star size={15} fill={starred ? 'currentColor' : 'none'} /> {starred ? 'Starred' : 'Star'}
+      </button>
+    </div>
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="container-page py-8"
+      className="container-page py-8 w-pd"
     >
       <Link to="/explore" className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors mb-6">
         <ArrowLeft size={15} /> Back to Explore
       </Link>
 
       {ws ? (
-        /* Inside the workspace: the demo's project header (image, title, meta, progress) */
+        /* Inside the workspace: the demo's project header (image, title, meta, the only progress bar) */
         <div className="w-ph">
           {project.cover_image_url
             ? <img src={project.cover_image_url} alt="" />
@@ -244,11 +273,10 @@ export function ProjectDetailPage() {
               <span>{statusLabel[project.status]}</span>
               <span>{projectTypeLabel[project.project_type]}</span>
               {project.category && <span>{project.category}</span>}
-              {project.skills?.map((sk) => <span key={sk.id}>{sk.name}</span>)}
             </div>
           </div>
           <div className="w-prog">
-            <small><span>{taskDone.length} of {tasks.length} tasks done</span><b>{progressPct}%</b></small>
+            <small><span>{taskDone.length} of {tasks.length} tasks verified</span><b>{progressPct}%</b></small>
             <div><i style={{ width: `${progressPct}%` }} /></div>
           </div>
         </div>
@@ -265,11 +293,6 @@ export function ProjectDetailPage() {
           <h2 className="font-display font-bold text-white">{project.title}</h2>
           <p className="tl">{project.category ?? projectTypeLabel[project.project_type]}</p>
           <p className="ds">{project.summary}</p>
-          {project.skills && project.skills.length > 0 && (
-            <div className="ref-tags" style={{ marginBottom: 6 }}>
-              {project.skills.map((sk) => <span key={sk.id} className="ref-tag">{sk.name}</span>)}
-            </div>
-          )}
           <div className="pd-stats">
             <div><Star size={22} /><span><b>{starCount.toLocaleString('en')}</b>Likes</span></div>
             <div><Users size={22} /><span><b>{contributors}</b>Contributors</span></div>
@@ -301,200 +324,125 @@ export function ProjectDetailPage() {
           </div>
         </div>
       )}
+      {actions}
 
       <div className="pd-tabs" role="tablist">
-        {([['ov', 'Overview'], ['tk', 'Tasks'], ['tm', 'Team'], ...(isOwner ? [['mg', 'Manage']] : [])] as ['ov' | 'tk' | 'tm' | 'mg', string][]).map(([k, l]) => (
+        {([['ov', 'Overview'], ['tk', 'Tasks'], ['tm', 'Team'], ...(isOwner ? [['st', 'Settings']] : [])] as [Tab, string][]).map(([k, l]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
 
-      <div key={tab} className={`reveal mt-6 grid gap-8 ${tab === 'tk' && ws ? 'w-tk-full' : 'lg:grid-cols-[1.6fr_1fr]'}`}>
-        {/* Main column */}
-        <div className="space-y-8">
-          {tab === 'ov' && (
-            <>
-          <section className="card-g pbox">
-            <h4>Project progress</h4>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span className="pd-muted">{taskDone.length} completed · {taskProg.length} in progress · {taskTodo.length} remaining</span>
-              <b>{progressPct}%</b>
-            </div>
-            <div className="prog"><i style={{ width: `${progressPct}%` }} /></div>
-            <div className="prog-meta"><span>{tasks.length} total tasks</span>{project.is_demo && <span className="demo-note">Demonstration data</span>}</div>
-          </section>
-
-          <section className="card-g pbox">
-            <h4>About the project</h4>
-            <ul className="checks">
-              <li>Open, documented and easy to contribute to</li>
-              <li>Clear tasks labelled by difficulty and area</li>
-              <li>Mentors review every pull request</li>
-              <li>{project.compensation === 'open_source' ? 'Open source and community-driven' : 'Maintained by its owner with invited contributors'}</li>
-            </ul>
-          </section>
-
-          {project.overview && (
-            <Section title="Overview">
-              <p className="text-sm text-slate-300 leading-relaxed">{project.overview}</p>
-            </Section>
-          )}
-
-          {(project.problem || project.target_users) && (
-            <div className="grid sm:grid-cols-2 gap-6">
-              {project.problem && (
-                <Section title="Problem">
-                  <p className="text-sm text-slate-400 leading-relaxed">{project.problem}</p>
-                </Section>
-              )}
-              {project.target_users && (
-                <Section title="Target users">
-                  <p className="text-sm text-slate-400 leading-relaxed">{project.target_users}</p>
-                </Section>
-              )}
-            </div>
-          )}
-
-          {/* Technologies */}
-          {project.skills && project.skills.length > 0 && (
-            <Section title="Technologies & skills">
-              <div className="flex flex-wrap gap-2">
-                {project.skills.map((s) => (
-                  <Link key={s.id} to={`/explore?technology=${encodeURIComponent(s.name)}`} className="chip hover:border-accent-400/40 hover:text-accent-200 transition-colors">
-                    {s.name}
-                    {s.category && <span className="text-slate-500 text-[10px]">· {s.category}</span>}
-                  </Link>
-                ))}
-              </div>
-            </Section>
-          )}
-
-          {/* Open roles */}
-          {openRoles.length > 0 && (
-            <Section title={`Available positions (${openRoles.length})`}>
-              <ul className="space-y-3">
-                {openRoles.map((r) => (
-                  <li key={r.id} className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-medium text-white">{r.title}</p>
-                      <Badge tone="green">Open</Badge>
+      <div key={tab} className="reveal mt-6 space-y-6">
+        {/* OVERVIEW: what the project is, open positions, and its details (once) */}
+        {tab === 'ov' && (
+          <>
+            <div className="w-pd-ov">
+              <div className="space-y-6 min-w-0">
+                <Section title="About the project">
+                  {project.overview
+                    ? <p className="text-sm text-slate-300 leading-relaxed">{project.overview}</p>
+                    : <p className="text-sm text-slate-400 leading-relaxed">{project.summary}</p>}
+                  {(project.problem || project.target_users) && (
+                    <div className="w-pd-pt">
+                      {project.problem && <div><small>Problem</small><p>{project.problem}</p></div>}
+                      {project.target_users && <div><small>Target users</small><p>{project.target_users}</p></div>}
                     </div>
-                    {r.description && <p className="mt-1.5 text-sm text-slate-400">{r.description}</p>}
-                  </li>
-                ))}
-              </ul>
-            </Section>
-          )}
+                  )}
+                </Section>
 
-          <section className="card-g pbox">
-            <h4>Recent tasks</h4>
-            {tasks.length === 0 ? (
-              <p className="pd-muted">No tasks have been published for this project yet.</p>
-            ) : (
-              ws ? (
-                <TaskBoard tasks={tasks} limit={3} onManage={isOwner ? openManage : undefined} />
-              ) : (
-              <div className="kan2">
-                {([['To Do', taskTodo, ''], ['In Progress', taskProg, 'b'], ['Completed', taskDone, 'g']] as const).map(([h, list, c]) => (
-                  <div key={h}>
-                    <h5>{h} ({list.length})</h5>
-                    {list.slice(0, 4).map((t, i) => (
-                      <div key={t.id} className="pd-task">
-                        <span className={`ck ${c}`} />
-                        <span className="pd-task-t">{t.title}</span>
-                        <span className="ref-tag pd-task-tag">{t.tag ?? tags[i % 4]}</span>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-              )
-            )}
-          </section>
-
-            </>
-          )}
-
-          {tab === 'tk' && (
-            <>
-          <section className={ws ? 'w-tk-board' : 'card-g pbox'}>
-            <h4>{ws ? 'Task board' : 'Recent tasks'}</h4>
-            {tasks.length === 0 ? (
-              <p className="pd-muted">No tasks have been published for this project yet.</p>
-            ) : (
-              ws ? (
-                <TaskBoard tasks={tasks} canClaim={isMember} claimingId={claimingId} onClaim={handleClaim} onManage={isOwner ? openManage : undefined} />
-              ) : (
-              <div className="kan2">
-                {([['To Do', taskTodo, ''], ['In Progress', taskProg, 'b'], ['Completed', taskDone, 'g']] as const).map(([h, list, c]) => (
-                  <div key={h}>
-                    <h5>{h} ({list.length})</h5>
-                    {list.slice(0, 4).map((t, i) => (
-                      <div key={t.id} className="pd-task">
-                        <span className={`ck ${c}`} />
-                        <span className="pd-task-t">{t.title}</span>
-                        <span className="ref-tag pd-task-tag">{t.tag ?? tags[i % 4]}</span>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-              )
-            )}
-          </section>
-
-            </>
-          )}
-
-          {tab === 'mg' && isOwner && project && profile && (
-            <>
-              {/* Manage: everything the owner edits in one place */}
-              <EditProjectModal
-                inline
-                project={project}
-                onClose={() => setTab('ov')}
-                onSaved={(updated) => { setProject(updated); toast.success('Project saved'); }}
-              />
-
-              <section className="card-g pbox">
-                <TaskManagementPanel
-                  projectId={project.id}
-                  profileId={profile.id}
-                  onChange={() => { fetchProjectTasks(project.id).then(setTasks).catch(() => {}); }}
-                />
-              </section>
-
-              <section className="card-g pbox">
-                <h4>Team members</h4>
-                {teamMembers.length === 0 ? (
-                  <p className="pd-muted">No members yet. Accepted join requests appear here.</p>
-                ) : (
-                  <ul className="w-list">
-                    {teamMembers.map((m) => (
-                      <li key={m.id} className="w-lrow">
-                        <Avatar src={m.profile?.avatar_url} name={m.profile?.display_name ?? ''} size="sm" />
-                        <span><b>{m.profile?.display_name ?? 'Member'}</b><small>{m.role ?? 'Team member'}</small></span>
-                        <button
-                          type="button"
-                          className="w-btn-l w-btn-sm w-danger"
-                          disabled={removingId === m.id}
-                          onClick={() => handleRemoveMember(m)}
-                        >
-                          {removingId === m.id ? 'Removing…' : 'Remove'}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                {openRoles.length > 0 && (
+                  <Section title={`Open positions (${openRoles.length})`}>
+                    <ul className="space-y-3">
+                      {openRoles.map((r) => (
+                        <li key={r.id} className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="font-medium text-white">{r.title}</p>
+                            <Badge tone="green">Open</Badge>
+                          </div>
+                          {r.description && <p className="mt-1.5 text-sm text-slate-400">{r.description}</p>}
+                        </li>
+                      ))}
+                    </ul>
+                  </Section>
                 )}
-              </section>
-            </>
-          )}
+              </div>
 
-          {tab === 'tm' && (
-            <>
-          {/* Team members */}
-          {teamMembers.length > 0 && (
-            <Section title="Team members">
-              {teamMembers.length > 0 && (
+              <Section title="Project details">
+                <div className="space-y-3">
+                  <MetaRow icon={<Target size={14} />} label="Type" value={projectTypeLabel[project.project_type]} />
+                  {owner && (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="flex items-center gap-2 text-xs text-slate-500"><Users size={14} /> Owner</span>
+                      <Link to={`/creators/${owner.handle}`} className="text-sm font-medium text-right link-accent">{owner.display_name}</Link>
+                    </div>
+                  )}
+                  {project.license && <MetaRow icon={<CheckCircle2 size={14} />} label="License" value={project.license} />}
+                  {project.difficulty && <MetaRow icon={<Flag size={14} />} label="Difficulty" value={difficultyLabel[project.difficulty]} />}
+                  {project.compensation && <MetaRow icon={<CheckCircle2 size={14} />} label="Compensation" value={compensationLabel[project.compensation]} />}
+                  <MetaRow icon={<Users size={14} />} label="Team size" value={project.team_size > 0 ? `${project.team_size} members` : 'Solo / forming'} />
+                  {project.duration_weeks && <MetaRow icon={<Calendar size={14} />} label="Duration" value={`${project.duration_weeks} weeks`} />}
+                  {project.time_commitment_hours && <MetaRow icon={<Clock size={14} />} label="Commitment" value={project.time_commitment_hours} />}
+                  <MetaRow icon={<MapPin size={14} />} label="Location" value={project.is_remote ? 'Remote' : project.location ?? '—'} />
+                  <MetaRow icon={<Calendar size={14} />} label="Created" value={created} />
+                </div>
+                {project.skills && project.skills.length > 0 && (
+                  <div className="w-pd-tech">
+                    <small>Technologies</small>
+                    <div className="flex flex-wrap gap-2">
+                      {project.skills.map((s) => (
+                        <Link key={s.id} to={`/explore?technology=${encodeURIComponent(s.name)}`} className="chip hover:border-accent-400/40 hover:text-accent-200 transition-colors">
+                          {s.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </Section>
+            </div>
+
+            {project.is_demo && (
+              <div className="rounded-lg border border-signal-amber/20 bg-signal-amber/5 px-3 py-2 text-xs text-signal-amber/90">
+                Demo content — sample project for platform preview.
+              </div>
+            )}
+          </>
+        )}
+
+        {/* TASKS: the one place for everything task-related */}
+        {tab === 'tk' && (
+          <ProjectTasks
+            api={taskApi}
+            members={teamMembers}
+            isOwner={isOwner}
+            isMember={isMember}
+            meId={profile?.id}
+            dashboardPath={dashboardPath}
+          />
+        )}
+
+        {/* TEAM: the owner, then members (role editing and removal for the owner) */}
+        {tab === 'tm' && (
+          <>
+            {owner && (
+              <Link to={`/creators/${owner.handle}`} className="surface-raised p-5 flex items-center gap-3 hover:border-accent-400/30 transition-colors group">
+                <Avatar src={owner.avatar_url} name={owner.display_name} size="lg" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate font-semibold text-white">{owner.display_name}</p>
+                    {owner.verified && <CheckCircle2 size={14} className="text-accent-400 shrink-0" />}
+                    <span className="w-pd-role">Owner</span>
+                  </div>
+                  <p className="text-xs text-slate-400">{creatorTypeLabel[owner.creator_type]}</p>
+                  {stats.count > 0 ? <Rating value={stats.avg} count={stats.count} /> : <NoRating label="New creator" />}
+                </div>
+                <ArrowRight size={16} className="text-slate-500 group-hover:text-accent-300 transition-colors" />
+              </Link>
+            )}
+
+            <Section title={`Team members (${teamMembers.length})`}>
+              {teamMembers.length === 0 ? (
+                <p className="text-sm text-slate-400">No members yet. {isOwner ? 'Accepted join requests appear here.' : ''}</p>
+              ) : (
                 <ul className="space-y-2">
                   {teamMembers.map((m) => (
                     <li key={m.id} className="rounded-xl border border-white/8 bg-white/[0.03] p-3">
@@ -521,12 +469,14 @@ export function ProjectDetailPage() {
                               <button
                                 onClick={() => handleSaveRole(m.id, m.profile_id)}
                                 disabled={roleSaving}
+                                aria-label="Save role"
                                 className="rounded-md bg-accent-500/20 p-1 text-accent-300 hover:bg-accent-500/30 transition-colors"
                               >
                                 {roleSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
                               </button>
                               <button
                                 onClick={() => { setEditingRoleFor(null); setRoleDraft(''); }}
+                                aria-label="Cancel"
                                 className="rounded-md p-1 text-slate-500 hover:text-white transition-colors"
                               >
                                 <X size={12} />
@@ -538,6 +488,7 @@ export function ProjectDetailPage() {
                               {isOwner && (
                                 <button
                                   onClick={() => { setEditingRoleFor(m.id); setRoleDraft(m.role ?? ''); }}
+                                  aria-label={`Edit ${m.profile?.display_name ?? 'member'}'s role`}
                                   className="text-slate-600 hover:text-accent-300 transition-colors"
                                 >
                                   <Pencil size={10} />
@@ -547,125 +498,34 @@ export function ProjectDetailPage() {
                           )}
                         </div>
                         {m.profile?.verified && <CheckCircle2 size={14} className="text-accent-400 shrink-0" />}
+                        {isOwner && (
+                          <button
+                            type="button"
+                            className="w-btn-l w-btn-sm w-danger"
+                            disabled={removingId === m.id}
+                            onClick={() => handleRemoveMember(m)}
+                          >
+                            {removingId === m.id ? 'Removing…' : 'Remove'}
+                          </button>
+                        )}
                       </div>
                     </li>
                   ))}
                 </ul>
               )}
             </Section>
-          )}
+          </>
+        )}
 
-            </>
-          )}
-
-          {project.is_demo && (
-            <div className="rounded-lg border border-signal-amber/20 bg-signal-amber/5 px-3 py-2 text-xs text-signal-amber/90">
-              Demo content — sample project for platform preview.
-            </div>
-          )}
-        </div>
-
-        {/* Sidebar */}
-        <div className="side space-y-5 lg:sticky lg:top-20 lg:self-start">
-          {/* Actions */}
-          <div className="surface-raised p-5 space-y-2.5">
-            {isOwner ? (
-              <Button className="w-full" onClick={openManage}>
-                <Pencil size={15} /> Edit Project
-              </Button>
-            ) : isMember ? (
-              <>
-                <div className="rounded-xl border border-signal-green/30 bg-signal-green/10 px-3 py-2.5 text-center">
-                  <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-signal-green">
-                    <CheckCircle2 size={15} /> You're a member of this team
-                  </p>
-                  {myRole && <p className="mt-0.5 text-xs text-slate-400">Your role: {myRole}</p>}
-                </div>
-                <Link to={profile ? getDashboardPath(profile.creator_type) : '/'} className="btn-secondary w-full">
-                  <ArrowRight size={15} /> Go to my tasks
-                </Link>
-              </>
-            ) : isCompleted ? (
-              <Badge tone="accent" className="w-full justify-center py-2">Completed showcase</Badge>
-            ) : alreadyApplied ? (
-              <Badge tone="amber" className="w-full justify-center py-2">Application submitted</Badge>
-            ) : (
-              <Button className="w-full" onClick={handleJoin}>
-                <Sparkles size={15} /> {openRoles.length > 0 ? `Apply to Join (${openRoles.length} roles)` : 'Apply to Join'}
-              </Button>
-            )}
-            {project.demo_url && (
-              <a href={project.demo_url} target="_blank" rel="noopener noreferrer" className="btn-secondary w-full">
-                <Play size={15} /> Visit Demo
-              </a>
-            )}
-            {project.repo_url && (
-              <a href={project.repo_url} target="_blank" rel="noopener noreferrer" className="btn-ghost w-full">
-                <GitBranch size={15} /> Repository
-              </a>
-            )}
-            {!isOwner && (
-              <Button variant="secondary" className="w-full" onClick={() => {
-                if (!user || !profile) {
-                  prompt({
-                    title: 'Contact the team',
-                    reason: 'Messaging requires a free WebLoop account so communication stays on-platform.',
-                    cta: 'Create a free account to message',
-                  });
-                } else {
-                  setShowMessageModal(true);
-                }
-              }}>
-                <Send size={15} /> Contact Team
-              </Button>
-            )}
-            <button type="button" className={`pd-star ${starred ? 'on' : ''}`} onClick={toggleStar} aria-pressed={starred}>
-              <Star size={18} fill={starred ? 'currentColor' : 'none'} /> <span>{starred ? 'Starred' : 'Star Project'}</span>
-            </button>
-          </div>
-
-          {/* Creator card */}
-          {owner && (
-            <Link to={`/creators/${owner.handle}`} className="surface-raised p-5 block hover:border-accent-400/30 transition-colors group">
-              <div className="flex items-center gap-3">
-                <Avatar src={owner.avatar_url} name={owner.display_name} size="lg" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <p className="truncate font-semibold text-white">{owner.display_name}</p>
-                    {owner.verified && <CheckCircle2 size={14} className="text-accent-400 shrink-0" />}
-                  </div>
-                  <p className="text-xs text-slate-400">{creatorTypeLabel[owner.creator_type]}</p>
-                  {stats.count > 0 ? <Rating value={stats.avg} count={stats.count} /> : <NoRating label="New creator" />}
-                </div>
-                <ArrowRight size={16} className="text-slate-500 group-hover:text-accent-300 transition-colors" />
-              </div>
-              {owner.bio && <p className="mt-3 text-xs text-slate-500 leading-relaxed line-clamp-3">{owner.bio}</p>}
-            </Link>
-          )}
-
-          {/* Meta */}
-          <div className="surface-raised p-5 space-y-3">
-            <MetaRow icon={<Target size={14} />} label="Type" value={projectTypeLabel[project.project_type]} />
-            {owner && <MetaRow icon={<Users size={14} />} label="Owner" value={owner.display_name} />}
-            {project.license && <MetaRow icon={<CheckCircle2 size={14} />} label="License" value={project.license} />}
-            {project.difficulty && <MetaRow icon={<Flag size={14} />} label="Difficulty" value={difficultyLabel[project.difficulty]} />}
-            {project.compensation && <MetaRow icon={<CheckCircle2 size={14} />} label="Compensation" value={compensationLabel[project.compensation]} />}
-            <MetaRow icon={<Users size={14} />} label="Team size" value={project.team_size > 0 ? `${project.team_size} members` : 'Solo / forming'} />
-            {project.duration_weeks && <MetaRow icon={<Calendar size={14} />} label="Duration" value={`${project.duration_weeks} weeks`} />}
-            {project.time_commitment_hours && <MetaRow icon={<Clock size={14} />} label="Commitment" value={project.time_commitment_hours} />}
-            <MetaRow icon={<MapPin size={14} />} label="Location" value={project.is_remote ? 'Remote' : project.location ?? '—'} />
-            <MetaRow icon={<Calendar size={14} />} label="Created" value={new Date(project.published_at ?? project.created_at).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })} />
-          </div>
-
-          {project.skills && project.skills.length > 0 && (
-            <div className="surface-raised p-5">
-              <h4 className="mb-3 text-sm font-semibold text-white">Technologies</h4>
-              <div className="techs">
-                {project.skills.slice(0, 4).map((sk) => <div key={sk.id}>{sk.name}</div>)}
-              </div>
-            </div>
-          )}
-        </div>
+        {/* SETTINGS (owner): project details and configuration only */}
+        {tab === 'st' && isOwner && (
+          <EditProjectModal
+            inline
+            project={project}
+            onClose={() => setTab('ov')}
+            onSaved={(updated) => { setProject(updated); toast.success('Project saved'); }}
+          />
+        )}
       </div>
 
       {/* Apply modal */}
@@ -740,15 +600,6 @@ export function ProjectDetailPage() {
             )}
           </div>
         </div>
-      )}
-
-      {/* Edit project modal */}
-      {showEditModal && project && (
-        <EditProjectModal
-          project={project}
-          onClose={() => setShowEditModal(false)}
-          onSaved={(updated) => { setProject(updated); setShowEditModal(false); }}
-        />
       )}
 
       {/* Project message modal */}
