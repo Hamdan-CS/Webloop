@@ -104,7 +104,7 @@ export function StoryScene({ reduced }: { reduced: boolean }) {
   });
 
   return (
-    <section ref={ref} className="gh-story" id="how">
+    <section ref={ref} className="gh-story" id="how" data-webi-spot="l">
       <span style={{ display: 'contents' }} dangerouslySetInnerHTML={{ __html: storyClouds }} />
       <div className="gh-story-in">
         <div className="gh-label">Start with a brief. Not a blank page.</div>

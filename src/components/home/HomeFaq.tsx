@@ -56,7 +56,7 @@ export function HomeFaq({ reduced }: { reduced: boolean }) {
   }, [reduced, mounted]);
 
   return (
-    <section ref={ref} className="gh-faq" id="faq">
+    <section ref={ref} className="gh-faq" id="faq" data-webi-spot="l">
       {mounted && createPortal(<div ref={trailRef} className="gh-trail" aria-hidden="true" />, document.body)}
       <div className="gh-wrap">
         <div className="gh-faq-side"><h2 className="gh-h-display">Questions</h2><span className="gh-faq-hint">Move your cursor around this section.</span></div>

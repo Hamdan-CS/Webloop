@@ -12,6 +12,7 @@ import { LAST_FEED_VISIT_KEY } from '@/features/feed/constants';
 import { useLenis } from '@/design-system/motion/lenisContext';
 import './nav.css';
 import { setSiteView } from '@/components/app/siteView';
+import { WebiLogoLoop } from '@/design-system/webi/WebiLogoLoop';
 
 /*
  * Site nav — the v4 demo's floating bar (.nav / .nav-pill / .nav-sheet):
@@ -177,7 +178,7 @@ export function Navbar() {
       <nav className={cn('gh-nav site-header', hidden && 'gh-hide', compact && 'gh-compact', open && 'gh-open')} aria-label="Main">
         <div className="gh-nav-in">
           <Link className="gh-logo" to="/" aria-label="WebLoop home">
-            WebL<svg width="26" height="14" aria-hidden="true"><use href="#loop" /></svg>p
+            WebL<WebiLogoLoop width={26} height={14} />p
           </Link>
           <div ref={linksRef} className="gh-nav-links" onPointerLeave={() => movePill(activeEl())}>
             <span ref={pillRef} className="gh-nav-pill" aria-hidden="true" />
@@ -220,7 +221,7 @@ export function Navbar() {
               </>
             ) : (
               <>
-                <Link className="gh-si" to="/signin">Sign in</Link>
+                <Link className="gh-si" to="/signin" {...(onHome ? { 'data-webi-mood': 'happy', 'data-webi-say': 'Welcome back!' } : {})}>Sign in</Link>
                 <Link className="gh-pill gh-dark" to="/join">Join WebLoop</Link>
               </>
             )}

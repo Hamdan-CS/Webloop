@@ -70,7 +70,7 @@ export function HeroGenie({ reduced }: { reduced: boolean }) {
   };
 
   return (
-    <section ref={ref} className="gh-hero" id="top">
+    <section ref={ref} className="gh-hero" id="top" data-webi-spot="r">
       <span style={{ display: 'contents' }} dangerouslySetInnerHTML={{ __html: heroDecor }} />
       <h1 aria-label="Where students, companies and universities build real projects.">
         <span className="gh-ln" aria-hidden="true"><span><span>Where</span><span ref={rotRef} className="gh-rot" /><span ref={bubsRef} className="gh-bubs" /></span></span>
@@ -78,8 +78,8 @@ export function HeroGenie({ reduced }: { reduced: boolean }) {
       </h1>
       <p className="gh-lead gh-hero-fade">Team up on real briefs. Every contribution is reviewed and verified, so your portfolio proves what you actually built.</p>
       <div className="gh-ctas gh-hero-fade">
-        <Link className="gh-pill gh-dark" to="/join">Join WebLoop <span className="gh-arr">→</span></Link>
-        <a className="gh-pill gh-light" href="#how" onClick={toHow}>See how it works</a>
+        <Link className="gh-pill gh-dark" to="/join" data-webi-mood="happy" data-webi-say="Takes a minute. I'll wait right here.">Join WebLoop <span className="gh-arr">→</span></Link>
+        <a className="gh-pill gh-light" href="#how" onClick={toHow} data-webi-mood="think" data-webi-say="Or scroll, and I'll show you around.">See how it works</a>
       </div>
       <div className="gh-orb-home gh-hero-fade" data-orb="spark" data-orb-scale="1"><span className="gh-chip gh-orb-tag">this is your idea</span></div>
     </section>

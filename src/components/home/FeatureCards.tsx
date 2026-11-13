@@ -64,7 +64,7 @@ export function FeatureCards() {
   });
 
   return (
-    <section ref={ref} className="gh-more" id="projects">
+    <section ref={ref} className="gh-more" id="projects" data-webi-spot="r">
       <div className="gh-wrap">
         <div className="gh-sec-hd"><span className="gh-mono">There's more</span><h2 className="gh-h-display" style={{ marginTop: 14 }}>Everything to take a brief all the way to <span className="gh-acc">proof.</span></h2><p className="gh-lead">Hover or tap a card to open it.</p></div>
         <div className="gh-xc gh-reveal" id="gh-xc" role="list" dangerouslySetInnerHTML={{ __html: xcCards }} />

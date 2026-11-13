@@ -15,6 +15,7 @@ import { Testimonials } from '@/components/home/Testimonials';
 import { HomeFaq } from '@/components/home/HomeFaq';
 import { EndLoop } from '@/components/home/EndLoop';
 import { IdeaOrb } from '@/components/home/IdeaOrb';
+import { Webi } from '@/design-system/webi/Webi';
 import '@/components/home/genie-home.css';
 import '@/components/home/genie-home-app.css';
 
@@ -62,7 +63,7 @@ export function HomePage() {
       <HeroGenie reduced={reduced} />
       <StoryScene reduced={reduced} />
       {/* 4 · protected stack, untouched; the wrapper only carries the orb's resting anchor */}
-      <section className="gh-stack-slot">
+      <section className="gh-stack-slot" data-webi-spot="r">
         <FrozenStack />
         <span data-orb="hide" style={{ display: 'block', width: 10, height: 10, margin: '0 auto' }} />
       </section>
@@ -73,6 +74,8 @@ export function HomePage() {
       <Testimonials />
       <HomeFaq reduced={reduced} />
       <EndLoop reduced={reduced} />
+      {/* Webi starts his intro once the cloud curtain (if any) has finished */}
+      <Webi ready={ready} />
     </div>
   );
 }

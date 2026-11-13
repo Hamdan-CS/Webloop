@@ -31,5 +31,5 @@ export function WordBands() {
     });
   });
 
-  return <section ref={ref} className="gh-words" id="words" dangerouslySetInnerHTML={{ __html: words }} />;
+  return <section ref={ref} className="gh-words" id="words" data-webi-spot="l" dangerouslySetInnerHTML={{ __html: words }} />;
 }

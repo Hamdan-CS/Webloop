@@ -18,7 +18,7 @@ const Q = ({ q, hidden }: { q: [string, string, string]; hidden?: boolean }) => 
 export function Testimonials() {
   const rowB = [...QS.slice(3), ...QS.slice(0, 3)];
   return (
-    <section className="gh-tst">
+    <section className="gh-tst" data-webi-spot="l">
       <div className="gh-wrap gh-sec-hd" style={{ marginBottom: 24 }}><span className="gh-mono">Voices</span><h2 className="gh-h-display" style={{ marginTop: 14 }}>Made for builders, trusted by teams</h2></div>
       <div className="gh-tst-row gh-a">{[...QS, ...QS].map((q, i) => <Q key={i} q={q} hidden={i >= QS.length} />)}</div>
       <div className="gh-tst-row gh-b">{[...rowB, ...rowB].map((q, i) => <Q key={i} q={q} hidden={i >= rowB.length} />)}</div>

@@ -112,7 +112,7 @@ export function ProjectArc({ reduced }: { reduced: boolean }) {
 
   const info = tiles[shown] ?? tiles[0];
   return (
-    <section ref={ref} className="gh-arc-sec" id="explore">
+    <section ref={ref} className="gh-arc-sec" id="explore" data-webi-spot="l">
       <div className="gh-arc-hd"><span className="gh-mono">Explore</span><h2 className="gh-h-display" style={{ marginTop: 12 }}>Projects from every field</h2><p className="gh-lead">Scroll to move through them. Hover to peek, click to select.</p></div>
       <div ref={arcRef} className="gh-arc">
         {tiles.map((t, i) => (

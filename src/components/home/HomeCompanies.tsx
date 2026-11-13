@@ -30,7 +30,7 @@ export function HomeCompanies() {
   const cityFallback = <div style={{ height: '40vh', display: 'grid', placeItems: 'center' }}><LoopLoader size={24} /></div>;
 
   return (
-    <section className="gh-co" id="companies">
+    <section className="gh-co" id="companies" data-webi-spot="r">
       <div className="gh-marq"><div className="gh-marq-t">{[...LOGOS, ...LOGOS].map((l, i) => <span key={i} aria-hidden={i >= LOGOS.length}><i />{l}</span>)}</div></div>
       <div className="gh-wrap">
         <div className="gh-sec-hd"><span className="gh-mono">For companies</span><h2 className="gh-h-display" style={{ marginTop: 14 }}>Post a brief. <span className="gh-acc">Meet the people</span> who ship it.</h2><p className="gh-lead">Verified companies publish real work. Students apply as teams, and you review what they deliver.</p></div>

@@ -103,7 +103,7 @@ export function EndLoop({ reduced }: { reduced: boolean }) {
   });
 
   return (
-    <section ref={ref} className="gh-end" id="end">
+    <section ref={ref} className="gh-end" id="end" data-webi-spot="r">
       <div className="gh-end-copy">
         <span className="gh-mono" style={{ color: '#2a5a97' }}>Open beta</span>
         <h2 style={{ marginTop: 14 }}>Close the <span className="gh-acc">loop.</span></h2>

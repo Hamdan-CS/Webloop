@@ -1,0 +1,31 @@
+/* Webi — ported from the reference (webi-reference.html). */
+
+/* ---------- nav logo ∞ states (WebiLogoLoop) ---------- */
+/* .main is the normal ∞; .wm/.run stay invisible unless the Webi engine adds .out */
+.webi-logo { overflow: visible; }
+.webi-logo .wm { stroke: #d3e4fb; opacity: 0; transition: opacity .5s; }          /* watermark ∞ shown while Webi is out */
+.webi-logo .main { transition: opacity .45s; }                                    /* the normal solid ∞ */
+.webi-logo .run { stroke: #0069e0; opacity: 0; transition: opacity .5s; }         /* short light running around the watermark */
+.webi-logo.out .wm { opacity: 1; }
+.webi-logo.out .main { opacity: 0; }
+.webi-logo.out .run { opacity: 1; animation: webiLogoRun 2.4s linear infinite; }
+.webi-logo.ripple { animation: webiLogoPop .6s ease-out; }
+@keyframes webiLogoPop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
+
+/* ---------- Webi layers ---------- */
+.webi-goo { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 30; pointer-events: none; filter: url(#webi-goo) drop-shadow(0 10px 14px rgba(0,50,140,.14)); opacity: .8; }
+.webi-face { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 31; pointer-events: none; opacity: .92; }
+.webi-bubble { position: fixed; z-index: 32; left: 0; top: 0; pointer-events: none; background: #fff; color: #0a0d12; font-family: 'Geist Variable', Geist, system-ui, sans-serif; -webkit-font-smoothing: antialiased; border-radius: 18px 18px 18px 5px; padding: 11px 15px; font-size: 14.5px; font-weight: 500; line-height: 1.4; max-width: 250px; box-shadow: 0 12px 34px rgba(10,40,90,.14); opacity: 0; transition: opacity .3s; will-change: transform; }
+.webi-bubble.show { opacity: 1; }
+.webi-bubble.flip { border-radius: 18px 18px 5px 18px; }
+
+/* ---------- dev-only mood bar (?webi-debug, DEV builds only) ---------- */
+.webi-debug { position: fixed; z-index: 45; left: 16px; bottom: 16px; background: #fff; border-radius: 16px; padding: 8px 10px; box-shadow: 0 8px 30px rgba(10,40,90,.12); display: flex; gap: 6px; flex-wrap: wrap; font-family: 'Geist Variable', Geist, system-ui, sans-serif; }
+.webi-debug button { font: 500 13px 'Geist Variable', Geist, sans-serif; color: #181d27; border: 1px solid #e3eaf3; background: #fff; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.webi-debug button.on { background: #181d27; color: #fff; }
+
+/* reduced motion: no pop, the light rests instead of running */
+@media (prefers-reduced-motion: reduce) {
+  .webi-logo.ripple { animation: none; }
+  .webi-logo.out .run { animation: none; }
+}
