@@ -950,6 +950,17 @@ export async function updateTask(
   if (error) throw error;
 }
 
+/** A project member takes an open, unassigned task (migration 023 · claim_task). */
+export async function claimTask(taskId: string): Promise<void> {
+  const { error } = await supabase.rpc('claim_task', { p_task_id: taskId });
+  if (error) {
+    const msg = error.message ?? '';
+    if (msg.includes('TASK_ALREADY_TAKEN')) throw new Error('Someone already took this task.');
+    if (msg.includes('NOT_A_MEMBER')) throw new Error('Only team members can take this task.');
+    throw error;
+  }
+}
+
 export async function deleteTask(taskId: string): Promise<void> {
   const { error } = await supabase.from('tasks').delete().eq('id', taskId);
   if (error) throw error;

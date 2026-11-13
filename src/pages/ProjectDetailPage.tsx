@@ -24,7 +24,7 @@ import {
   Eye,
   GitCommit,
 } from 'lucide-react';
-import { fetchProjectBySlug, fetchProfileStats, createApplication, checkExistingApplication, fetchProjectMembers, updateMemberRole, fetchProjectTasks, removeProjectMember } from '@/services/api';
+import { fetchProjectBySlug, fetchProfileStats, createApplication, checkExistingApplication, fetchProjectMembers, updateMemberRole, fetchProjectTasks, removeProjectMember, claimTask } from '@/services/api';
 import { TaskManagementPanel } from '@/components/projects/TaskManagementPanel';
 import { toast } from 'sonner';
 import type { Project, ProjectMember, Task } from '@/types';
@@ -71,6 +71,7 @@ export function ProjectDetailPage() {
   const [roleSaving, setRoleSaving] = useState(false);
   const [tab, setTab] = useState<'ov' | 'tk' | 'tm' | 'mg'>('ov');
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
   const ws = useWorkspaceMaybe();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [starred, setStarred] = useState(false);
@@ -190,6 +191,19 @@ export function ProjectDetailPage() {
   const openManage = () => {
     setTab('mg');
     document.getElementById('w-ws-panel')?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleClaim = async (t: Task) => {
+    if (!project) return;
+    setClaimingId(t.id);
+    try {
+      await claimTask(t.id);
+      toast.success(`You took "${t.title}"`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't take this task. Please try again.");
+    }
+    fetchProjectTasks(project.id).then(setTasks).catch(() => {});
+    setClaimingId(null);
   };
 
   const handleRemoveMember = async (m: ProjectMember) => {
@@ -420,6 +434,27 @@ export function ProjectDetailPage() {
             {tasks.length === 0 ? (
               <p className="pd-muted">No tasks have been published for this project yet.</p>
             ) : (
+              ws ? (
+                /* the demo's kanban; team members can take open (general) tasks */
+                <div className="w-kb">
+                  {([['To do', taskTodo], ['In progress', taskProg], ['Done', taskDone]] as const).map(([h, list]) => (
+                    <div key={h} className="w-kcol">
+                      <h4>{h}<span>{list.length}</span></h4>
+                      {list.map((t, i) => (
+                        <div key={t.id} className="w-kcard">
+                          {t.title}
+                          <small><span>{h === 'Done' ? 'Verified' : !t.assignee_id ? 'Open to the team' : t.tag ?? tags[i % 4]}</span>{t.assignee && <WAvatar name={t.assignee.display_name} src={t.assignee.avatar_url} size={22} />}</small>
+                          {isMember && !t.assignee_id && t.status === 'open' && (
+                            <button type="button" className="w-btn-d w-btn-sm w-take" disabled={claimingId === t.id} onClick={() => handleClaim(t)}>
+                              {claimingId === t.id ? 'Taking…' : 'Take task'}
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ) : (
               <div className="kan2">
                 {([['To Do', taskTodo, ''], ['In Progress', taskProg, 'b'], ['Completed', taskDone, 'g']] as const).map(([h, list, c]) => (
                   <div key={h}>
@@ -434,6 +469,7 @@ export function ProjectDetailPage() {
                   </div>
                 ))}
               </div>
+              )
             )}
           </section>
 
