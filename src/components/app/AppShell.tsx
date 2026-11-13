@@ -16,6 +16,7 @@ import { WorkspaceContext, projectDot, type WorkspaceApi } from './workspaceCont
 import { setSiteView } from './siteView';
 import { WIcon, type IconName } from './icons';
 import { WAvatar } from './ui';
+import { useSlidingTabInk } from './slidingTabInk';
 import './app-shell.css';
 import './app-shell-app.css';
 import './workspace-pages.css';
@@ -36,6 +37,23 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(() => { try { return localStorage.getItem('wl_sb_collapsed') === '1'; } catch { return false; } });
+  // the active sidebar row's highlight slides from item to item
+  const navRef = useRef<HTMLElement>(null);
+  const [ink, setInk] = useState<{ y: number; h: number } | null>(null);
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const place = () => {
+      const on = nav.querySelector<HTMLElement>('button.w-on');
+      setInk(on ? { y: on.offsetTop, h: on.offsetHeight } : null);
+    };
+    place();
+    const ro = new ResizeObserver(place);
+    ro.observe(nav);
+    return () => ro.disconnect();
+  }, [pathname, collapsed]);
+  // tab bars inside the panel: one underline that slides between tabs
+  useSlidingTabInk('w-ws-panel');
   const [projects, setProjects] = useState<Project[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -152,7 +170,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             <button type="button" className="w-icon-btn" aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} aria-pressed={collapsed} onClick={() => setCollapsed((c) => !c)}><WIcon name="side" /></button>
           </div>
           <button type="button" className="w-sb-new" onClick={() => setCmdOpen(true)}><WIcon name="plus" /><span>New project</span><kbd>⌘K</kbd></button>
-          <nav className="w-sb-nav" aria-label="Main">
+          <nav className="w-sb-nav" aria-label="Main" ref={navRef}>
+            <span className="w-sb-ink" aria-hidden="true" style={ink ? { transform: `translateY(${ink.y}px)`, height: ink.h, opacity: 1 } : { opacity: 0 }} />
             {views.map((v) => (
               <button key={v.key} type="button" className={v.match(pathname) ? 'w-on' : ''} aria-current={v.match(pathname) ? 'page' : undefined} onClick={go(v)} onAuxClick={(e) => { if (e.button === 1) go(v)(e); }} title={collapsed ? v.label : undefined}>
                 <WIcon name={v.icon} /><span>{v.label}</span>

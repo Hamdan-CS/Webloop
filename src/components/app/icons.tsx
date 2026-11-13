@@ -21,7 +21,7 @@ export type IconName = keyof typeof IC;
 
 export function WIcon({ name, size }: { name: IconName; size?: number }) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" data-ic={name} fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
       {IC[name]}
     </svg>
   );
