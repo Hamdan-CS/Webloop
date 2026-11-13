@@ -243,7 +243,7 @@ export function PublishProjectPage() {
   const fp = (k: string) => ({ onFocus: () => setFocus(k), onBlur: () => setFocus('') });
 
   return (
-    <div className="container-page pf pub py-8">
+    <div className="container-page pf pub py-8 w-forms">
       <Link to="/explore" className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors mb-5">
         <ArrowLeft size={15} /> Back to Explore
       </Link>

@@ -20,6 +20,7 @@ import { Button } from '@/components/shared/ui/Button';
 import { GoogleIcon } from '@/components/shared/ui/GoogleIcon';
 import { cn } from '@/utils/cn';
 import { getDashboardPath } from '@/utils/roles';
+import { AuthLayout } from '@/components/layout/AuthLayout';
 
 type Role = 'student' | 'company' | 'university';
 
@@ -95,7 +96,7 @@ export function JoinPage() {
   };
 
   return (
-    <div className="container-page py-10">
+    <AuthLayout wide>
       <div className="join-hd max-w-3xl">
         <h1 className="font-display text-3xl sm:text-4xl font-bold text-white">Choose how you want to participate.</h1>
         <p className="lead mt-3">
@@ -275,6 +276,6 @@ export function JoinPage() {
           Continue as a guest — browse projects <ArrowRight size={13} className="inline" />
         </Link>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

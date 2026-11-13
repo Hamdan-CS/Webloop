@@ -7,3 +7,5 @@ export * from './tokens';
 export * from './themes';
 export * from './backgrounds';
 export * from './animations';
+export * from './motion';
+export * from './illustrations';

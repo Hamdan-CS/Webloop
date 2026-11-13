@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { WAvatar } from '@/components/app/ui';
+import { projectDot, useWorkspaceMaybe } from '@/components/app/workspaceContext';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -66,6 +68,7 @@ export function ProjectDetailPage() {
   const [roleDraft, setRoleDraft] = useState('');
   const [roleSaving, setRoleSaving] = useState(false);
   const [tab, setTab] = useState<'ov' | 'tk' | 'tm'>('ov');
+  const ws = useWorkspaceMaybe();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [starred, setStarred] = useState(false);
 
@@ -192,6 +195,28 @@ export function ProjectDetailPage() {
         <ArrowLeft size={15} /> Back to Explore
       </Link>
 
+      {ws ? (
+        /* Inside the workspace: the demo's project header (image, title, meta, progress) */
+        <div className="w-ph">
+          {project.cover_image_url
+            ? <img src={project.cover_image_url} alt="" />
+            : <span className="w-ph-art" style={{ background: `linear-gradient(135deg, ${projectDot(project.id)}, var(--iris))` }} />}
+          <div className="min-w-0">
+            <h1>{project.title}</h1>
+            <div className="meta">
+              <span>{statusLabel[project.status]}</span>
+              <span>{projectTypeLabel[project.project_type]}</span>
+              {project.category && <span>{project.category}</span>}
+              {project.skills?.map((sk) => <span key={sk.id}>{sk.name}</span>)}
+            </div>
+          </div>
+          <div className="w-prog">
+            <small><span>{taskDone.length} of {tasks.length} tasks done</span><b>{progressPct}%</b></small>
+            <div><i style={{ width: `${progressPct}%` }} /></div>
+          </div>
+        </div>
+      ) : (
+      <>
       {/* Hero — reference's pd-hero: copy + stats on the left, a tilted browser preview on the right */}
       <div className="pd-hero">
         <div>
@@ -226,6 +251,19 @@ export function ProjectDetailPage() {
           </div>
         </div>
       </div>
+      </>
+      )}
+      {ws && (
+        <div className="w-ph-sub">
+          {project.summary && <p>{project.summary}</p>}
+          <div className="w-ph-stats">
+            <span><Star size={14} /> {starCount.toLocaleString('en')} likes</span>
+            <span><Users size={14} /> {contributors} contributors</span>
+            <span><Eye size={14} /> {(project.views_count ?? 0).toLocaleString('en')} views</span>
+            <span><GitCommit size={14} /> {(project.commits_count ?? 0).toLocaleString('en')} commits</span>
+          </div>
+        </div>
+      )}
 
       <div className="pd-tabs" role="tablist">
         {([['ov', 'Overview'], ['tk', 'Tasks'], ['tm', 'Team']] as const).map(([k, l]) => (
@@ -315,6 +353,22 @@ export function ProjectDetailPage() {
             {tasks.length === 0 ? (
               <p className="pd-muted">No tasks have been published for this project yet.</p>
             ) : (
+              ws ? (
+                /* the demo's kanban: three columns, white task cards */
+                <div className="w-kb">
+                  {([['To do', taskTodo], ['In progress', taskProg], ['Done', taskDone]] as const).map(([h, list]) => (
+                    <div key={h} className="w-kcol">
+                      <h4>{h}<span>{list.length}</span></h4>
+                      {list.map((t, i) => (
+                        <div key={t.id} className="w-kcard">
+                          {t.title}
+                          <small><span>{h === 'Done' ? 'Verified' : t.tag ?? tags[i % 4]}</span>{t.assignee && <WAvatar name={t.assignee.display_name} src={t.assignee.avatar_url} size={22} />}</small>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ) : (
               <div className="kan2">
                 {([['To Do', taskTodo, ''], ['In Progress', taskProg, 'b'], ['Completed', taskDone, 'g']] as const).map(([h, list, c]) => (
                   <div key={h}>
@@ -329,6 +383,7 @@ export function ProjectDetailPage() {
                   </div>
                 ))}
               </div>
+              )
             )}
           </section>
 

@@ -36,6 +36,8 @@ import { Select } from '@/components/shared/ui/Select';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { relativeDate } from '@/utils/labels';
 import { cn } from '@/utils/cn';
+import { WPageHeader } from '@/components/app/ui';
+import { useWorkspaceMaybe } from '@/components/app/workspaceContext';
 
 type Tab = 'overview' | 'projects' | 'applicants' | 'tasks';
 const TABS: Tab[] = ['overview', 'projects', 'applicants', 'tasks'];
@@ -52,6 +54,9 @@ const ATTENTION_LIMIT = 4;
 
 export function CompanyDashboard() {
   const { profile, unreadMessages, refreshCounts } = useAuth();
+  const ws = useWorkspaceMaybe();
+  const hour = new Date().getHours();
+  const hi = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const { openPanel } = useFloatingPanel();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as Tab | null;
@@ -144,25 +149,17 @@ export function CompanyDashboard() {
   const nothingWaiting = pending.length === 0 && toReview.length === 0 && unreadMessages === 0;
 
   return (
-    <div className="container-page py-8 pf sd">
-      <div className="surface-raised pf-card pf-head p-5 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <Avatar src={profile.avatar_url} name={profile.display_name} size="xl" />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="pf-name">{profile.display_name}</h1>
-              <span className="ref-tag pf-type">Company</span>
-            </div>
-            <p className="mt-1 text-sm text-slate-400">
-              @{profile.handle} · {activeProjects} active project{activeProjects === 1 ? '' : 's'} · {pending.length} applicant{pending.length === 1 ? '' : 's'} waiting
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Link to="/publish"><Button className="btn-sm"><Plus size={15} /> Post a Project</Button></Link>
-            <Link to={`/creators/${profile.handle}`}><Button variant="ghost" className="btn-sm"><Building2 size={15} /> View Profile</Button></Link>
-          </div>
-        </div>
-        <div className="pf-tabs cw-tabs mt-5" role="tablist">
+    <div className="container-page py-8 pf sdash">
+      <WPageHeader
+        title={`${hi}, ${profile.display_name}`}
+        subtitle={`${activeProjects} active project${activeProjects === 1 ? '' : 's'} · ${pending.length} applicant${pending.length === 1 ? '' : 's'} waiting · ${toReview.length} to review`}
+        actions={<>
+          {ws && <button type="button" className="w-btn-l" onClick={ws.openPalette}>Search <kbd>⌘K</kbd></button>}
+          <Link to={`/creators/${profile.handle}`} className="w-btn-l"><Building2 size={15} /> View profile</Link>
+          <Link to="/publish" className="w-btn-d"><Plus size={16} /> Post a project</Link>
+        </>}
+      />
+        <div className="pf-tabs cw-tabs w-cw-gtabs" role="tablist">
           {([
             ['overview', 'Overview', null],
             ['projects', 'Projects', projects.length],
@@ -184,7 +181,6 @@ export function CompanyDashboard() {
             </button>
           ))}
         </div>
-      </div>
 
       <div className={loading ? undefined : 'reveal'}>
 {loading ? (
@@ -197,17 +193,10 @@ export function CompanyDashboard() {
       ) : (
         <motion.div className="mt-6" animate={paneControls}>
           {tab === 'overview' && (
-            <div className="space-y-6">
-              <div className="pf-kpis">
-                <KpiButton value={activeProjects} label="Active projects" onClick={() => setTab('projects')} />
-                <KpiButton value={pending.length} label="Pending applicants" tone="c2" onClick={() => openApplicants()} />
-                <KpiButton value={toReview.length} label="Work to review" tone="c2" onClick={() => setTab('tasks')} />
-                <div className="pf-kpi"><b>{stats.count > 0 ? stats.avg.toFixed(1) : '—'}</b><span>Avg rating</span></div>
-              </div>
-
-              <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-                <section className="surface pf-card p-5">
-                  <h2 className="pf-h4 mb-3">Needs your attention</h2>
+            <div className="w-grid2">
+              <div className="w-col">
+                <section className="w-box">
+                  <div className="w-box-h"><b>Needs your attention</b><small>{pending.length + toReview.length + (unreadMessages > 0 ? 1 : 0)} waiting</small></div>
                   {projects.length === 0 ? (
                     <div className="sd-empty">
                       <Briefcase size={22} />
@@ -260,23 +249,29 @@ export function CompanyDashboard() {
                     </ul>
                   )}
                 </section>
+              </div>
 
-                <div className="space-y-5">
-                  <section className="surface pf-card p-5">
-                    <h2 className="pf-h4 mb-3">Find talent</h2>
-                    <nav className="space-y-1.5">
+                <div className="w-col">
+                  <div className="w-kpis">
+                    <KpiButton k={1} value={activeProjects} label="Active projects" onClick={() => setTab('projects')} />
+                    <KpiButton k={2} value={pending.length} label="Applicants" onClick={() => openApplicants()} />
+                    <KpiButton k={3} value={toReview.length} label="To review" onClick={() => setTab('tasks')} />
+                    <div className="w-kpi k4"><small>Rating</small><b>{stats.count > 0 ? stats.avg.toFixed(1) : '—'}</b></div>
+                  </div>
+                  <section className="w-box">
+                    <div className="w-box-h"><b>Find talent</b></div>
+                    <nav className="w-list">
                       <QuickLink to="/gallery" icon={<Users size={15} />} label="Browse student work" />
                       <QuickLink to="/explore" icon={<TrendingUp size={15} />} label="Browse projects" />
                       <QuickLink to="/settings/profile" icon={<Building2 size={15} />} label="Edit company profile" />
                     </nav>
                   </section>
-                  <section className="surface pf-card p-5">
-                    <h2 className="pf-h4 mb-3">Reputation</h2>
+                  <section className="w-box">
+                    <div className="w-box-h"><b>Reputation</b><small>From contributors</small></div>
                     {stats.count > 0 ? <Rating value={stats.avg} count={stats.count} /> : <NoRating label="No reviews yet" />}
                     <p className="mt-3 text-xs text-slate-500">Ratings come from contributors who worked on your projects.</p>
                   </section>
                 </div>
-              </div>
             </div>
           )}
 
@@ -370,21 +365,21 @@ export function CompanyDashboard() {
   );
 }
 
-function KpiButton({ value, label, tone, onClick }: { value: number; label: string; tone?: 'c2'; onClick: () => void }) {
+function KpiButton({ k, value, label, onClick }: { k: 1 | 2 | 3 | 4; value: number; label: string; onClick: () => void }) {
   return (
-    <button type="button" className="pf-kpi text-left" onClick={onClick} style={{ cursor: 'pointer', fontFamily: 'inherit' }}>
-      <b className={value > 0 ? tone : undefined}>{value}</b>
-      <span>{label}</span>
+    <button type="button" className={`w-kpi k${k} text-left`} onClick={onClick} style={{ cursor: 'pointer', border: 0 }}>
+      <small>{label}</small>
+      <b>{value}</b>
     </button>
   );
 }
 
 function QuickLink({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
   return (
-    <Link to={to} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
-      <span className="text-slate-500">{icon}</span>
-      <span className="flex-1 text-left">{label}</span>
-      <ArrowRight size={13} className="text-slate-600" />
+    <Link to={to} className="w-lrow">
+      <span className="w-nt-ic" style={{ width: 30, height: 30, borderRadius: 9 }}>{icon}</span>
+      <span><b>{label}</b></span>
+      <ArrowRight size={13} />
     </Link>
   );
 }

@@ -49,6 +49,10 @@ import { ContactModal } from '@/components/messaging/ContactModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { creatorTypeLabel, relativeDate, statusLabel, statusTone } from '@/utils/labels';
 import { cn } from '@/utils/cn';
+import { toast } from 'sonner';
+import { WAvatar, WBox, WKpis, WVerifiedRow } from '@/components/app/ui';
+import { WContribHeat } from '@/components/app/ui/WContribHeat';
+import { useWorkspaceMaybe } from '@/components/app/workspaceContext';
 import { MyPostsSection } from '@/features/feed/components/MyPostsSection';
 import { checkIsAdmin } from '@/features/feed/services/feedApi';
 
@@ -85,6 +89,11 @@ export function CreatorProfilePage() {
   const tabSectionRef = useRef<HTMLDivElement>(null);
 
   const isOwner = !!(user && myProfile && profile && myProfile.id === profile.id);
+  const ws = useWorkspaceMaybe();
+  const copyLink = () => {
+    const url = window.location.origin + window.location.pathname;
+    navigator.clipboard?.writeText(url).then(() => toast.success('Link copied'), () => toast.error("Couldn't copy the link"));
+  };
 
   const setTab = useCallback(
     (t: Tab) => {
@@ -217,6 +226,79 @@ export function CreatorProfilePage() {
 
   return (
     <div className="container-page py-8 max-w-5xl pf reveal">
+      {ws ? (
+        <>
+          {/* ===== The demo's Portfolio view: avatar header + Copy link, Verified work, Contributions ===== */}
+          <header className="w-vh">
+            <div className="w-pf-id">
+              <WAvatar name={profile.display_name} src={profile.avatar_url} size={64} />
+              <div className="min-w-0">
+                <h1>{profile.display_name}{profile.verified && <CheckCircle2 size={18} className="w-pf-ok" aria-label="Verified" />}</h1>
+                <p>{[
+                  profile.major ?? creatorTypeLabel[profile.creator_type],
+                  `${publishedProjects.length} project${publishedProjects.length !== 1 ? 's' : ''}`,
+                  isCompany ? (stats.count > 0 ? `${stats.avg.toFixed(1)} rating` : null) : `${contributions.approved} verified contribution${contributions.approved !== 1 ? 's' : ''}`,
+                  profile.location,
+                ].filter(Boolean).join(' · ')}</p>
+              </div>
+            </div>
+            <div className="acts">
+              <button type="button" className="w-btn-l" onClick={copyLink}><Link2 size={15} /> Copy link</button>
+              {isOwner ? (
+                <Link to="/settings/profile" className="w-btn-l"><Sparkles size={14} /> Edit profile</Link>
+              ) : (
+                <button type="button" className="w-btn-d" onClick={handleContact}><Mail size={14} /> Message</button>
+              )}
+            </div>
+          </header>
+
+          <div className="w-grid2">
+            <div className="w-col">
+              <WBox title="Verified work" meta="Signed off by project owners">
+                {portfolio.length === 0 ? (
+                  <div className="w-inner w-empty"><CheckCircle2 size={22} /><span>No verified work yet.</span></div>
+                ) : (
+                  <div className="w-inner w-verify">
+                    {portfolio.slice(0, 6).map((w) => (
+                      <WVerifiedRow
+                        key={w.id}
+                        label={w.title}
+                        meta={[w.category, w.role].filter(Boolean).join(' · ') || undefined}
+                        time={w.is_verified ? '✓' : undefined}
+                        pending={!w.is_verified}
+                      />
+                    ))}
+                  </div>
+                )}
+              </WBox>
+              {(profile.website_url || profile.github_url || profile.linkedin_url) && (
+                <WBox title="Links">
+                  <div className="w-links">
+                    {profile.website_url && <a href={profile.website_url} target="_blank" rel="noopener noreferrer" className="w-btn-l w-btn-sm"><Globe size={13} /> Website</a>}
+                    {profile.github_url && <a href={profile.github_url} target="_blank" rel="noopener noreferrer" className="w-btn-l w-btn-sm"><Github size={13} /> GitHub</a>}
+                    {profile.linkedin_url && <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer" className="w-btn-l w-btn-sm"><Linkedin size={13} /> LinkedIn</a>}
+                  </div>
+                </WBox>
+              )}
+            </div>
+            <div className="w-col">
+              {(profile.creator_type === 'student' || profile.creator_type === 'team') ? (
+                <WBox title="Contributions" meta={`${contributions.approved} approved`}>
+                  <WContribHeat studentId={profile.id} />
+                </WBox>
+              ) : null}
+              <WKpis items={[
+                { label: 'Projects', value: publishedProjects.length },
+                { label: isCompany ? 'Submissions' : 'Verified', value: isCompany ? contributions.total : contributions.approved },
+                { label: 'Portfolio', value: portfolio.length },
+                { label: 'Rating', value: stats.count > 0 ? stats.avg.toFixed(1) : '—' },
+              ]} />
+              {profile.is_demo && <div className="demo-note">Demo content — sample profile for platform preview.</div>}
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
       {/* ===== Profile Card (LinkedIn-style header) ===== */}
       <div className="surface-raised pf-card pf-head overflow-hidden">
         {/* Banner */}
@@ -350,6 +432,8 @@ export function CreatorProfilePage() {
             <ContributionGrid studentId={profile.id} size="full" />
           </Suspense>
         </div>
+      )}
+        </>
       )}
 
       {/* ===== Owner management tabs ===== */}

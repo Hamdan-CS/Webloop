@@ -1,18 +1,18 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, useEffect } from 'react';
 import { Toaster } from 'sonner';
 import { AuthPromptProvider } from '@/components/auth/AuthPrompt';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { DesignProvider } from '@/design-system/DesignProvider';
 import { FloatingPanelProvider, PanelBadgeSync, FloatingPanel } from '@/components/FloatingPanel';
-import { Navbar } from '@/components/navigation/Navbar';
-import { Footer } from '@/components/layout/Footer';
+import { SiteFrame } from '@/components/layout/SiteFrame';
 import { RoleRoute } from '@/components/auth/RoleRoute';
 import { GuestOnlyRoute } from '@/components/auth/GuestOnlyRoute';
 import { HomeRoute } from '@/components/auth/HomeRoute';
 import { GlobalTip } from '@/components/shared/ui/GlobalTip';
 import { AuthErrorBanner } from '@/components/auth/AuthErrorBanner';
+import { PageTransition } from '@/components/layout/PageTransition';
 
 // Route-level code splitting: each page ships as its own chunk instead of
 // one ~1.3MB bundle, so a visitor only downloads the page they land on.
@@ -122,20 +122,6 @@ function NewStudentOnboardingRedirect() {
   return null;
 }
 
-/** Fades each page in once its code has loaded. Scroll-driven pages get opacity only:
- * a moving parent would throw off their scroll position measurements. */
-function RouteStage({ children }: { children: React.ReactNode }) {
-  const { pathname } = useLocation();
-  const scrollDriven = pathname === '/' || pathname === '/how-it-works';
-  return (
-    <Suspense fallback={<RouteLoading />}>
-      <div key={pathname} className={scrollDriven ? 'route-fade' : 'reveal'}>
-        {children}
-      </div>
-    </Suspense>
-  );
-}
-
 /** React Router doesn't reset scroll position on navigation (it's an SPA —
  * the browser never reloads), so without this, clicking a card from deep
  * down a long page (e.g. the scroll-heavy home page) lands on the new page
@@ -161,12 +147,9 @@ function App() {
           <FloatingPanelProvider>
           <ScrollToTop />
           <NewStudentOnboardingRedirect />
-          <div className="flex min-h-dvh flex-col">
-            <Navbar />
-            {/* the header is now position:fixed (so it can hide on scroll), so push content below it */}
-            <main className="flex-1 pt-16 pb-16 md:pb-0">
+          <SiteFrame>
               <AuthErrorBanner />
-              <RouteStage>
+              <PageTransition fallback={<RouteLoading />}>
                 <Routes>
                   <Route path="/" element={<HomeRoute><HomePage /></HomeRoute>} />
                   <Route path="/feed" element={<FeedPage />} />
@@ -193,14 +176,12 @@ function App() {
                   <Route path="/dashboard/university" element={<RoleRoute allowed={['university']}><UniversityDashboard /></RoleRoute>} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
-              </RouteStage>
-            </main>
-            <Footer />
-            <PanelBadgeSync />
-            <FloatingPanel />
-            <GlobalTip />
-            <Toaster theme="system" richColors position="bottom-right" />
-          </div>
+              </PageTransition>
+          </SiteFrame>
+          <PanelBadgeSync />
+          <FloatingPanel />
+          <GlobalTip />
+          <Toaster theme="light" position="bottom-center" />
           </FloatingPanelProvider>
           </AuthPromptProvider>
         </AuthProvider>

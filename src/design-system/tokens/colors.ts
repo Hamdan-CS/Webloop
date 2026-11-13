@@ -30,22 +30,36 @@ export const darkColors = {
 
 export const lightColors = {
   ink: {
-    950: '#f4f8fd', 900: '#fafbfe', 850: '#ffffff', 800: '#f1f5fb',
-    700: '#e2e8f4', 600: '#cbd5e8', 500: '#94a3c0', 400: '#64748b',
+    950: '#ebf5ff', 900: '#fafdff', 850: '#ffffff', 800: '#dde8f5',
+    700: '#c9d8ec', 600: '#a8b8ce', 500: '#828d9e', 400: '#636872',
   },
   slate: {
-    50: '#0f172a', 100: '#1e293b', 200: '#334155', 300: '#475569',
-    400: '#64748b', 500: '#475569', 600: '#334155', 700: '#1e293b',
-    800: '#0f172a', 900: '#020617',
+    50: '#0a0d12', 100: '#0a0d12', 200: '#181d27', 300: '#535862',
+    400: '#636872', 500: '#676d77', 600: '#535862', 700: '#353a44',
+    800: '#181d27', 900: '#0a0d12',
   },
   accent: {
-    50: '#ecfeff', 100: '#ccfbf0', 200: '#0d6473', 300: '#0e7490',
-    400: '#0891b2', 500: '#0e7490', 600: '#0e7490', 700: '#0d5a6c',
-    800: '#155e75', 900: '#164e63',
+    50: '#ebf5ff', 100: '#cce7ff', 200: '#0054b8', 300: '#0069e0',
+    400: '#0069e0', 500: '#0060cc', 600: '#0054b8', 700: '#00489e',
+    800: '#003a80', 900: '#002d63',
   },
-  signal: { green: '#037a56', amber: '#a16207', rose: '#be123c', violet: '#6d28d9' },
-  contentStrong: '#0f172a',
-  bodyBg: '#f4f8fd',
+  signal: { green: '#087443', amber: '#a15c07', rose: '#b42318', violet: '#6d28d9' },
+  contentStrong: '#0a0d12',
+  bodyBg: '#ebf5ff',
+} as const;
+
+/**
+ * Genie semantic palette (F2) — mirrors the hex tokens in the first :root
+ * block of tokens.css. 3D scenes read these when they are recoloured (F7).
+ */
+export const genie = {
+  sky: '#ebf5ff', card: '#fafdff', paper: '#ffffff', mist: '#f6f7f8', stackBg: '#f4f8fd',
+  ink: '#0a0d12', charcoal: '#181d27', graphite: '#535862', fog: '#93979f', line: '#dde8f5',
+  iris: '#0069e0', irisHi: '#479dff',
+  lav: '#f1e6ff', mint: '#d3f6e3', powder: '#cce7ff', solar: '#fff2be', peach: '#ffe2d1',
+  ok: '#087443', okBg: '#e4f6ec', warn: '#a15c07', warnBg: '#fff3dc', danger: '#b42318', dangerBg: '#fdecea',
+  /** contribution graph levels, empty → busiest */
+  heat: ['#eef5ff', '#bcd8ff', '#7cb5ff', '#3d8ef5', '#0060cc'],
 } as const;
 
 export type DesignTheme = 'dark' | 'light';

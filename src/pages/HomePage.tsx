@@ -1,105 +1,78 @@
-import { lazy, Suspense, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
-import { CompaniesCityScene } from '@/components/scenes/Companies-City/CompaniesCityScene';
-import { CompaniesGrid } from '@/components/scenes/Companies-City/CompaniesGrid';
-import { COMPANIES } from '@/data/homeDemo';
-import { LoopLoader } from '@/components/shared/ui/LoopLoader';
+import { useEffect, useRef, useState } from 'react';
+import { pauseCssLoopsOffscreen } from '@/components/home/offscreen';
+import { useLocation } from 'react-router-dom';
+import { useReducedMotion } from '@/design-system/motion/useReducedMotion';
+import { useLenis } from '@/design-system/motion/lenisContext';
+import { IntroCurtain, INTRO_KEY } from '@/components/home/IntroCurtain';
+import { HeroGenie } from '@/components/home/HeroGenie';
+import { StoryScene } from '@/components/home/StoryScene';
+import { FrozenStack } from '@/components/home/FrozenStack';
+import { WordBands } from '@/components/home/WordBands';
+import { FeatureCards } from '@/components/home/FeatureCards';
+import { ProjectArc } from '@/components/home/ProjectArc';
+import { HomeCompanies } from '@/components/home/HomeCompanies';
+import { Testimonials } from '@/components/home/Testimonials';
+import { HomeFaq } from '@/components/home/HomeFaq';
+import { EndLoop } from '@/components/home/EndLoop';
+import { IdeaOrb } from '@/components/home/IdeaOrb';
+import '@/components/home/genie-home.css';
+import '@/components/home/genie-home-app.css';
 
-const EcosystemScene = lazy(() => import('@/components/scenes/Home-Ecosystem/EcosystemScene'));
-const ProjectStackScene = lazy(() => import('@/components/scenes/A-ProjectStack/ProjectStackScene'));
-const LiveDashboardScene = lazy(() => import('@/components/scenes/C-LiveDashboard/LiveDashboardScene'));
-const ProjectShowcaseScene = lazy(() => import('@/components/scenes/F-ProjectShowcase/ProjectShowcaseScene'));
-const ExplorePreview = lazy(() => import('@/components/scenes/H-ExplorePreview/ExplorePreview'));
-
-function SceneLoading() {
-  return (
-    <div className="flex h-[50vh] items-center justify-center">
-      <LoopLoader size={24} />
-    </div>
-  );
+function introSeen() {
+  try { return sessionStorage.getItem(INTRO_KEY) === '1'; } catch { return true; }
 }
 
-/** Section 7 — Discover Companies. Kept exactly as the /companies page's
- * city scene (same component, same building animation); fed demonstration
- * data here instead of a live Supabase fetch. These demo companies have
- * real seeded profiles under the same handle, so "Open" goes straight to
- * their /creators/:handle page like the real companies list does. */
-function CompaniesPreview() {
-  const navigate = useNavigate();
-  const [hoverId, setHoverId] = useState<string | null>(null);
-  const demoCompanies = COMPANIES.map((c) => ({
-    id: c.id,
-    handle: c.id,
-    display_name: c.name,
-    avatar_url: null,
-    bio: c.desc,
-  }));
-  const openCompany = (handle: string) => navigate(`/creators/${handle}`);
-
-  return (
-    <section id="companies" className="ws-scene home-sec" aria-labelledby="h-co">
-      <div className="wrap">
-        <CompaniesCityScene companies={demoCompanies} onOpen={openCompany} hoveredId={hoverId} onHoverId={setHoverId} />
-        <CompaniesGrid hoveredId={hoverId} onHover={setHoverId} onOpen={openCompany} />
-      </div>
-    </section>
-  );
-}
-
-/** Section 8 — closing band, linking to the real sign-up page. */
-function ClosingBand() {
-  return (
-    <section id="cta" className="ws-scene home-sec" aria-labelledby="h-cta">
-      <div className="wrap">
-        <div className="cta-card">
-          <div>
-            <h2 id="h-cta" className="hr-h2" style={{ maxWidth: 'none' }}>Ready to build something <span className="hl">real?</span></h2>
-            <p>Join as a student, company or university and start turning ideas into verified work.</p>
-          </div>
-          <div className="cta-btns">
-            <Link to="/join" className="hr-btn primary">Join the Platform <ArrowRight size={15} /></Link>
-            <Link to="/explore" className="hr-btn">Browse projects</Link>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
+/**
+ * Homepage — the approved v4 demo (docs/redesign/webloop-genie-demo.html),
+ * section by section: intro, hero, story (→ app → flood), the protected 3D
+ * Project Stack (unchanged, via FrozenStack), Team/Build/Prove, expanding
+ * feature cards, curved project arc, companies (3D city kept), testimonials,
+ * FAQ with sticker trail, particle-loop ending. Guest-only route.
+ */
 export function HomePage() {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
+  const lenis = useLenis();
+  const { hash } = useLocation();
+  const [playIntro] = useState(() => !reduced && !introSeen());
+  const [ready, setReady] = useState(!playIntro);
+
+  // performance: pause the decorative CSS loops (marquees, floating object,
+  // orb ring) while they are off-screen
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || reduced) return;
+    return pauseCssLoopsOffscreen(root, '.gh-marq-t, .gh-tst-row, .gh-xc-obj .gh-mv, #gh-orb .gh-spark');
+  }, [reduced, ready]);
+
+  // arriving from another page via /#section: scroll there once laid out
+  useEffect(() => {
+    if (!hash) return;
+    const id = window.setTimeout(() => {
+      const t = document.querySelector(hash);
+      if (t) { if (lenis) lenis.scrollTo(t as HTMLElement, { immediate: true }); else t.scrollIntoView(); }
+    }, 600);
+    return () => window.clearTimeout(id);
+  }, [hash, lenis]);
+
   return (
-    <div className="home-page home-redesign">
-      {/* 1 — Ecosystem hero */}
-      <Suspense fallback={<SceneLoading />}>
-        <EcosystemScene />
-      </Suspense>
-
-      {/* 2 — Project Stack */}
-      <Suspense fallback={<SceneLoading />}>
-        <ProjectStackScene />
-      </Suspense>
-
-      {/* 3 — Live Dashboard */}
-      <Suspense fallback={<SceneLoading />}>
-        <LiveDashboardScene />
-      </Suspense>
-
-      {/* 4 — Project Showcase */}
-      <Suspense fallback={<SceneLoading />}>
-        <ProjectShowcaseScene />
-      </Suspense>
-
-      {/* 6 — Explore Projects preview */}
-      <Suspense fallback={<SceneLoading />}>
-        <ExplorePreview />
-      </Suspense>
-
-      {/* 7 — Discover Companies (city) */}
-      <CompaniesPreview />
-
-      {/* 8 — Closing band */}
-      <ClosingBand />
+    <div ref={rootRef} className={`ghome${reduced ? ' gh-rm' : ''}`}>
+      {playIntro && <IntroCurtain onDone={() => setReady(true)} />}
+      {!reduced && <IdeaOrb rootRef={rootRef} ready={ready} />}
+      <HeroGenie reduced={reduced} />
+      <StoryScene reduced={reduced} />
+      {/* 4 · protected stack, untouched; the wrapper only carries the orb's resting anchor */}
+      <section className="gh-stack-slot">
+        <FrozenStack />
+        <span data-orb="hide" style={{ display: 'block', width: 10, height: 10, margin: '0 auto' }} />
+      </section>
+      <WordBands />
+      <FeatureCards />
+      <ProjectArc reduced={reduced} />
+      <HomeCompanies />
+      <Testimonials />
+      <HomeFaq reduced={reduced} />
+      <EndLoop reduced={reduced} />
     </div>
   );
 }

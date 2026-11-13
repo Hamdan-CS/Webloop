@@ -1,0 +1,20 @@
+/* Integration rules for the ported homepage (not part of the demo):
+   the page runs under the floating nav, uses the demo's base type, and hosts
+   the kept 3D city and the protected stack. */
+.ghome { position: relative; margin-top: -6rem; background: var(--sky); color: var(--ink); font: 500 16px/1.5 var(--f-ui); letter-spacing: -.01em; overflow-x: clip; -webkit-font-smoothing: antialiased; }
+.ghome a { color: inherit; text-decoration: none; }
+.ghome button { font: inherit; color: inherit; cursor: pointer; }
+.ghome h1, .ghome h2, .ghome h3, .ghome h4, .ghome p { margin: 0; }
+.ghome .gh-lead { margin-top: 0; }
+.ghome .gh-sec-hd .gh-lead, .ghome .gh-arc-hd .gh-lead { margin-top: 18px; }
+.ghome .gh-hero .gh-lead { margin: 28px auto 0; }
+.ghome .gh-end-copy .gh-lead { margin: 16px auto 0; }
+.ghome .gh-city { margin: 8px 0 36px; }
+.ghome .gh-cocard { display: block; color: var(--ink); }
+.ghome .gh-stack-slot { position: relative; background: var(--stack-bg); }
+.ghome .gh-co-grid { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) { .ghome .gh-co-grid { grid-template-columns: 1fr; } }
+/* phones: the demo scales its floating objects to .6 under 600px but not the
+   word-band faces, which then cover the words; give them the same scale */
+@media (max-width: 600px) { .ghome .gh-band .gh-who { scale: .6; } .ghome .gh-band.gh-b3 .gh-who { top: 8% !important; } }
+.ghome .gh-paused, .ghome .gh-paused::after { animation-play-state: paused !important; }

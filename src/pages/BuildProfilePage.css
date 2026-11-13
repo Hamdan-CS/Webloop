@@ -9,21 +9,22 @@
 
 .bp-root {
   /* light palette matched to the site theme (sky tints + blue strokes, no grey) */
-  --bp-bg: #F5F9FF; --bp-surface: #FFFFFF; --bp-sunken: #E8F3FC; --bp-ink: #050E26; --bp-muted: #3F5375;
-  --bp-line: rgba(6, 121, 171, 0.16); --bp-line-strong: rgba(6, 121, 171, 0.42);
-  --bp-accent: #0679AB; --bp-accent-ink: #FFFFFF; --bp-accent-soft: #E8F3FC;
-  --bp-ok: #0E7A55; --bp-ok-soft: #DDF2E9; --bp-err: #C0392B; --bp-err-soft: #FBE8E5;
-  --bp-font-d: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
-  --bp-font-b: 'Figtree', 'Segoe UI', system-ui, sans-serif;
+  /* Genie palette (F8): sky canvas, bone/white surfaces, ink text, iris accent */
+  --bp-bg: #EBF5FF; --bp-surface: #FFFFFF; --bp-sunken: #F3F8FE; --bp-ink: #0A0D12; --bp-muted: #535862;
+  --bp-line: #DDE8F5; --bp-line-strong: #C9DCF2;
+  --bp-accent: #0069E0; --bp-accent-ink: #FFFFFF; --bp-accent-soft: #EBF5FF;
+  --bp-ok: #087443; --bp-ok-soft: #E4F6EC; --bp-err: #B42318; --bp-err-soft: #FDECEA;
+  --bp-font-d: 'Geist Variable', 'Geist', system-ui, sans-serif;
+  --bp-font-b: 'Geist Variable', 'Geist', system-ui, sans-serif;
   color-scheme: light;
   display: block;
   background: var(--bp-bg);
   color: var(--bp-ink);
   font: 15px/1.5 var(--bp-font-b);
   -webkit-font-smoothing: antialiased;
-  border-radius: 20px;
+  border-radius: 32px;
   overflow: hidden;
-  border: 1px solid var(--bp-line);
+  border: 0;
   min-height: 640px;
 }
 html.dark .bp-root {
@@ -112,7 +113,7 @@ html.dark .bp-root {
 .bp-btn.bp-sm { min-height: 32px; padding: 0 11px; font-size: 12.5px; }
 html:not(.dark) .bp-btn:not(.bp-primary):not(.bp-ghost) { color: var(--bp-accent); }
 .bp-btn.bp-primary { background: var(--bp-accent); border-color: var(--bp-accent); color: var(--bp-accent-ink); }
-html:not(.dark) .bp-btn.bp-primary { background: linear-gradient(135deg, #0897c2, #1b4fd8); border-color: transparent; }
+html:not(.dark) .bp-btn.bp-primary { background: #181D27; border-color: transparent; box-shadow: 0 1px 2px rgba(10,13,18,.8), 0 0 0 1px #0a0d12; }
 .bp-btn.bp-primary:hover { filter: brightness(1.08); background: var(--bp-accent); }
 .bp-btn.bp-ghost { border-color: transparent; background: transparent; color: var(--bp-muted); }
 .bp-btn.bp-ghost:hover { color: var(--bp-ink); background: var(--bp-sunken); }

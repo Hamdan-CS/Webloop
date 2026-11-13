@@ -29,24 +29,25 @@ const NEON = {
     levels: ['#1C2440', '#0E7490', '#06B6D4', '#22D3EE', '#38BDF8'],
     indigo: '#818CF8',
   },
+  // Genie redesign (F7): pale blue tile, blue contribution walk, one violet spotlight
   light: {
-    tile: '#E3F3F8', muted: '#64748B',
-    levels: ['#E3F3F8', '#14B8A6', '#06B6D4', '#0284C7', '#2563EB'],
-    indigo: '#4F46E5',
+    tile: '#EEF5FF', muted: '#535862',
+    levels: ['#EEF5FF', '#BCD8FF', '#7CB5FF', '#3D8EF5', '#0060CC'],
+    indigo: '#7C3AED',
   },
 };
-const ACCENT = '#06B6D4';
-const ACCENT_DEEP = '#0E7490';
+const ACCENT = '#0069E0';
+const ACCENT_DEEP = '#0050B8';
 const AMBER = '#FBBF24';
-const PILL_SOLID = '#0891B2';
+const PILL_SOLID = '#181D27';
 const CARD_BG = '#FFFFFF';
-const CARD_BG_SOFT = '#F5F7FC';
-const CARD_LINE = '#E2E8F0';
-const CARD_INK = '#0F172A';
-const CARD_MUTED = '#475569';
+const CARD_BG_SOFT = '#FAFDFF';
+const CARD_LINE = '#DDE8F5';
+const CARD_INK = '#0A0D12';
+const CARD_MUTED = '#535862';
 const CARD_MUTED_2 = '#334155';
 const CARD_DASH = '#CBD5E1';
-const GRID_SHADES = ['#E2E8F0', '#5EEAD4', '#06B6D4', '#0284C7', '#2563EB'];
+const GRID_SHADES = ['#EEF5FF', '#BCD8FF', '#7CB5FF', '#3D8EF5', '#0060CC'];
 function isLightTheme() {
   return document.documentElement.classList.contains('light');
 }
@@ -80,7 +81,8 @@ export function startHowItWorksStage(): () => void {
 
   let pal: any = {};
   function readPalette() {
-    const bg = new THREE.Color(cssColor('rgb(var(--ink-950))'));
+    // scene melts into the page's sky canvas (Genie)
+    const bg = new THREE.Color(cssColor('var(--sky)'));
     const N = isLightTheme() ? NEON.light : NEON.dark;
     pal = {
       bg,
@@ -99,7 +101,7 @@ export function startHowItWorksStage(): () => void {
   const ease = (x: number) => x * x * (3 - 2 * x);
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
   const rand = (i: number) => Math.abs(Math.sin(i * 12.9898) * 43758.5453) % 1;
-  const FONT = 'Figtree, system-ui, sans-serif';
+  const FONT = '"Geist Variable", Geist, system-ui, sans-serif';
   const tmp = new THREE.Color();
   const box = new THREE.BoxGeometry(1, 1, 1);
   box.translate(0, 0.5, 0);

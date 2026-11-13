@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/shared/ui/Button';
 import { GoogleIcon } from '@/components/shared/ui/GoogleIcon';
 import { getDashboardPath } from '@/utils/roles';
+import { AuthLayout } from '@/components/layout/AuthLayout';
 
 export function SignInPage() {
   const { signIn, signInWithGoogle } = useAuth();
@@ -42,8 +43,8 @@ export function SignInPage() {
   };
 
   return (
-    <div className="container-page py-16">
-      <div className="mx-auto max-w-md">
+    <AuthLayout>
+      <div>
         <div className="card-g auth-fm">
           <div>
             <h3>Sign in to WebLoop</h3>
@@ -128,6 +129,6 @@ export function SignInPage() {
           </form>
         </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

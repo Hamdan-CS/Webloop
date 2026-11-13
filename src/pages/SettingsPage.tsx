@@ -5,18 +5,18 @@ import {
   Sun, Moon, Loader2, AlertCircle, CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/design-system/components/ThemeProvider';
+import { useTheme, DARK_MODE_ENABLED } from '@/design-system/components/ThemeProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/shared/ui/Button';
 import { cn } from '@/utils/cn';
 
 type SectionKey = 'account' | 'profile' | 'appearance';
 
-const SECTIONS: { key: SectionKey; label: string; icon: React.ReactNode }[] = [
+const SECTIONS = ([
   { key: 'account', label: 'Account & security', icon: <ShieldCheck size={16} /> },
   { key: 'profile', label: 'Profile', icon: <UserCircle2 size={16} /> },
   { key: 'appearance', label: 'Appearance', icon: <Palette size={16} /> },
-];
+] as { key: SectionKey; label: string; icon: React.ReactNode }[]).filter((s) => s.key !== 'appearance' || DARK_MODE_ENABLED); // hidden while dark mode is off
 
 const inputClass =
   'w-full rounded-lg border border-white/10 bg-ink-900/60 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-accent-400/40 focus:outline-none';
@@ -35,7 +35,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="container-page pf py-8 max-w-5xl">
+    <div className="container-page pf py-8 max-w-5xl w-forms">
       <div className="mb-6">
         <span className="label-overline">Settings</span>
         <h1 className="mt-2 font-display text-3xl font-bold pf-name">Your settings</h1>
@@ -67,7 +67,7 @@ export function SettingsPage() {
         <div className="space-y-6">
           {section === 'account' && <AccountSection />}
           {section === 'profile' && <ProfileSection />}
-          {section === 'appearance' && <AppearanceSection />}
+          {section === 'appearance' && DARK_MODE_ENABLED && <AppearanceSection />}
         </div>
       </div>
     </div>

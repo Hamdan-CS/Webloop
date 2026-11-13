@@ -21,8 +21,8 @@ export function LoopLoader({ size = 28, className = '' }: LoopLoaderProps) {
     >
       <defs>
         <linearGradient id={id} x1="0" x2="1">
-          <stop offset="0" stopColor="var(--cyan)" />
-          <stop offset="1" stopColor="var(--wordmark-accent)" />
+          <stop offset="0" stopColor="#7cb8ff" />
+          <stop offset="1" stopColor="#0069e0" />
         </linearGradient>
       </defs>
       <path className="loop-loader-track" d={INF_PATH} />

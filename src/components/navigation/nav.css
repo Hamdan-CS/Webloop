@@ -1,0 +1,20 @@
+/* The nav keeps the legacy .site-header class so the notification bell's
+   existing styles (.site-header .hdr-bell / .hdr-theme) still apply; undo the
+   legacy wrapper behaviour the demo's .nav doesn't have. */
+.gh-nav.site-header { pointer-events: auto; height: auto; }
+.gh-nav .hdr-theme { width: 40px; height: 40px; border-radius: 999px; border: 0; background: var(--mist); color: var(--ink); display: inline-grid; place-items: center; }
+.gh-nav .hdr-theme:hover { background: #eceef1; }
+.gh-nav .gh-si { border: 0; background: transparent; cursor: pointer; font: inherit; }
+.gh-nav .hdr-user { height: 44px; }
+@media (max-width: 900px) { .gh-nav .hdr-user-n { display: none; } }
+/* footer: the demo's logo is a span; ours is a link, so keep it inline-flex
+   under the demo's `.ft a { display:block }` */
+.gh-ft a.gh-logo { display: inline-flex; padding: 0; color: var(--ink); }
+
+/* ---- auth pages: sky, the demo's clouds, a centred white card ---- */
+.gh-auth { position: relative; overflow: hidden; isolation: isolate; margin-top: -6rem; padding: 132px 16px 96px; min-height: 100vh; background: radial-gradient(900px 500px at 50% 0, #fff, rgba(255,255,255,0) 70%), var(--sky); }
+.gh-auth-c { position: absolute; z-index: -1; pointer-events: none; }
+.gh-auth-in { position: relative; width: min(460px, 100%); margin: 0 auto; }
+.gh-auth-in.gh-auth-wide { width: min(1200px, 100%); }
+.gh-auth .card-g { background: #fff; border-radius: var(--r-card); box-shadow: var(--shadow-lg), 0 0 0 1px rgba(10,13,18,.04); padding: 36px; }
+@media (max-width: 600px) { .gh-auth-c { scale: .6; } .gh-auth .card-g { padding: 26px; } }

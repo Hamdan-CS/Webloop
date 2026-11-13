@@ -1,0 +1,96 @@
+/* ============================================================
+   LAYOUT — page frame and section rhythm (F3, BLUEPRINT section B).
+   Plain CSS imported before Tailwind's layers, so utility classes on
+   the same element still win. Uses tokens.css values only.
+   ============================================================ */
+
+/* A page's outer frame: sits on the sky canvas under the floating nav. */
+.page {
+  min-height: 100%;
+  padding-bottom: clamp(56px, 8vw, 120px);
+}
+
+/* Page hero: eyebrow → headline → lead (→ actions), centred by default. */
+.page-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: clamp(48px, 8vw, 112px) 20px clamp(32px, 5vw, 64px);
+  text-align: center;
+  isolation: isolate;
+}
+.page-hero.left { align-items: flex-start; text-align: left; }
+.page-hero h1 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(40px, 6vw, 88px);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  text-wrap: balance;
+  max-width: 16ch;
+}
+.page-hero p {
+  font-size: clamp(16px, 1.4vw, 19px);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: var(--graphite);
+  max-width: 52ch;
+}
+.page-hero .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 8px; }
+.page-hero.left .actions { justify-content: flex-start; }
+
+/* Vertical rhythm between page sections (80–120px, per the reference). */
+.section { padding-block: clamp(56px, 8vw, 120px); }
+.section + .section { padding-top: 0; }
+.section-tight { padding-block: clamp(32px, 5vw, 64px); }
+
+/* Key facts as label / value rows (Baselayer pattern). */
+.facts { display: grid; gap: 0; }
+.facts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line-hex);
+  font-size: 14px;
+}
+.facts > div:last-child { border-bottom: 0; }
+.facts dt,
+.facts .k {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+.facts dd,
+.facts .v { color: var(--ink); font-weight: 500; text-align: right; }
+
+/* ---- site footer (F5) ---- */
+.site-footer { position: relative; z-index: 2; margin-top: 96px; background: var(--paper); padding: 72px 0 36px; }
+.site-footer .ft-wrap { width: min(1200px, 100% - 48px); margin-inline: auto; }
+.site-footer .ft { display: grid; grid-template-columns: 1.6fr repeat(3, 1fr); gap: 32px; }
+.site-footer .ft-blurb { margin-top: 16px; color: var(--graphite); font-size: 14.5px; line-height: 1.55; max-width: 32ch; }
+.site-footer h4 { margin: 0 0 14px; font: 500 12px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--graphite); }
+.site-footer .ft a:not([aria-label]) { display: block; padding: 5px 0; color: var(--graphite); font-size: 15px; transition: color var(--dur-1); }
+.site-footer .ft a:not([aria-label]):hover { color: var(--iris); }
+.site-footer .ft-social { display: flex; gap: 10px; margin-top: 20px; }
+.site-footer .ft-social a { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 999px; color: var(--graphite); box-shadow: 0 0 0 1px var(--line-hex); transition: color var(--dur-1), background var(--dur-1); }
+.site-footer .ft-social a:hover { color: var(--iris); background: var(--sky); }
+.site-footer .ft-bot { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin-top: 48px; padding-top: 22px; border-top: 1px solid #eef2f7; font-size: 13px; color: var(--graphite); }
+.site-footer .ft-legal { display: flex; gap: 16px; }
+.site-footer .ft-legal a:hover { color: var(--ink); }
+@media (max-width: 900px) { .site-footer .ft { grid-template-columns: 1fr 1fr; } }
+
+/* ---- mobile tab bar (F5): floating white pill above the home indicator ---- */
+.mtab {
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255, 255, 255, .9);
+  backdrop-filter: blur(14px) saturate(1.3); -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  box-shadow: var(--shadow-float), 0 0 0 1px rgba(221, 232, 245, .7);
+}
+.mtab a.active svg { color: var(--iris); }

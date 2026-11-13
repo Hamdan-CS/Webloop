@@ -3,6 +3,9 @@ import { ThemeProvider } from './components/ThemeProvider';
 import { PresetProvider } from './components/PresetProvider';
 import { BackgroundProvider } from './components/BackgroundProvider';
 import { configureGsapDefaults } from './animations/gsap.config';
+import { SmoothScroll } from './motion/SmoothScroll';
+import { GenieSprite } from '@/components/genie/GenieSprite';
+import '@/components/layout/genie-shell.css';
 import './themes/presets.css';
 
 /**
@@ -21,7 +24,10 @@ export function DesignProvider({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
       <PresetProvider>
-        <BackgroundProvider>{children}</BackgroundProvider>
+        <BackgroundProvider>
+          <GenieSprite />
+          <SmoothScroll>{children}</SmoothScroll>
+        </BackgroundProvider>
       </PresetProvider>
     </ThemeProvider>
   );

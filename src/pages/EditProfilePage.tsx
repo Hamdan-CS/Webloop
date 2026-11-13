@@ -136,7 +136,7 @@ export function EditProfilePage() {
   };
 
   return (
-    <div className="container-page py-8 max-w-2xl pf">
+    <div className="container-page py-8 max-w-2xl pf w-forms">
       <Link to={`/creators/${profile.handle}`} className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors mb-6">
         <ArrowLeft size={15} /> Back to profile
       </Link>

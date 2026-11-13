@@ -1,0 +1,11 @@
+/** The demo's illustrated round stickers (`STICK`): [background, 48×48 SVG body]. */
+export const STICK: Record<string, [string, string]> = {
+  cap: ['#cce7ff', '<path d="M24 12 6 20l18 8 18-8z" fill="#1d3557"/><path d="M14 24v8c3 3 6.5 4.5 10 4.5s7-1.5 10-4.5v-8l-10 4.5z" fill="#2a4a78"/><path d="M38 20v10" stroke="#f2b31b" stroke-width="2.4" stroke-linecap="round"/><circle cx="38" cy="31.5" r="2.6" fill="#f2b31b"/>'],
+  laptop: ['#e4ccff', '<rect x="10" y="13" width="28" height="18" rx="3" fill="#3d3a8c"/><rect x="13" y="16" width="22" height="12" rx="1.5" fill="#cfe6ff"/><path d="M17 20l-2.5 2 2.5 2M22 20l2.5 2-2.5 2" stroke="#5b4be0" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M7 33h34l-2 3H9z" fill="#5a57b8"/>'],
+  brief: ['#ffe2d1', '<rect x="9" y="17" width="30" height="20" rx="4" fill="#e07a3f"/><path d="M19 17v-3a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3" stroke="#a5532a" stroke-width="2.4" fill="none"/><rect x="9" y="23" width="30" height="3" fill="#c0612f"/><rect x="21" y="21.5" width="6" height="6" rx="1.5" fill="#ffd27a"/>'],
+  campus: ['#d3f6e3', '<path d="M24 9 8 17h32z" fill="#2f8f5b"/><rect x="11" y="18" width="26" height="3" fill="#3fae72"/><rect x="13" y="22" width="3.5" height="11" fill="#fff"/><rect x="22.25" y="22" width="3.5" height="11" fill="#fff"/><rect x="31.5" y="22" width="3.5" height="11" fill="#fff"/><rect x="9" y="33" width="30" height="4" rx="1" fill="#2f8f5b"/>'],
+  book: ['#f1e6ff', '<path d="M10 14c5-2 10-1 14 2v20c-4-3-9-4-14-2z" fill="#7c3aed"/><path d="M38 14c-5-2-10-1-14 2v20c4-3 9-4 14-2z" fill="#a78bfa"/><path d="M24 16v20" stroke="#5b21b6" stroke-width="1.2"/>'],
+  team: ['#fff2be', '<path d="M14 33a7 7 0 0 1 .6-14 9.5 9.5 0 0 1 18.2-1.6A7.8 7.8 0 0 1 34 33z" fill="#4d9dff"/><path d="M18.5 25.5q1.6-1.8 3.2 0M26.5 25.5q1.6-1.8 3.2 0" stroke="#0b2a55" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M20.5 28.5q3.5 3.2 7 0" stroke="#0b2a55" stroke-width="1.8" fill="none" stroke-linecap="round"/>'],
+  check: ['#d3f6e3', '<circle cx="24" cy="24" r="12" fill="#1fa968"/><path d="M18.5 24.5l3.8 3.8 7.5-8" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'],
+};
+export const stickerSVG = (k: string) => `<svg viewBox="0 0 48 48" aria-hidden="true">${STICK[k][1]}</svg>`;
