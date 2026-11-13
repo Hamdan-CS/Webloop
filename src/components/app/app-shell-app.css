@@ -5,6 +5,10 @@
    (messages drawer, toasts, tips) must stay above, so no stacking context */
 .w-app { opacity: 1; visibility: visible; z-index: auto; transition: grid-template-columns .5s var(--ease); }
 html.wl-in-app, html.wl-in-app body { overflow: hidden; height: 100%; }
+/* the demo only pins the grid row on mobile; without it, on desktop the
+   workspace column grows to fit its content and the panel never scrolls */
+.w-app { grid-template-rows: minmax(0, 1fr); }
+.w-ws, .w-sb { min-height: 0; }
 .w-ws-panel > * { min-width: 0; }
 
 /* ---- browser-style tabs ---- */
