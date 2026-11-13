@@ -13,6 +13,13 @@ export interface WebiEngineOptions {
   /** dev-only mood bar; its buttons get `.on` for the active mood */
   debug?: HTMLElement | null;
   reducedMotion: boolean;
+  /** the page's smooth-scroll instance (Lenis), read when the tour scrolls; null → native scroll */
+  getSmoothScroll?: () => SmoothScrollLike | null;
+}
+
+/** the subset of Lenis the tour uses */
+export interface SmoothScrollLike {
+  scrollTo(target: number, opts?: { duration?: number; immediate?: boolean; force?: boolean; onComplete?: () => void }): void;
 }
 
 export interface WebiEngine {
@@ -169,6 +176,98 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     W.introAt = performance.now(); introSaid = false;
   }
 
+  /* ---- guided tour (desktop only): hover → offer, click → Webi drives the scroll, any click / Esc → cancel ---- */
+  const TOUR = WEBI.tour;
+  const desktopMQ = matchMedia(TOUR.desktopQuery);
+  let tour: { steps: { el: HTMLElement; line: string }[]; step: number; phase: 'talking' | 'moving'; nextAt: number; token: number } | null = null;
+  let tourToken = 0;
+  let pollTimer = 0;
+  let cursorSet = false;
+  const setCursor = (on: boolean) => {
+    if (on === cursorSet) return;
+    cursorSet = on;
+    document.documentElement.style.cursor = on ? 'pointer' : '';
+  };
+  const readMs = (line: string) => clamp(TOUR.read.baseMs + line.length * TOUR.read.msPerChar, TOUR.read.minMs, TOUR.read.maxMs);
+  /* document Y of a step; a pinned section is measured by its pin-spacer so it stays stable while pinned */
+  const stepY = (el: HTMLElement) => {
+    const a = el.parentElement?.classList.contains('pin-spacer') ? el.parentElement : el;
+    return Math.max(0, a.getBoundingClientRect().top + scrollY);
+  };
+  function scrollToY(y: number, done: () => void) {
+    const ss = o.getSmoothScroll?.();
+    if (ss && !REDUCE) { ss.scrollTo(y, { duration: TOUR.scrollSeconds, force: true, onComplete: done }); return; }
+    window.scrollTo({ top: y, behavior: REDUCE ? 'auto' : 'smooth' });
+    const t0 = performance.now();
+    const poll = () => { if (Math.abs(scrollY - y) < 2 || performance.now() - t0 > 2500) done(); else pollTimer = window.setTimeout(poll, 60); };
+    pollTimer = window.setTimeout(poll, 60);
+  }
+  function stopScroll() {
+    window.clearTimeout(pollTimer);
+    const ss = o.getSmoothScroll?.();
+    if (ss) ss.scrollTo(scrollY, { immediate: true, force: true });
+    else window.scrollTo({ top: scrollY, behavior: 'auto' });
+  }
+  function startTour() {
+    const steps: { el: HTMLElement; line: string }[] = [];
+    for (const s of TOUR.steps) { const el = document.querySelector<HTMLElement>(s.target); if (el) steps.push({ el, line: s.line }); }
+    if (!steps.length) return;
+    tour = { steps, step: -1, phase: 'talking', nextAt: performance.now() + TOUR.startMs, token: ++tourToken };
+    setMood('happy', TOUR.startMs, TOUR.startLine);
+  }
+  function endTour(cancelled: boolean) {
+    if (!tour) return;
+    tour = null; tourToken++;
+    stopScroll();
+    W.force = null; W.forceUntil = 0;
+    if (cancelled) sayFor(TOUR.cancelLine, TOUR.cancelMs);
+  }
+  function tickTour(now: number) {
+    if (!tour) return;
+    W.lastInput = now; // no falling asleep mid-tour
+    if (tour.phase !== 'talking' || now < tour.nextAt) return;
+    tour.step++;
+    if (tour.step >= tour.steps.length) { tour = null; tourToken++; return; }
+    const s = tour.steps[tour.step], token = tour.token;
+    tour.phase = 'moving'; W.say = ''; W.sayUntil = 0;
+    scrollToY(stepY(s.el), () => {
+      if (!tour || tour.token !== token) return;
+      const ms = readMs(s.line);
+      tour.phase = 'talking'; tour.nextAt = performance.now() + ms;
+      sayFor(s.line, ms);
+    });
+  }
+  /* clicks: decided on pointerdown (not in the frame) so a click on Webi can be kept from reaching what's under him */
+  let hiddenNow = true;
+  let swallowClick = false;
+  const nearWebi = (x: number, y: number) => {
+    const T = WEBI.triggers.tickle;
+    return started && !hiddenNow && Math.hypot(x - W.pos.x, y - W.pos.y) < T.radius * W.S + T.pad;
+  };
+  const canTour = () => desktopMQ.matches && W.m < 0.5;
+  window.addEventListener('pointerdown', (e) => {
+    const near = nearWebi(e.clientX, e.clientY);
+    if (tour) { endTour(true); swallowClick = near; return; } // any click — on Webi or anywhere — cancels
+    if (!near) return;
+    if (canTour()) { startTour(); swallowClick = true; }
+    else { const T = WEBI.triggers.tickle; setMood('happy', T.ms, T.line); }
+  }, { capture: true, signal: ac.signal });
+  window.addEventListener('click', (e) => {
+    if (!swallowClick) return;
+    swallowClick = false; e.preventDefault(); e.stopImmediatePropagation();
+  }, { capture: true, signal: ac.signal });
+  window.addEventListener('pointerup', () => { if (swallowClick) window.setTimeout(() => { swallowClick = false; }, 400); }, { capture: true, signal: ac.signal });
+  document.addEventListener('pointerout', (e) => { if (!e.relatedTarget) { PTR.x = PTR.y = -1e4; } }, { passive: true, signal: ac.signal });
+
+  /* while touring Webi owns the scroll: block wheel and scroll keys (capture, before Lenis); Esc cancels */
+  window.addEventListener('wheel', (e) => { if (tour) { e.preventDefault(); e.stopImmediatePropagation(); } }, { passive: false, capture: true, signal: ac.signal });
+  const SCROLL_KEYS = new Set([' ', 'PageUp', 'PageDown', 'ArrowUp', 'ArrowDown', 'Home', 'End']);
+  window.addEventListener('keydown', (e) => {
+    if (!tour) return;
+    if (e.key === 'Escape') { endTour(true); return; }
+    if (SCROLL_KEYS.has(e.key)) { e.preventDefault(); e.stopImmediatePropagation(); }
+  }, { capture: true, signal: ac.signal });
+
   const IN = WEBI.intro;
   let lastSY = scrollY;
   const T_START = performance.now();
@@ -190,7 +289,8 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     }
 
     /* --- mood resolution: forced > hover > dizzy (fast scroll) > sleep (12 s idle) > idle --- */
-    if (Math.abs(dy) > WEBI.triggers.dizzyScrollPx) W.dizzyUntil = now + WEBI.triggers.dizzyMs;
+    tickTour(now);
+    if (!tour && Math.abs(dy) > WEBI.triggers.dizzyScrollPx) W.dizzyUntil = now + WEBI.triggers.dizzyMs;
     let mood: WebiMood = 'idle';
     if (W.force && now < W.forceUntil) mood = W.force;
     else if (hoverMood && hoverMood in MOODS) mood = hoverMood as WebiMood;
@@ -238,11 +338,9 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     if (logo && out !== logo.classList.contains('out')) {
       logo.classList.toggle('out', out); logo.classList.remove('ripple'); void logo.getBoundingClientRect(); logo.classList.add('ripple');
     }
-    if (PTR.down !== W.lastDown) {
-      W.lastDown = PTR.down;
-      const T = WEBI.triggers.tickle;
-      if (!hidden && Math.hypot(PTR.x - W.pos.x, PTR.y - W.pos.y) < T.radius * W.S + T.pad) setMood('happy', T.ms, T.line);
-    }
+    hiddenNow = hidden;
+    const webiHover = canTour() && !tour && nearWebi(PTR.x, PTR.y);
+    setCursor(webiHover);
 
     /* --- shape per mood --- */
     let sxk = 1, syk = 1, shakeX = 0, wob = REDUCE ? 0 : 0.7;
@@ -287,7 +385,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
 
     /* --- speech bubble --- */
     if (!introSaid && sinceIntro > IN.sayAt && sy < IN.nearTop) { introSaid = true; sayFor(IN.line, IN.lineMs); }
-    let txt = (now < W.sayUntil ? W.say : '') || hoverSay || (mood === 'dizzy' || mood === 'sleep' ? MOODS[mood].say! : '');
+    let txt = (now < W.sayUntil ? W.say : '') || (webiHover ? TOUR.hoverLine : '') || (tour ? '' : hoverSay) || (mood === 'dizzy' || mood === 'sleep' ? MOODS[mood].say! : '');
     if (S < 0.3 || W.m > 0.5) txt = '';
     if (txt) {
       if (bubble.textContent !== txt) bubble.textContent = txt;
@@ -367,6 +465,9 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     },
     destroy() {
       cancelAnimationFrame(raf);
+      if (tour) { tour = null; stopScroll(); }
+      window.clearTimeout(pollTimer);
+      setCursor(false);
       ac.abort();
       runStyle?.remove();
       const L = logoEl;

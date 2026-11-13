@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useReducedMotion } from '@/design-system/motion/useReducedMotion';
+import { useLenis } from '@/design-system/motion/lenisContext';
 import { WEBI, WEBI_MOODS } from './webi.config';
 import { createWebiEngine, type WebiEngine } from './webiEngine';
 import './webi.css';
@@ -22,11 +23,14 @@ export function Webi({ ready = true }: { ready?: boolean }) {
   const debugRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<WebiEngine | null>(null);
   const reduced = useReducedMotion();
+  const lenis = useLenis();
+  const lenisRef = useRef(lenis);
+  lenisRef.current = lenis;
 
   useEffect(() => {
     const goo = gooRef.current, face = faceRef.current, bubble = bubbleRef.current;
     if (!goo || !face || !bubble) return;
-    const engine = createWebiEngine({ goo, face, bubble, debug: debugRef.current, reducedMotion: reduced });
+    const engine = createWebiEngine({ goo, face, bubble, debug: debugRef.current, reducedMotion: reduced, getSmoothScroll: () => lenisRef.current });
     engineRef.current = engine;
     return () => { engine.destroy(); engineRef.current = null; };
   }, [reduced]);

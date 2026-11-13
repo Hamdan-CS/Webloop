@@ -70,6 +70,36 @@ export const WEBI = {
   /** bubble placement relative to Webi (multiplied by the current scale) */
   bubble: { gapRight: 40, gapFlip: 44, above: 60, edge: 12, minTop: 70, bottomPad: 10 },
 
+  /**
+   * Guided tour (desktop only). Hovering Webi shows `hoverLine`; clicking him
+   * starts the tour: Webi takes over the scroll and stops at each step to
+   * explain it. Any click (on him or anywhere), or Esc, cancels it.
+   * Steps are matched by selector, in order; missing ones are skipped.
+   */
+  tour: {
+    desktopQuery: '(hover: hover) and (pointer: fine) and (min-width: 900px)',
+    hoverLine: 'Need an explanation? Click me.',
+    startLine: "Okay! I'll walk you through it. Click anywhere to stop.",
+    startMs: 2600,
+    cancelLine: "Okay, I'll stop here.",
+    cancelMs: 1800,
+    scrollSeconds: 1.6,
+    /** how long each step's line stays up: base + per character, clamped */
+    read: { baseMs: 1800, msPerChar: 45, minMs: 3200, maxMs: 6500 },
+    steps: [
+      { target: '#top', line: 'This is WebLoop. Students, companies and universities build real projects here, together.' },
+      { target: '#how', line: 'Here is how it works: a brief, a team and a mentor turn your idea into verified proof.' },
+      { target: '.gh-stack-slot', line: 'Every project has an overview, a team, tasks, contributions and a final result.' },
+      { target: '#words', line: 'Team up, build in the open, and prove what you actually did.' },
+      { target: '#projects', line: 'These tools take a brief all the way to proof. Hover a card to open it.' },
+      { target: '#explore', line: 'Projects from every field. Hover to peek, click to open one.' },
+      { target: '#companies', line: 'Companies post real briefs, and review what student teams ship.' },
+      { target: '.gh-tst', line: "Here's what builders and teams say about WebLoop." },
+      { target: '#faq', line: 'Still curious? The answers to common questions are right here.' },
+      { target: '#end', line: "That's the tour! Join WebLoop whenever you're ready." },
+    ],
+  },
+
   /** debug mood bar duration */
   debugMs: 3500,
 

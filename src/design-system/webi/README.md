@@ -19,6 +19,20 @@ The approved reference (`webi-reference.html`) is the source of truth. Everythin
   - On the first visit of a session, the intro waits for the cloud curtain to finish (the `ready` prop).
 - **Logo.** Before Webi leaves, the logo is solid. While he's out, it's the watermark plus the running light. When `<Webi />` unmounts, the engine removes `out`, so every other page shows the normal logo.
 
+## Guided tour (desktop only)
+
+The tour only runs where `(hover: hover) and (pointer: fine) and (min-width: 900px)` matches.
+
+- **Hover Webi.** The cursor becomes a pointer and the bubble says "Need an explanation? Click me."
+- **Click Webi.** He announces the tour, then takes over the scroll and walks through `WEBI.tour.steps` in order.
+  - Each step scrolls to its section (Lenis, 1.6 s), then he explains it in the bubble.
+  - How long each line stays up depends on its length.
+  - While the tour runs, wheel and scroll keys are blocked, so Webi controls the page.
+- **Cancel.** Any click (on Webi or anywhere else) or Esc stops the tour. Webi says "Okay, I'll stop here." and the page stays where it is.
+  - A click on Webi never reaches the element underneath him.
+- **Edit the tour.** Change the lines or the order in `webi.config.ts` → `tour.steps`. Each step has `target` (a selector) and `line`. Missing targets are skipped.
+- **On touch and narrow screens**, clicking Webi keeps the original "Hehe, that tickles!" reaction.
+
 ## Files
 
 | File | What it holds |
