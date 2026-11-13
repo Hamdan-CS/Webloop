@@ -291,3 +291,4 @@
 .w-danger { color: #c2410c; }
 .w-danger:hover { background: #fdecea !important; color: #b42318; }
 .w-lrow .w-danger { flex: none; }
+.w-kcard .w-take { margin-top: 10px; width: 100%; justify-content: center; }
