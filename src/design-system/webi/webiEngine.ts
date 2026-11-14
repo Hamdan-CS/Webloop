@@ -270,6 +270,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
   }
   /* clicks: decided on pointerdown (not in the frame) so a click on Webi can be kept from reaching what's under him */
   let hiddenNow = true;
+  let crossUntil = 0; // the × shows only while Webi is hovered (plus a short grace to reach it)
   let swallowClick = false;
   const nearWebi = (x: number, y: number) => {
     const T = WEBI.triggers.tickle;
@@ -283,7 +284,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     if (tour) { endTour(true); swallowClick = near; return; } // any click — on Webi or anywhere — cancels
     if (!near) return;
     if (canTour()) { startTour(); swallowClick = true; }
-    else { const T = WEBI.triggers.tickle; setMood('happy', T.ms, T.line); }
+    else { const T = WEBI.triggers.tickle; setMood('happy', T.ms, T.line); crossUntil = performance.now() + WEBI.dismiss.touchShowMs; } // no hover on touch: a tap reveals the ×
   }, { capture: true, signal: ac.signal });
   window.addEventListener('click', (e) => {
     if (!swallowClick) return;
@@ -471,7 +472,8 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
 
     /* --- the × sits on Webi's shoulder, on the side away from the bubble --- */
     if (close) {
-      const showX = !hidden && !leaving && !parked && W.m < 0.5 && S > 0.3 && sinceIntro > IN.faceAt;
+      if (nearWebi(PTR.x, PTR.y) || close.matches(':hover, :focus-visible')) crossUntil = Math.max(crossUntil, now + DIS.hoverGraceMs);
+      const showX = now < crossUntil && !hidden && !leaving && !parked && W.m < 0.5 && S > 0.3 && sinceIntro > IN.faceAt;
       if (showX) {
         const C = DIS.cross, left = !(txt && bubble.classList.contains('flip'));
         const cx = W.pos.x + (left ? -C.x : C.x) * S, cy = W.pos.y + bob + C.y * S;

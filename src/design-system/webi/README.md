@@ -37,7 +37,7 @@ The tour only runs where `(hover: hover) and (pointer: fine) and (min-width: 900
 
 ## Hide and bring back
 
-- **Hide.** A small red × sits on Webi's shoulder, on the side away from his bubble. Clicking it:
+- **Hide.** Hovering Webi shows a small red × on his shoulder, on the side away from his bubble. It isn't there otherwise. On touch screens, tapping Webi shows it for a few seconds. Clicking it:
   1. ends any tour;
   2. Webi says "Thank you! If you need me, click on the loop." and shrinks back into the nav ∞;
   3. the logo turns solid again.

@@ -165,6 +165,10 @@ export const WEBI = {
     storageKey: 'webi_parked',
     /** × position from Webi's centre (unit space, × scale) and its size in px */
     cross: { x: 46, y: -58, size: 22 },
+    /** the × appears only while Webi is hovered; it lingers this long after the pointer leaves */
+    hoverGraceMs: 700,
+    /** touch screens have no hover: tapping Webi shows the × for this long */
+    touchShowMs: 3500,
   },
 
   /** debug mood bar duration */
