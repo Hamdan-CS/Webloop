@@ -20,6 +20,7 @@ export function Webi({ ready = true }: { ready?: boolean }) {
   const gooRef = useRef<HTMLCanvasElement>(null);
   const faceRef = useRef<HTMLCanvasElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const debugRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<WebiEngine | null>(null);
   const reduced = useReducedMotion();
@@ -30,7 +31,7 @@ export function Webi({ ready = true }: { ready?: boolean }) {
   useEffect(() => {
     const goo = gooRef.current, face = faceRef.current, bubble = bubbleRef.current;
     if (!goo || !face || !bubble) return;
-    const engine = createWebiEngine({ goo, face, bubble, debug: debugRef.current, reducedMotion: reduced, getSmoothScroll: () => lenisRef.current });
+    const engine = createWebiEngine({ goo, face, bubble, close: closeRef.current, debug: debugRef.current, reducedMotion: reduced, getSmoothScroll: () => lenisRef.current });
     engineRef.current = engine;
     return () => { engine.destroy(); engineRef.current = null; };
   }, [reduced]);
@@ -52,6 +53,10 @@ export function Webi({ ready = true }: { ready?: boolean }) {
       <canvas ref={gooRef} className="webi-goo" aria-hidden="true" />
       <canvas ref={faceRef} className="webi-face" aria-hidden="true" />
       <div ref={bubbleRef} className="webi-bubble" aria-hidden="true" />
+      {/* the only interactive Webi layer: sends him back into the nav logo (click the logo to bring him back) */}
+      <button ref={closeRef} type="button" className="webi-close" aria-label="Hide Webi" title="Hide Webi">
+        <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true" focusable="false"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+      </button>
       {DEBUG && (
         <div
           ref={debugRef}

@@ -152,6 +152,21 @@ export const WEBI = {
     ] as WebiTourStep[],
   },
 
+  /**
+   * Dismiss: a small red × beside Webi sends him back into the nav ∞.
+   * Clicking the logo brings him out again. Remembered for the browser session.
+   */
+  dismiss: {
+    line: 'Thank you! If you need me, click on the loop.',
+    lineMs: 4200,
+    backLine: "I'm back!",
+    backLineDesktop: "I'm back! Hover me if you need an explanation.",
+    backMs: 3600,
+    storageKey: 'webi_parked',
+    /** × position from Webi's centre (unit space, × scale) and its size in px */
+    cross: { x: 46, y: -58, size: 22 },
+  },
+
   /** debug mood bar duration */
   debugMs: 3500,
 

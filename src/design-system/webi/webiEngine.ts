@@ -10,6 +10,8 @@ export interface WebiEngineOptions {
   goo: HTMLCanvasElement;
   face: HTMLCanvasElement;
   bubble: HTMLElement;
+  /** the small red × beside Webi: sends him back into the nav logo */
+  close?: HTMLElement | null;
   /** dev-only mood bar; its buttons get `.on` for the active mood */
   debug?: HTMLElement | null;
   reducedMotion: boolean;
@@ -47,7 +49,7 @@ interface Bead { x: number; y: number; vx: number; vy: number; r: number; col?: 
 
 export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
   const REDUCE = o.reducedMotion;
-  const { goo, face, bubble, debug } = o;
+  const { goo, face, bubble, debug, close } = o;
   const gx = goo.getContext('2d');
   const fx = face.getContext('2d');
   if (!gx || !fx) return { start() {}, setMood() {}, replayIntro() {}, destroy() {} };
@@ -275,6 +277,8 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
   };
   const canTour = () => desktopMQ.matches && W.m < 0.5;
   window.addEventListener('pointerdown', (e) => {
+    if (close && close.contains(e.target as Node)) { if (tour) endTour(false); return; } // the × handles itself
+    if (parked || leaving) return;
     const near = nearWebi(e.clientX, e.clientY);
     if (tour) { endTour(true); swallowClick = near; return; } // any click — on Webi or anywhere — cancels
     if (!near) return;
@@ -287,6 +291,36 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
   }, { capture: true, signal: ac.signal });
   window.addEventListener('pointerup', () => { if (swallowClick) window.setTimeout(() => { swallowClick = false; }, 400); }, { capture: true, signal: ac.signal });
   document.addEventListener('pointerout', (e) => { if (!e.relatedTarget) { PTR.x = PTR.y = -1e4; } }, { passive: true, signal: ac.signal });
+
+  /* ---- dismiss: the × sends Webi back into the nav ∞; clicking the ∞ (the logo link) brings him out again ---- */
+  const DIS = WEBI.dismiss;
+  const store = (v: boolean) => { try { if (v) sessionStorage.setItem(DIS.storageKey, '1'); else sessionStorage.removeItem(DIS.storageKey); } catch { /* storage blocked */ } };
+  let parked = false;  // inside the logo, not drawn
+  let leaving = false; // flying back to the logo
+  try { parked = sessionStorage.getItem(DIS.storageKey) === '1'; } catch { /* storage blocked */ }
+  function dismiss() {
+    if (!started || parked || leaving) return;
+    if (tour) endTour(false);
+    leaving = true; store(true);
+    W.force = 'happy'; W.forceUntil = performance.now() + 2200;
+    sayFor(DIS.line, DIS.lineMs);
+  }
+  function summon() {
+    if (!parked && !leaving) return;
+    parked = leaving = false; store(false);
+    W.force = null; W.forceUntil = 0;
+    if (REDUCE) placeAtSpot((performance.now() - T_START) / 1000); else resetBeads();
+    introSaid = true; // no first-visit greeting, just a short hello
+    sayFor(desktopMQ.matches ? DIS.backLineDesktop : DIS.backLine, DIS.backMs);
+  }
+  close?.addEventListener('click', (e) => { e.preventDefault(); dismiss(); }, { signal: ac.signal });
+  window.addEventListener('click', (e) => {
+    if (!parked && !leaving) return;
+    const L = getLogo(), a = L?.closest('a') ?? L;
+    if (!a || !a.contains(e.target as Node)) return;
+    e.preventDefault(); // stays on the page (React Router skips navigation for a prevented click)
+    summon();
+  }, { capture: true, signal: ac.signal });
 
   /* while touring Webi owns the scroll: block wheel and scroll keys (capture, before Lenis); Esc cancels */
   window.addEventListener('wheel', (e) => { if (tour) { e.preventDefault(); e.stopImmediatePropagation(); } }, { passive: false, capture: true, signal: ac.signal });
@@ -335,30 +369,34 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     /* --- target position --- */
     const sinceIntro = (now - W.introAt) / 1000;
     let tx: number, ty: number, k: number = WEBI.spring.k, damp: number = WEBI.spring.damping, St: number = scaleTarget(), mT = 0;
-    if (sinceIntro < IN.endsAt && sy < IN.nearTop && !REDUCE) { // intro: drip out of the logo as a small ∞
+    if (leaving || parked) { // going home: shrink back into the ∞ inside the nav logo
+      const L = logoCenter();
+      tx = L.x; ty = L.y + 8; St = WEBI.scale.logoStart; mT = 1; k = 0.09; damp = 0.72;
+      if (leaving && (REDUCE || (Math.hypot(tx - W.pos.x, ty - W.pos.y) < 5 && W.m > 0.9))) { leaving = false; parked = true; }
+    } else if (sinceIntro < IN.endsAt && sy < IN.nearTop && !REDUCE) { // intro: drip out of the logo as a small ∞
       const L = logoCenter(), q = clamp((sinceIntro - IN.popAt) / IN.dripFor, 0, 1);
       tx = L.x; ty = L.y + 8 + ease(q) * IN.dripDistance; St = lerp(WEBI.scale.logoStart, St, q); mT = 1; k = 0.25; damp = 0.55;
     } else { // scroll-driven: glide to the side the centred section asks for
       ({ tx, ty } = spotTarget(t));
       if (!REDUCE && sinceIntro < IN.standUpWindow && Math.hypot(tx - W.pos.x, ty - W.pos.y) > WEBI.spots.standUpWithin) mT = 1;
     }
-    if (mood === 'sleep' && !REDUCE) ty += 14;
+    if (mood === 'sleep' && !REDUCE && !leaving) ty += 14;
     if (REDUCE) { W.pos.x = tx; W.pos.y = ty; W.vel.x = W.vel.y = 0; }
     else {
       W.vel.x = (W.vel.x + (tx - W.pos.x) * k) * damp; W.vel.y = (W.vel.y + (ty - W.pos.y) * k) * damp;
-      if (mood === 'happy' || mood === 'success') { if (Math.sin(mt * 11) > 0.96 && W.vel.y > -1) W.vel.y -= 3.2; }
-      { const v = Math.hypot(W.vel.x, W.vel.y), mx = WEBI.spring.maxSpeed; if (v > mx) { W.vel.x *= mx / v; W.vel.y *= mx / v; } }
+      if ((mood === 'happy' || mood === 'success') && !leaving) { if (Math.sin(mt * 11) > 0.96 && W.vel.y > -1) W.vel.y -= 3.2; }
+      { const v = Math.hypot(W.vel.x, W.vel.y), mx = leaving ? WEBI.spring.maxSpeed * 1.6 : WEBI.spring.maxSpeed; if (v > mx) { W.vel.x *= mx / v; W.vel.y *= mx / v; } }
       W.pos.x += W.vel.x; W.pos.y += W.vel.y;
     }
     const sp = Math.hypot(W.vel.x, W.vel.y);
-    W.S += (St - W.S) * (sinceIntro < IN.endsAt ? 0.25 : 0.07); W.m += (mT - W.m) * 0.07;
+    W.S += (St - W.S) * (sinceIntro < IN.endsAt ? 0.25 : 0.07); W.m += (mT - W.m) * (leaving ? 0.1 : 0.07);
     let tiltT = clamp(W.vel.x * 0.03, -0.3, 0.3);
     if (mood === 'think') tiltT += 0.16; if (mood === 'dizzy') tiltT += Math.sin(t * 7) * 0.28; if (mood === 'sleep') tiltT -= 0.12;
     if (REDUCE) tiltT = 0;
     W.tilt += (tiltT * (1 - W.m) - W.tilt) * 0.1;
 
     /* logo: solid until Webi leaves, then watermark + running light */
-    const hidden = sinceIntro < IN.popAt && sy < IN.nearTop && !REDUCE;
+    const hidden = parked || (sinceIntro < IN.popAt && sy < IN.nearTop && !REDUCE && !leaving);
     if (hidden) {
       const L = logoCenter(), s0 = WEBI.scale.logoStart;
       W.pos.x = L.x; W.pos.y = L.y + 8; W.vel.x = W.vel.y = 0; W.S = s0;
@@ -369,7 +407,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
       logo.classList.toggle('out', out); logo.classList.remove('ripple'); void logo.getBoundingClientRect(); logo.classList.add('ripple');
     }
     hiddenNow = hidden;
-    const webiHover = canTour() && !tour && nearWebi(PTR.x, PTR.y);
+    const webiHover = canTour() && !tour && !leaving && nearWebi(PTR.x, PTR.y);
     setCursor(webiHover);
 
     /* --- shape per mood --- */
@@ -417,6 +455,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     if (!introSaid && sinceIntro > IN.sayAt && sy < IN.nearTop) { introSaid = true; sayFor(IN.line, IN.lineMs); }
     let txt = (now < W.sayUntil ? W.say : '') || (webiHover ? TOUR.hoverLine : '') || (tour ? '' : hoverSay) || (mood === 'dizzy' || mood === 'sleep' ? MOODS[mood].say! : '');
     if (S < 0.3 || W.m > 0.5) txt = '';
+    if (leaving || parked) txt = now < W.sayUntil ? W.say : ''; // the goodbye stays readable while he flies home
     if (txt) {
       if (bubble.textContent !== txt) bubble.textContent = txt;
       const B = WEBI.bubble;
@@ -429,6 +468,17 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     }
     bubble.classList.toggle('show', !!txt);
     bubble.classList.toggle('teach', mood === 'teach');
+
+    /* --- the × sits on Webi's shoulder, on the side away from the bubble --- */
+    if (close) {
+      const showX = !hidden && !leaving && !parked && W.m < 0.5 && S > 0.3 && sinceIntro > IN.faceAt;
+      if (showX) {
+        const C = DIS.cross, left = !(txt && bubble.classList.contains('flip'));
+        const cx = W.pos.x + (left ? -C.x : C.x) * S, cy = W.pos.y + bob + C.y * S;
+        close.style.transform = `translate(${Math.round(cx - C.size / 2)}px,${Math.round(cy - C.size / 2)}px)`;
+      }
+      close.classList.toggle('show', showX);
+    }
   }
 
   /*
@@ -548,6 +598,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
       if (started) return;
       started = true;
       if (REDUCE) placeAtSpot((performance.now() - T_START) / 1000); else resetBeads();
+      if (parked) introSaid = true; // dismissed earlier this session: he stays in the logo until it's clicked
     },
     setMood,
     replayIntro() {
@@ -568,6 +619,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
         if (runP) runP.style.strokeDasharray = '';
       }
       bubble.classList.remove('show');
+      close?.classList.remove('show');
     },
   };
 }
