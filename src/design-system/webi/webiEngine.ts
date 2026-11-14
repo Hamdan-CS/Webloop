@@ -19,7 +19,7 @@ export interface WebiEngineOptions {
 
 /** the subset of Lenis the tour uses */
 export interface SmoothScrollLike {
-  scrollTo(target: number, opts?: { duration?: number; immediate?: boolean; force?: boolean; onComplete?: () => void }): void;
+  scrollTo(target: number, opts?: { duration?: number; easing?: (t: number) => number; immediate?: boolean; force?: boolean; lock?: boolean; onComplete?: () => void }): void;
 }
 
 export interface WebiEngine {
@@ -164,6 +164,9 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     const swX = REDUCE ? 0 : Math.sin(t * SP.sway.xSpeed) * SP.sway.x;
     const swY = REDUCE ? 0 : Math.sin(t * SP.sway.ySpeed) * SP.sway.y;
     let tx = VW * (sxp[spot] ?? sxp.r) + swX, ty = VH * (spot === 'm' ? SP.yHigh : SP.y) + swY;
+    // during the tour each beat can place Webi itself, so he walks around while explaining
+    const tp = tour?.pos;
+    if (tp) { tx = VW * tp[0] + swX; ty = VH * tp[1] + swY; }
     tx = clamp(tx, SP.margin.x, VW - SP.margin.x); ty = clamp(ty, SP.margin.top, VH - SP.margin.bottom);
     return { tx, ty };
   }
@@ -179,7 +182,8 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
   /* ---- guided tour (desktop only): hover → offer, click → Webi drives the scroll, any click / Esc → cancel ---- */
   const TOUR = WEBI.tour;
   const desktopMQ = matchMedia(TOUR.desktopQuery);
-  let tour: { steps: { el: HTMLElement; line: string }[]; step: number; phase: 'talking' | 'moving'; nextAt: number; token: number } | null = null;
+  interface TourBeat { el: HTMLElement; at: number; pos?: [number, number]; line: string }
+  let tour: { beats: TourBeat[]; i: number; phase: 'talking' | 'moving'; nextAt: number; token: number; pos?: [number, number] } | null = null;
   let tourToken = 0;
   let pollTimer = 0;
   let cursorSet = false;
@@ -189,17 +193,30 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     document.documentElement.style.cursor = on ? 'pointer' : '';
   };
   const readMs = (line: string) => clamp(TOUR.read.baseMs + line.length * TOUR.read.msPerChar, TOUR.read.minMs, TOUR.read.maxMs);
-  /* document Y of a step; a pinned section is measured by its pin-spacer so it stays stable while pinned */
-  const stepY = (el: HTMLElement) => {
-    const a = el.parentElement?.classList.contains('pin-spacer') ? el.parentElement : el;
-    return Math.max(0, a.getBoundingClientRect().top + scrollY);
+  /*
+   * document Y of a beat. A pinned section is measured by its pin-spacer (stable while pinned)
+   * and `at` walks its pinned distance, so stops line up with its scroll animation.
+   * A normal section: `at` 0 = its top at the viewport top, 1 = its bottom at the viewport bottom.
+   */
+  const beatY = (b: TourBeat) => {
+    // the pinned element is the target itself or one inside it (e.g. the stack inside .gh-stack-slot)
+    const sp = b.el.parentElement?.classList.contains('pin-spacer') ? b.el.parentElement : b.el.querySelector<HTMLElement>('.pin-spacer');
+    const pinned = sp?.firstElementChild as HTMLElement | null | undefined;
+    const box = (sp ?? b.el).getBoundingClientRect(), top = box.top + scrollY;
+    const travel = sp && pinned ? Math.max(0, sp.offsetHeight - pinned.offsetHeight) : Math.max(0, box.height - VH);
+    const max = document.documentElement.scrollHeight - VH;
+    return clamp(Math.round(top + travel * clamp(b.at, 0, 1)), 0, Math.max(0, max));
   };
+  const easeInOutSine = (x: number) => -(Math.cos(Math.PI * x) - 1) / 2;
   function scrollToY(y: number, done: () => void) {
+    const dist = Math.abs(y - scrollY);
+    if (dist < 3) { done(); return; }
+    const S = TOUR.scroll, secs = clamp(dist / S.pxPerSecond, S.minSeconds, S.maxSeconds);
     const ss = o.getSmoothScroll?.();
-    if (ss && !REDUCE) { ss.scrollTo(y, { duration: TOUR.scrollSeconds, force: true, onComplete: done }); return; }
+    if (ss && !REDUCE) { ss.scrollTo(y, { duration: secs, easing: easeInOutSine, force: true, onComplete: done }); return; }
     window.scrollTo({ top: y, behavior: REDUCE ? 'auto' : 'smooth' });
     const t0 = performance.now();
-    const poll = () => { if (Math.abs(scrollY - y) < 2 || performance.now() - t0 > 2500) done(); else pollTimer = window.setTimeout(poll, 60); };
+    const poll = () => { if (Math.abs(scrollY - y) < 2 || performance.now() - t0 > secs * 1000 + 1500) done(); else pollTimer = window.setTimeout(poll, 60); };
     pollTimer = window.setTimeout(poll, 60);
   }
   function stopScroll() {
@@ -209,11 +226,21 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     else window.scrollTo({ top: scrollY, behavior: 'auto' });
   }
   function startTour() {
-    const steps: { el: HTMLElement; line: string }[] = [];
-    for (const s of TOUR.steps) { const el = document.querySelector<HTMLElement>(s.target); if (el) steps.push({ el, line: s.line }); }
-    if (!steps.length) return;
-    tour = { steps, step: -1, phase: 'talking', nextAt: performance.now() + TOUR.startMs, token: ++tourToken };
-    setMood('happy', TOUR.startMs, TOUR.startLine);
+    const beats: TourBeat[] = [];
+    for (const s of TOUR.steps) {
+      const el = document.querySelector<HTMLElement>(s.target);
+      if (el) for (const b of s.beats) beats.push({ el, at: b.at ?? 0, pos: b.pos, line: b.line });
+    }
+    if (!beats.length) return;
+    // start where the visitor already is: the last beat at or above the upper third of the screen
+    const here = scrollY + VH * 0.35;
+    let first = 0;
+    beats.forEach((b, i) => { if (beatY(b) <= here) first = i; });
+    // several beats can share one stop (e.g. the hero): begin with the first of them
+    while (first > 0 && beats[first - 1].el === beats[first].el && beatY(beats[first - 1]) >= beatY(beats[first]) - 4) first--;
+    tour = { beats, i: first - 1, phase: 'talking', nextAt: performance.now() + TOUR.startMs, token: ++tourToken };
+    W.force = null; W.forceUntil = 0;
+    sayFor(TOUR.startLine, TOUR.startMs);
   }
   function endTour(cancelled: boolean) {
     if (!tour) return;
@@ -226,16 +253,18 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     if (!tour) return;
     W.lastInput = now; // no falling asleep mid-tour
     if (tour.phase !== 'talking' || now < tour.nextAt) return;
-    tour.step++;
-    if (tour.step >= tour.steps.length) { tour = null; tourToken++; return; }
-    const s = tour.steps[tour.step], token = tour.token;
-    tour.phase = 'moving'; W.say = ''; W.sayUntil = 0;
-    scrollToY(stepY(s.el), () => {
+    tour.i++;
+    if (tour.i >= tour.beats.length) { tour = null; tourToken++; return; }
+    const b = tour.beats[tour.i], token = tour.token;
+    tour.phase = 'moving'; tour.pos = b.pos; W.say = ''; W.sayUntil = 0;
+    const pinnedBeat = !!(b.el.parentElement?.classList.contains('pin-spacer') || b.el.querySelector('.pin-spacer'));
+    scrollToY(beatY(b), () => window.setTimeout(() => {
       if (!tour || tour.token !== token) return;
-      const ms = readMs(s.line);
-      tour.phase = 'talking'; tour.nextAt = performance.now() + ms;
-      sayFor(s.line, ms);
-    });
+      const last = tour.i === tour.beats.length - 1;
+      const ms = readMs(b.line) + (last ? TOUR.endMs - TOUR.pauseMs : 0);
+      tour.phase = 'talking'; tour.nextAt = performance.now() + ms + TOUR.pauseMs;
+      sayFor(b.line, ms);
+    }, pinnedBeat ? TOUR.settleMs : 0)); // scrubbed scenes lag the scroll a little: let them land first
   }
   /* clicks: decided on pointerdown (not in the frame) so a click on Webi can be kept from reaching what's under him */
   let hiddenNow = true;
@@ -292,7 +321,8 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     tickTour(now);
     if (!tour && Math.abs(dy) > WEBI.triggers.dizzyScrollPx) W.dizzyUntil = now + WEBI.triggers.dizzyMs;
     let mood: WebiMood = 'idle';
-    if (W.force && now < W.forceUntil) mood = W.force;
+    if (tour) mood = 'teach'; // the teacher look is how visitors know he's explaining
+    else if (W.force && now < W.forceUntil) mood = W.force;
     else if (hoverMood && hoverMood in MOODS) mood = hoverMood as WebiMood;
     else if (now < W.dizzyUntil) mood = 'dizzy';
     else if (now - W.lastInput > WEBI.triggers.sleepAfterMs) mood = 'sleep';
@@ -392,10 +422,45 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
       const B = WEBI.bubble;
       const bw = bubble.offsetWidth, bh = bubble.offsetHeight, flip = W.pos.x + B.gapFlip * S + bw > VW - B.edge;
       const bx = flip ? W.pos.x - B.gapFlip * S - bw : W.pos.x + B.gapRight * S, by = W.pos.y - B.above * S - bh * 0.6;
-      bubble.style.transform = `translate(${bx}px,${clamp(by, B.minTop, VH - bh - B.bottomPad)}px)`;
+      const bTop = clamp(by, B.minTop, VH - bh - B.bottomPad);
+      bubble.style.transform = `translate(${bx}px,${bTop}px)`;
       bubble.classList.toggle('flip', flip);
+      if (now - textCheckAt > 160) { textCheckAt = now; bubble.classList.toggle('over-text', coversText(bx, bTop, bw, bh)); }
     }
     bubble.classList.toggle('show', !!txt);
+    bubble.classList.toggle('teach', mood === 'teach');
+  }
+
+  /*
+   * Does the bubble sit on top of the page's own text? Sample a grid of points under it
+   * (every Webi layer is pointer-events: none, so hit-testing sees the page) and look for
+   * a text node whose glyphs are actually under that point.
+   */
+  let textCheckAt = 0;
+  function coversText(x: number, y: number, w: number, h: number) {
+    const D = document as Document & {
+      caretRangeFromPoint?: (x: number, y: number) => Range | null;
+      caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null;
+    };
+    const rr = document.createRange();
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) {
+      const px = x + (w * (i + 0.5)) / 4, py = y + (h * (j + 0.5)) / 3;
+      if (px < 0 || py < 0 || px > VW || py > VH) continue;
+      const el = document.elementFromPoint(px, py);
+      if (!el || el === document.documentElement || el === document.body) continue;
+      let n: Node | null = null, off = 0;
+      if (D.caretRangeFromPoint) { const r = D.caretRangeFromPoint(px, py); if (r) { n = r.startContainer; off = r.startOffset; } }
+      else if (D.caretPositionFromPoint) { const p = D.caretPositionFromPoint(px, py); if (p) { n = p.offsetNode; off = p.offset; } }
+      if (!n || n.nodeType !== 3 || !el.contains(n)) continue;
+      const len = (n.textContent || '').length;
+      // the caret sits between two characters: test the glyph on each side of it
+      for (const s of [off - 1, off]) {
+        if (s < 0 || s >= len || !(n.textContent || '')[s].trim()) continue;
+        rr.setStart(n, s); rr.setEnd(n, s + 1);
+        for (const q of rr.getClientRects()) if (px >= q.left - 3 && px <= q.right + 3 && py >= q.top && py <= q.bottom) return true;
+      }
+    }
+    return false;
   }
 
   function drawFace(now: number, t: number, S: number, bob: number, mood: WebiMood, mt: number, sp: number, shakeX: number, alpha: number) {
@@ -406,6 +471,8 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     let lx = 0, ly = 0;
     if (now - PTR.last < 3500) { const dx = PTR.x - W.pos.x, dy = PTR.y - W.pos.y, d = Math.hypot(dx, dy) || 1, mm = Math.min(1, d / 200) * 2.6; lx = (dx / d) * mm; ly = (dy / d) * mm; }
     if (mood === 'think') { lx = 2.4; ly = -2.6; }
+    if (mood === 'teach') { const dx = VW / 2 - W.pos.x, dy = VH * 0.45 - W.pos.y, d = Math.hypot(dx, dy) || 1; lx = (dx / d) * 2.2; ly = (dy / d) * 2.2; } // looks at what he's explaining
+    const talking = mood === 'teach' && now < W.sayUntil;
     const INKC = '#181d27';
     f.fillStyle = f.strokeStyle = INKC; f.lineCap = 'round'; f.lineJoin = 'round';
     const oval = (x: number, y: number) => { f.fillStyle = INKC; f.beginPath(); f.ellipse(x + lx, y + ly, 4.2, 5.8 * bk, 0, 0, 7); f.fill(); if (bk > 0.5) { f.fillStyle = '#fff'; f.beginPath(); f.arc(x + lx + 1.5, y + ly - 2.3, 1.5, 0, 7); f.fill(); } };
@@ -430,6 +497,8 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
       else if (mood === 'bug') { f.lineWidth = 2.4; f.beginPath(); f.moveTo(-5, MY + 1); f.lineTo(-2, MY - 1); f.lineTo(1, MY + 1); f.lineTo(4, MY - 1); f.stroke(); }
       else if (mood === 'sleep') { f.beginPath(); f.ellipse(0, MY + 1, 2, 1.6, 0, 0, 7); f.fill(); }
       else if (mood === 'dizzy') { f.lineWidth = 2.2; f.beginPath(); for (let x = -6; x <= 6; x += 1) { const y = MY + Math.sin(x * 0.9 + t * 10) * 1.6; if (x === -6) f.moveTo(x, y); else f.lineTo(x, y); } f.stroke(); }
+      else if (talking) { const op = REDUCE ? 0.6 : 0.35 + 0.65 * Math.abs(Math.sin(t * 9)); f.beginPath(); f.ellipse(0, MY + 1.5, 3.6, 1 + 3 * op, 0, 0, 7); f.fill(); }
+      else if (mood === 'teach') { f.lineWidth = 2.6; f.beginPath(); f.moveTo(-4, MY + 0.5); f.quadraticCurveTo(1, MY + 4, 5, MY - 1); f.stroke(); } // a confident half-smile
       else if (sp > 8) { f.beginPath(); f.ellipse(0, MY + 2, 2.3, 3.2, 0, 0, 7); f.fill(); }
       else { f.lineWidth = 2.6; f.beginPath(); f.moveTo(-4.6, MY); f.quadraticCurveTo(0, MY + 4.2, 4.6, MY); f.stroke(); }
       // mood props
@@ -442,6 +511,28 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
           const a = (j / 5) * Math.PI * 2 + t * 0.8, r = 78 + Math.sin(t * 3 + j) * 6, x = Math.cos(a) * r * 0.75, y = Math.sin(a) * r - 6, s = 2.4 + Math.sin(t * 6 + j * 2) * 1.4;
           f.save(); f.translate(x, y); f.beginPath(); f.moveTo(0, -s * 2); f.quadraticCurveTo(0, 0, s * 2, 0); f.quadraticCurveTo(0, 0, 0, s * 2); f.quadraticCurveTo(0, 0, -s * 2, 0); f.quadraticCurveTo(0, 0, 0, -s * 2); f.fill(); f.restore();
         }
+      }
+      if (mood === 'teach') {
+        const a = REDUCE ? 1 : Math.min(1, mt * 3);
+        f.save(); f.globalAlpha *= a;
+        // round glasses
+        f.strokeStyle = INKC; f.lineWidth = 2.2;
+        E.forEach((x) => { f.fillStyle = 'rgba(255,255,255,.22)'; f.beginPath(); f.arc(x, EY, 7.8, 0, 7); f.fill(); f.stroke(); });
+        f.beginPath(); f.moveTo(-2.4, EY - 1); f.quadraticCurveTo(0, EY - 3.4, 2.4, EY - 1); f.stroke();
+        f.beginPath(); f.moveTo(-17.6, EY - 1.5); f.lineTo(-25, EY - 4); f.moveTo(17.6, EY - 1.5); f.lineTo(25, EY - 4); f.stroke();
+        // graduation cap: band, board, button and a swinging tassel
+        const drop = REDUCE ? 0 : (1 - a) * -14;
+        f.translate(0, drop);
+        f.fillStyle = INKC;
+        f.beginPath(); f.moveTo(-15, -64); f.lineTo(-14, -75); f.lineTo(14, -75); f.lineTo(15, -64); f.quadraticCurveTo(0, -60, -15, -64); f.fill();
+        f.beginPath(); f.moveTo(-30, -77); f.lineTo(0, -87); f.lineTo(30, -77); f.lineTo(0, -68); f.closePath(); f.fill();
+        f.fillStyle = '#2b3445'; f.beginPath(); f.moveTo(-30, -77); f.lineTo(0, -68); f.lineTo(30, -77); f.lineTo(0, -71); f.closePath(); f.fill();
+        const sw = REDUCE ? 0 : Math.sin(t * 2.6) * 3;
+        f.strokeStyle = '#f5b301'; f.lineWidth = 1.8;
+        f.beginPath(); f.moveTo(0, -78); f.lineTo(22, -75); f.quadraticCurveTo(24 + sw * 0.4, -68, 23 + sw, -60); f.stroke();
+        f.fillStyle = '#f5b301'; f.beginPath(); f.ellipse(23 + sw, -58, 2.4, 3.6, 0, 0, 7); f.fill();
+        f.fillStyle = '#f5b301'; f.beginPath(); f.arc(0, -78, 2, 0, 7); f.fill();
+        f.restore();
       }
       gloss(-17, -52, 5, 2, -0.9); gloss(-21, 30, 6, 2.3, -1.1);
       f.restore();

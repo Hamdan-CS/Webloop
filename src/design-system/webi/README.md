@@ -21,17 +21,19 @@ The approved reference (`webi-reference.html`) is the source of truth. Everythin
 
 ## Guided tour (desktop only)
 
-The tour only runs where `(hover: hover) and (pointer: fine) and (min-width: 900px)` matches.
+The tour only runs where `(hover: hover) and (pointer: fine) and (min-width: 900px)` matches. Phones and tablets don't get it.
 
 - **Hover Webi.** The cursor becomes a pointer and the bubble says "Need an explanation? Click me."
-- **Click Webi.** He announces the tour, then takes over the scroll and walks through `WEBI.tour.steps` in order.
-  - Each step scrolls to its section (Lenis, 1.6 s), then he explains it in the bubble.
-  - How long each line stays up depends on its length.
-  - While the tour runs, wheel and scroll keys are blocked, so Webi controls the page.
-- **Cancel.** Any click (on Webi or anywhere else) or Esc stops the tour. Webi says "Okay, I'll stop here." and the page stays where it is.
-  - A click on Webi never reaches the element underneath him.
-- **Edit the tour.** Change the lines or the order in `webi.config.ts` → `tour.steps`. Each step has `target` (a selector) and `line`. Missing targets are skipped.
-- **On touch and narrow screens**, clicking Webi keeps the original "Hehe, that tickles!" reaction.
+- **Click Webi.** He switches to his teacher look: the `teach` mood, which is a teal body with round glasses and a graduation cap, and a mouth that moves while he talks. Then he explains, **starting from the section the visitor is already in**, not from the top.
+- **Beats.** Each step in `WEBI.tour.steps` has one or more beats. At each beat Webi:
+  1. scrolls slowly to that stop (eased, about 380 px/s), so scroll animations play visibly;
+  2. walks to the beat's `pos`;
+  3. explains it in the bubble. How long the line stays up depends on its length.
+- **Pinned scenes.** In the How It Works story, the Project Stack and the others, `at` is the pinned scroll progress, so the stops follow the animation. The stack has one beat per layer at 0, .24, .49, .74 and 1, matching its active layer. Webi waits `settleMs` for the scrubbed animation to land before he speaks.
+- **While the tour runs**, wheel and scroll keys are blocked, so Webi controls the page. His bubble stays fully opaque.
+- **Cancel.** Any click (on Webi or anywhere else) or Esc stops the tour. Webi says "Okay, I'll stop here.", goes back to his normal look, and the page stays where it is. A click on Webi never reaches the element underneath him.
+- **Edit the tour.** Lines, stops, positions and speed are all in `webi.config.ts` under `tour`. Missing targets are skipped.
+- **Outside the tour**, a bubble that covers page text fades to 62% opacity.
 
 ## Files
 
@@ -60,9 +62,9 @@ window.dispatchEvent(new CustomEvent('webi:mood', { detail: { mood: 'success', m
 
 Both do nothing when Webi isn't mounted.
 
-**Mood priority:** forced (`setMood`) > hovered element's `data-webi-mood` > `dizzy` (scrolling faster than 70px per frame) > `sleep` (12 s with no input) > `idle`.
+**Mood priority:** tour (`teach`) > forced (`setMood`) > hovered element's `data-webi-mood` > `dizzy` (scrolling faster than 70px per frame) > `sleep` (12 s with no input) > `idle`.
 
-**Moods:** `idle`, `happy`, `think`, `error`, `bug`, `sleep`, `dizzy`, `success`.
+**Moods:** `idle`, `happy`, `think`, `error`, `bug`, `sleep`, `dizzy`, `success`, and `teach` (used by the tour).
 
 ## Markup hooks
 

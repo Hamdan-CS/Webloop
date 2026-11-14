@@ -4,8 +4,11 @@
  * Change them here, not in the engine.
  */
 
-export type WebiMood = 'idle' | 'happy' | 'think' | 'error' | 'bug' | 'sleep' | 'dizzy' | 'success';
+export type WebiMood = 'idle' | 'happy' | 'think' | 'error' | 'bug' | 'sleep' | 'dizzy' | 'success' | 'teach';
 export type WebiSpot = 'r' | 'l' | 'm';
+
+export interface WebiTourBeat { at?: number; pos?: [number, number]; line: string }
+export interface WebiTourStep { target: string; beats: WebiTourBeat[] }
 
 export interface WebiMoodDef {
   /** palette: light → dark, eased toward while the mood is active */
@@ -79,25 +82,74 @@ export const WEBI = {
   tour: {
     desktopQuery: '(hover: hover) and (pointer: fine) and (min-width: 900px)',
     hoverLine: 'Need an explanation? Click me.',
-    startLine: "Okay! I'll walk you through it. Click anywhere to stop.",
-    startMs: 2600,
+    startLine: "Okay! Let me explain it, starting right here. Click anywhere to stop.",
+    startMs: 2800,
     cancelLine: "Okay, I'll stop here.",
     cancelMs: 1800,
-    scrollSeconds: 1.6,
-    /** how long each step's line stays up: base + per character, clamped */
-    read: { baseMs: 1800, msPerChar: 45, minMs: 3200, maxMs: 6500 },
+    endMs: 4200,
+    /**
+     * Scrolling: slow and eased, so scroll animations visibly play.
+     * Duration = distance / pxPerSecond, clamped to [minSeconds, maxSeconds].
+     */
+    scroll: { pxPerSecond: 380, minSeconds: 1.4, maxSeconds: 9 },
+    /** pause after a line before Webi moves on */
+    pauseMs: 500,
+    /** after scrolling to a stop in a pinned (scrubbed) scene, wait for its animation to catch up */
+    settleMs: 1000,
+    /** how long each line stays up: base + per character, clamped */
+    read: { baseMs: 1600, msPerChar: 50, minMs: 3400, maxMs: 7500 },
+    /**
+     * Steps, in page order. Missing targets are skipped. Each beat:
+     * - `at`: where to stop inside the section, 0 → 1. For a pinned section this is
+     *   its pinned scroll progress (so `at` follows its scroll animation); for a normal
+     *   section it runs from its top at the viewport top to its bottom at the viewport bottom.
+     * - `pos`: where Webi stands, [x, y] as fractions of the viewport (omit → the section's spot).
+     */
     steps: [
-      { target: '#top', line: 'This is WebLoop. Students, companies and universities build real projects here, together.' },
-      { target: '#how', line: 'Here is how it works: a brief, a team and a mentor turn your idea into verified proof.' },
-      { target: '.gh-stack-slot', line: 'Every project has an overview, a team, tasks, contributions and a final result.' },
-      { target: '#words', line: 'Team up, build in the open, and prove what you actually did.' },
-      { target: '#projects', line: 'These tools take a brief all the way to proof. Hover a card to open it.' },
-      { target: '#explore', line: 'Projects from every field. Hover to peek, click to open one.' },
-      { target: '#companies', line: 'Companies post real briefs, and review what student teams ship.' },
-      { target: '.gh-tst', line: "Here's what builders and teams say about WebLoop." },
-      { target: '#faq', line: 'Still curious? The answers to common questions are right here.' },
-      { target: '#end', line: "That's the tour! Join WebLoop whenever you're ready." },
-    ],
+      { target: '#top', beats: [
+        { at: 0, pos: [0.86, 0.6], line: 'This is WebLoop: students, companies and universities build real projects here, together.' },
+        { at: 0, pos: [0.14, 0.66], line: 'You can join right here, or let me show you how it all works first.' },
+      ] },
+      { target: '#how', beats: [
+        { at: 0.03, pos: [0.12, 0.7], line: 'Every project starts with a brief, not a blank page. Watch how WebLoop builds one.' },
+        { at: 0.2, pos: [0.88, 0.72], line: 'It begins with your idea, the spark for the whole project.' },
+        { at: 0.34, pos: [0.12, 0.72], line: 'Then you get a team, and a real brief that says what to build.' },
+        { at: 0.5, pos: [0.88, 0.72], line: 'A mentor guides you, and the work turns into verified proof.' },
+        { at: 0.72, pos: [0.9, 0.82], line: 'Your project gets its own workspace: a live activity feed and a heatmap of everyone’s work.' },
+        { at: 0.9, pos: [0.1, 0.8], line: 'One click on Start, and the project opens up…' },
+      ] },
+      { target: '.gh-stack-slot', beats: [
+        { at: 0, pos: [0.9, 0.78], line: 'A project is more than an idea. It has five layers. Here is the first: the overview, with its goal, status and tech stack.' },
+        { at: 0.24, pos: [0.9, 0.62], line: 'Layer 2 is the team: who is building it, and the skills each person brings.' },
+        { at: 0.49, pos: [0.9, 0.78], line: 'Layer 3 is tasks: to do, in progress and done, so everyone knows what comes next.' },
+        { at: 0.74, pos: [0.9, 0.62], line: 'Layer 4 is contributions. Every commit is tracked, so each person’s work is visible.' },
+        { at: 1, pos: [0.9, 0.78], line: 'And layer 5 is the final result: verified proof of what the team built.' },
+      ] },
+      { target: '#words', beats: [
+        { at: 0, line: 'Three words sum up WebLoop. First: team up with people whose skills complement yours.' },
+        { at: 0.5, pos: [0.88, 0.6], line: 'Then build it, in the open, step by step.' },
+        { at: 1, line: 'And prove it: your real contribution is verified, not just claimed.' },
+      ] },
+      { target: '#projects', beats: [
+        { at: 0, line: 'These are the tools that take a brief all the way to proof.' },
+        { at: 1, line: 'Each card is one tool. Hover a card to open it and see how it works.' },
+      ] },
+      { target: '#explore', beats: [
+        { at: 0.04, line: 'Here you can explore projects from every field.' },
+        { at: 0.5, pos: [0.88, 0.7], line: 'As you scroll, the projects move past. Hover one to peek at it.' },
+        { at: 0.96, line: 'Click a project to see who built it, and how.' },
+      ] },
+      { target: '#companies', beats: [
+        { at: 0, line: 'Companies post real briefs here, and every company is verified.' },
+        { at: 1, pos: [0.14, 0.62], line: 'Student teams apply, and the company reviews what they actually ship.' },
+      ] },
+      { target: '.gh-tst', beats: [{ at: 0, line: 'Here is what builders and teams say about WebLoop.' }] },
+      { target: '#faq', beats: [{ at: 0, line: 'Still curious? The common questions are answered right here. Click one to open it.' }] },
+      { target: '#end', beats: [
+        { at: 0.3, line: 'Ideas, people and proof, all in one loop.' },
+        { at: 1, pos: [0.86, 0.66], line: "That's the tour! Join WebLoop whenever you're ready." },
+      ] },
+    ] as WebiTourStep[],
   },
 
   /** debug mood bar duration */
@@ -112,6 +164,8 @@ export const WEBI = {
     sleep: { c: ['#c3cedd', '#6c7d97'], say: 'zzz… scroll to wake me up.' },
     dizzy: { c: ['#ffd27a', '#ec7d12'], say: "Whoa, slow down! I'm dizzy." },
     success: { c: ['#8fe9c4', '#0aa774'], say: "Done! You're all set." },
+    /** guided tour: teal body, round glasses and a graduation cap */
+    teach: { c: ['#7be3ec', '#0a7c96'], say: 'Let me explain.' },
   } as Record<WebiMood, WebiMoodDef>,
 } as const;
 

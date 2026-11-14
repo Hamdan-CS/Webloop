@@ -18,6 +18,10 @@
 .webi-bubble { position: fixed; z-index: 32; left: 0; top: 0; pointer-events: none; background: #fff; color: #0a0d12; font-family: 'Geist Variable', Geist, system-ui, sans-serif; -webkit-font-smoothing: antialiased; border-radius: 18px 18px 18px 5px; padding: 11px 15px; font-size: 14.5px; font-weight: 500; line-height: 1.4; max-width: 250px; box-shadow: 0 12px 34px rgba(10,40,90,.14); opacity: 0; transition: opacity .3s; will-change: transform; }
 .webi-bubble.show { opacity: 1; }
 .webi-bubble.flip { border-radius: 18px 18px 5px 18px; }
+/* guided tour: a wider bubble with a teal edge, matching Webi's teacher colour */
+.webi-bubble.teach { max-width: 300px; box-shadow: 0 0 0 1.5px #a9e7ee, 0 12px 34px rgba(10,90,110,.16); }
+/* outside the tour, a bubble covering page text fades; while Webi explains it stays fully opaque */
+.webi-bubble.show.over-text:not(.teach) { opacity: .62; }
 
 /* ---------- dev-only mood bar (?webi-debug, DEV builds only) ---------- */
 .webi-debug { position: fixed; z-index: 45; left: 16px; bottom: 16px; background: #fff; border-radius: 16px; padding: 8px 10px; box-shadow: 0 8px 30px rgba(10,40,90,.12); display: flex; gap: 6px; flex-wrap: wrap; font-family: 'Geist Variable', Geist, system-ui, sans-serif; }
