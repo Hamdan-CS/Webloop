@@ -5,7 +5,7 @@ import { AuthPromptProvider } from '@/components/auth/AuthPrompt';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { DesignProvider } from '@/design-system/DesignProvider';
-import { FloatingPanelProvider, PanelBadgeSync, FloatingPanel } from '@/components/FloatingPanel';
+import { BadgeSync } from '@/components/app/BadgeSync';
 import { MessagesProvider } from '@/components/messaging/MessagesProvider';
 import { SiteFrame } from '@/components/layout/SiteFrame';
 import { RoleRoute } from '@/components/auth/RoleRoute';
@@ -145,7 +145,6 @@ function App() {
       <DesignProvider>
         <AuthProvider>
           <AuthPromptProvider>
-          <FloatingPanelProvider>
           <MessagesProvider>
           <ScrollToTop />
           <NewStudentOnboardingRedirect />
@@ -182,12 +181,10 @@ function App() {
                 </Routes>
               </PageTransition>
           </SiteFrame>
-          <PanelBadgeSync />
-          <FloatingPanel />
+          <BadgeSync />
           <GlobalTip />
           <Toaster theme="light" position="bottom-center" />
           </MessagesProvider>
-          </FloatingPanelProvider>
           </AuthPromptProvider>
         </AuthProvider>
       </DesignProvider>

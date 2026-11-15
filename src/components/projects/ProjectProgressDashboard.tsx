@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ListChecks,
@@ -18,7 +18,6 @@ import {
   Rocket,
   Plus,
 } from 'lucide-react';
-import { useFloatingPanel } from '@/components/FloatingPanel';
 import {
   fetchProjectTasks,
   fetchProjectMembers,
@@ -84,7 +83,9 @@ const DASH_TABS: { key: DashTab; label: string }[] = [
 type ActivityItem = { id: string; at: string; icon: React.ReactNode; text: string };
 
 export function ProjectProgressDashboard({ project, isOwner, onClose }: Props) {
-  const { openPanel } = useFloatingPanel();
+  const navigate = useNavigate();
+  // tasks are created on the project's Tasks tab (the side panel only ever listed reviews)
+  const addTask = () => { onClose?.(); navigate(`/projects/${project.slug}?tab=tk&new=1`); };
   const [dashTab, setDashTab] = useState<DashTab>('overview');
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
   const [assigneeFilter, setAssigneeFilter] = useState<string>('all');
@@ -235,7 +236,7 @@ export function ProjectProgressDashboard({ project, isOwner, onClose }: Props) {
               isOwner={isOwner}
               onInvite={() => setShowInvite(true)}
               onShowTasks={showTasksFor}
-              onAddTask={() => openPanel('tasks')}
+              onAddTask={addTask}
             />
           )}
 
@@ -273,7 +274,7 @@ export function ProjectProgressDashboard({ project, isOwner, onClose }: Props) {
                 <div className="dcell dash-start">
                   <ListChecks size={24} className="mx-auto" />
                   <p className="mt-2">{isOwner ? 'No tasks yet. Add your first task to start tracking work.' : 'No tasks have been created for this project yet.'}</p>
-                  {isOwner && <button type="button" className="btn btn-primary btn-sm" onClick={() => openPanel('tasks')}><Plus size={14} /> Add a task</button>}
+                  {isOwner && <button type="button" className="btn btn-primary btn-sm" onClick={addTask}><Plus size={14} /> Add a task</button>}
                 </div>
               )}
 

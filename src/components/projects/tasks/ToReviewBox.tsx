@@ -9,9 +9,11 @@ export function ToReviewBox() {
   const { profile, pendingReviews, refreshCounts } = useAuth();
   if (!profile || pendingReviews === 0) return null;
   return (
-    <WBox title="To review" meta={`${pendingReviews} waiting`}>
-      <ToReviewList profileId={profile.id} onChange={() => { void refreshCounts(); }} />
-    </WBox>
+    <div id="to-review">
+      <WBox title="To review" meta={`${pendingReviews} waiting`}>
+        <ToReviewList profileId={profile.id} onChange={() => { void refreshCounts(); }} />
+      </WBox>
+    </div>
   );
 }
 

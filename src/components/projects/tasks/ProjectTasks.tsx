@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { CalendarDays, ListChecks, Plus, Trash2, UserRound, X } from 'lucide-react';
@@ -55,8 +55,11 @@ export function ProjectTasks({
   isMember,
   meId,
   dashboardPath,
+  startCreating = false,
 }: {
   api: Api;
+  /** open the New task form on arrival (owner only) */
+  startCreating?: boolean;
   members: ProjectMember[];
   isOwner: boolean;
   isMember: boolean;
@@ -67,6 +70,11 @@ export function ProjectTasks({
   const [filter, setFilter] = useState<Filter>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  // open the New task form once we know you own the project (it loads after the page)
+  const autoOpened = useRef(false);
+  useEffect(() => {
+    if (startCreating && isOwner && !autoOpened.current) { autoOpened.current = true; setCreating(true); }
+  }, [startCreating, isOwner]);
   const selected = tasks.find((t) => t.id === selectedId) ?? null;
 
   // a deleted task closes its panel

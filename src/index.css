@@ -1872,16 +1872,6 @@ html[data-hdr="hidden"] .toolbar { top: 0; }
 .site-header .hdr-bell-n { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 10.5px; font-weight: 700; display: grid; place-items: center; border: 2px solid var(--hdr-bg, var(--panel-solid)); }
 
 /* ---- messages / tasks side drawer ---- */
-.fp-backdrop { position: fixed; inset: 0; z-index: 70; background: rgba(8, 16, 34, .38); backdrop-filter: blur(2px); opacity: 0; transition: opacity .25s; }
-.fp-backdrop.show { opacity: 1; }
-.fp-drawer { position: fixed; z-index: 71; top: 0; right: 0; bottom: 0; width: 100%; max-width: 440px; display: flex; flex-direction: column; background: var(--panel-solid); border-left: 1px solid var(--line-2); box-shadow: -24px 0 60px -20px rgba(8, 16, 34, .45); transform: translateX(100%); transition: transform .3s var(--ease); color: var(--text); }
-.fp-drawer.show { transform: none; }
-.fp-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
-.fp-head .pf-tabs { overflow: visible; }
-.fp-close { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); background: var(--panel-2); color: var(--text-2); cursor: pointer; transition: border-color .2s; }
-.fp-close:hover { border-color: var(--accent); color: var(--text); }
-.fp-body { flex: 1; overflow-y: auto; }
-@media (prefers-reduced-motion: reduce) { .fp-drawer, .fp-backdrop { transition: none; } }
 
 /* ===== Publish wizard ===== */
 .pub .pub-steps{position:relative;display:flex;gap:6px;list-style:none;padding:0 0 12px;margin:0 0 22px;border-bottom:1px solid var(--line);overflow-x:auto}

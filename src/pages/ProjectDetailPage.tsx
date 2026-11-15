@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { projectDot, useWorkspaceMaybe } from '@/components/app/workspaceContext';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -71,7 +71,9 @@ export function ProjectDetailPage() {
   const [editingRoleFor, setEditingRoleFor] = useState<string | null>(null);
   const [roleDraft, setRoleDraft] = useState('');
   const [roleSaving, setRoleSaving] = useState(false);
-  const [tab, setTab] = useState<Tab>('ov');
+  // ?tab=tk (&new=1) — e.g. "Add a task" from the project overview opens Tasks with the form ready
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState<Tab>(() => (['ov', 'tk', 'tm', 'st'].includes(params.get('tab') ?? '') ? (params.get('tab') as Tab) : 'ov'));
   const [removingId, setRemovingId] = useState<string | null>(null);
   const ws = useWorkspaceMaybe();
   const [starred, setStarred] = useState(false);
@@ -417,6 +419,7 @@ export function ProjectDetailPage() {
             isMember={isMember}
             meId={profile?.id}
             dashboardPath={dashboardPath}
+            startCreating={params.get('new') === '1'}
           />
         )}
 

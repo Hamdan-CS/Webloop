@@ -139,8 +139,7 @@
 .nf .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 32px; }
 .nf .g-cloudbank { z-index: -1; }
 
-/* floating panel / drawers: sky scrim instead of navy */
-.fp-backdrop { background: rgba(235, 245, 255, .6) !important; backdrop-filter: blur(6px) !important; -webkit-backdrop-filter: blur(6px) !important; }
+/* Explore filter popover */
 .fpanel input[type="checkbox"] { accent-color: var(--iris); }
 .nf .g-loop { display: block; margin: 0 auto; }
 
