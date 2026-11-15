@@ -2,8 +2,9 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LogOut, User, Settings, ShieldAlert, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useFloatingPanel } from '@/components/FloatingPanel';
 import { useMessagesData } from '@/components/messaging/messagesContext';
+import { PipContext, type PipApi, type PipCorner } from '@/components/messaging/pipContext';
+import { MessagesPip } from '@/components/messaging/MessagesPip';
 import { fetchProfileProjects, fetchJoinedProjects } from '@/services/api';
 import { checkIsAdmin } from '@/features/feed/services/feedApi';
 import { getDashboardPath, getDashboardLabel } from '@/utils/roles';
@@ -44,7 +45,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     const t = setInterval(() => { if (document.visibilityState === 'visible') void refreshCounts(); }, 60_000);
     return () => clearInterval(t);
   }, [refreshCounts]);
-  const { openPanel } = useFloatingPanel();
   const { open: openTab, newTab } = useTabs();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -123,7 +123,22 @@ export function AppShell({ children }: { children: ReactNode }) {
   const home = profile ? getDashboardPath(profile.creator_type) : '/feed';
   const portfolio = profile ? `/creators/${profile.handle}` : '/settings';
   const backToSite = useCallback(() => { setSiteView(true); navigate('/explore'); }, [navigate]);
-  const openMessages = useCallback(() => openPanel('messages'), [openPanel]);
+  const openMessages = useCallback(() => navigate('/messages'), [navigate]);
+
+  // Messages picture-in-picture: one window for the whole app, outside the routed content
+  const [pipState, setPipState] = useState<{ open: boolean; conversationId: string | null; minimised: boolean }>({ open: false, conversationId: null, minimised: false });
+  const [pipCorner, setPipCorner] = useState<PipCorner>(() => {
+    try { const c = localStorage.getItem('wl_pip_corner'); return c === 'bl' || c === 'tr' || c === 'tl' ? c : 'br'; } catch { return 'br'; }
+  });
+  // where "Pop out" goes back to: the last page outside Messages
+  const [returnPath, setReturnPath] = useState<string | null>(null);
+  useEffect(() => { if (!pathname.startsWith('/messages') && pathname !== NEW_TAB_PATH) setReturnPath(pathname); }, [pathname]);
+  const openPip = useCallback((conversationId: string | null) => setPipState({ open: true, conversationId, minimised: false }), []);
+  const closePip = useCallback(() => setPipState((s) => ({ ...s, open: false })), []);
+  const setPipMinimised = useCallback((minimised: boolean) => setPipState((s) => ({ ...s, minimised })), []);
+  const setPipConversation = useCallback((conversationId: string | null) => setPipState((s) => ({ ...s, conversationId })), []);
+  const setCorner = useCallback((c: PipCorner) => { setPipCorner(c); try { localStorage.setItem('wl_pip_corner', c); } catch { /* ignore */ } }, []);
+  const pip: PipApi = { ...pipState, corner: pipCorner, openPip, closePip, setMinimised: setPipMinimised, setConversation: setPipConversation, setCorner, returnPath: returnPath ?? home };
 
   const views: View[] = [
     { key: 'home', label: 'Home', icon: 'home', to: home, match: (p) => p.startsWith('/dashboard/') },
@@ -134,7 +149,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     // their home in the app now that the profile menu no longer lists them (kept off the phone tab bar)
     { key: 'gallery', label: 'Student work', icon: 'work', to: '/gallery', match: (p) => p.startsWith('/gallery'), sidebarOnly: true },
     { key: 'companies', label: 'Companies', icon: 'org', to: '/companies', match: (p) => p.startsWith('/companies'), sidebarOnly: true },
-    { key: 'messages', label: 'Messages', icon: 'msg', dot: unreadMessages || undefined, action: openMessages, match: () => false },
+    { key: 'messages', label: 'Messages', icon: 'msg', to: '/messages', dot: unreadMessages || undefined, match: (p) => p.startsWith('/messages') },
     { key: 'portfolio', label: 'Portfolio', icon: 'port', to: portfolio, match: (p) => p === portfolio },
   ];
 
@@ -175,6 +190,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <WorkspaceContext.Provider value={api}>
+    <PipContext.Provider value={pip}>
       <div className={`w-app${collapsed ? ' w-collapsed' : ''}`} data-lenis-prevent aria-label="WebLoop workspace">
         <aside className="w-sb" aria-label="Workspace">
           <div className="w-sb-top">
@@ -253,7 +269,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
 
         <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} commands={commands} />
+        <MessagesPip />
       </div>
+    </PipContext.Provider>
     </WorkspaceContext.Provider>
   );
 }

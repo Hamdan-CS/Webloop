@@ -165,6 +165,13 @@ export async function fetchProfileByHandle(handle: string): Promise<Profile | nu
   return (data as unknown as Profile) ?? null;
 }
 
+/** A profile by id (Messages page: opening a chat with someone you haven't messaged yet). */
+export async function fetchProfileById(id: string): Promise<Profile | null> {
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return (data as unknown as Profile) ?? null;
+}
+
 const PROJECT_WITH_RELATIONS = `
   *,
   owner:profiles!projects_owner_id_fkey(*),

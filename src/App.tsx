@@ -36,6 +36,7 @@ const MyInvitationsPage = lazy(() => import('@/pages/MyInvitationsPage').then((m
 const MyProjectsPage = lazy(() => import('@/pages/MyProjectsPage').then((m) => ({ default: m.MyProjectsPage })));
 const EditProfilePage = lazy(() => import('@/pages/EditProfilePage').then((m) => ({ default: m.EditProfilePage })));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+const MessagesPage = lazy(() => import('@/pages/MessagesPage').then((m) => ({ default: m.MessagesPage })));
 const BuildProfilePage = lazy(() => import('@/pages/BuildProfilePage').then((m) => ({ default: m.BuildProfilePage })));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
 const StudentDashboard = lazy(() => import('@/pages/dashboards/StudentDashboard').then((m) => ({ default: m.StudentDashboard })));
@@ -170,6 +171,8 @@ function App() {
                   <Route path="/my-invitations" element={<MyInvitationsPage />} />
                   <Route path="/my-projects" element={<MyProjectsRoute />} />
                   <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/messages" element={<MessagesPage />} />
+                  <Route path="/messages/:conversationId" element={<MessagesPage />} />
                   <Route path="/settings/profile" element={<SettingsRoute />} />
                   <Route path="/build-profile" element={<BuildProfilePage />} />
                   <Route path="/dashboard/student" element={<RoleRoute allowed={['student', 'team']}><StudentDashboard /></RoleRoute>} />

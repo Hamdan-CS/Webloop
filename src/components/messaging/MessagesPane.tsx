@@ -1,19 +1,23 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Plus, Inbox, AlertCircle } from 'lucide-react';
+import { Plus, Inbox, AlertCircle } from 'lucide-react';
 import type { Conversation } from '@/hooks/useMessages';
-import { useMessagesData } from '@/components/messaging/messagesContext';
-import { fetchProfileProjects, fetchProjectMembers } from '@/services/api';
-import type { Profile, Project } from '@/types';
+import { useMessagesData } from './messagesContext';
+import type { Profile } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
-import { ConversationThread } from '@/components/messaging/ConversationThread';
+import { ConversationThread } from './ConversationThread';
+import { ComposePicker } from './ComposePicker';
 import { relativeDate } from '@/utils/labels';
 import { cn } from '@/utils/cn';
 
 interface Props {
   profileId: string;
   myProfile: Profile;
+  /** Chat to show first (null = the list). */
+  initialChatId?: string | null;
+  /** Told whenever the open chat changes (null = back to the list). */
+  onChatChange?: (otherId: string | null) => void;
 }
 
 type View = 'list' | 'thread' | 'compose';
@@ -24,18 +28,33 @@ const viewVariants = {
   exit: (dir: 1 | -1) => ({ opacity: 0, x: dir * -16 }),
 };
 
-export function MessagesTab({ profileId, myProfile }: Props) {
+/**
+ * The whole Messages section in a small space — conversation list, open chat,
+ * new message. Used by the picture-in-picture window (it was the side panel's
+ * Messages tab).
+ */
+export function MessagesPane({ profileId, myProfile, initialChatId = null, onChatChange }: Props) {
   const { conversations, loading, error, markConversationRead, refresh, pendingChatId, requestChat } = useMessagesData();
-  const [selected, setSelected] = useState<Conversation | null>(null);
+  const [selected, setSelectedState] = useState<Conversation | null>(null);
   const [composing, setComposing] = useState(false);
+  const setSelected = (c: Conversation | null) => { setSelectedState(c); onChatChange?.(c ? c.other.id : null); };
+
+  // open the initial chat once the inbox has loaded
+  const [initialDone, setInitialDone] = useState(!initialChatId);
+  useEffect(() => {
+    if (initialDone || loading) return;
+    setInitialDone(true);
+    const c = conversations.find((x) => x.other.id === initialChatId);
+    if (c) setSelectedState(c);
+  }, [initialDone, loading, conversations, initialChatId]);
 
   // a chat requested from elsewhere (bell → Reply) opens straight away
   useEffect(() => {
     if (!pendingChatId || loading) return;
     const c = conversations.find((x) => x.other.id === pendingChatId);
     requestChat(null);
-    if (c) { setComposing(false); setSelected(c); }
-  }, [pendingChatId, loading, conversations, requestChat]);
+    if (c) { setComposing(false); setSelectedState(c); onChatChange?.(c.other.id); }
+  }, [pendingChatId, loading, conversations, requestChat, onChatChange]);
 
   const view: View = selected ? 'thread' : composing ? 'compose' : 'list';
   const dir: 1 | -1 = view === 'list' ? -1 : 1;
@@ -194,85 +213,3 @@ export function MessagesTab({ profileId, myProfile }: Props) {
   );
 }
 
-function ComposePicker({
-  profileId,
-  onBack,
-  onPick,
-}: {
-  profileId: string;
-  onBack: () => void;
-  onPick: (profile: Profile, projectId?: string, projectTitle?: string) => void;
-}) {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [members, setMembers] = useState<Record<string, { profile: Profile; role: string | null }[]>>({});
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    (async () => {
-      const prs = await fetchProfileProjects(profileId, { includeDrafts: true });
-      setProjects(prs);
-      const m: Record<string, { profile: Profile; role: string | null }[]> = {};
-      await Promise.all(
-        prs.map(async (p) => {
-          const mem = await fetchProjectMembers(p.id);
-          m[p.id] = mem
-            .filter((x) => x.profile_id !== profileId && x.profile)
-            .map((x) => ({ profile: x.profile as Profile, role: x.role }));
-        }),
-      );
-      setMembers(m);
-      setLoading(false);
-    })();
-  }, [profileId]);
-
-  const hasMembers = Object.values(members).some((m) => m.length > 0);
-
-  return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-white/8 px-3 py-3">
-        <button
-          onClick={onBack}
-          aria-label="Back"
-          className="rounded-lg p-1.5 text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
-        >
-          <ArrowLeft size={16} />
-        </button>
-        <p className="text-xs font-medium text-white">New message</p>
-      </div>
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <LoopLoader size={18} />
-          </div>
-        ) : !hasMembers ? (
-          <p className="py-8 text-center text-xs text-slate-500">
-            No team members yet. Accept join requests on your projects first.
-          </p>
-        ) : (
-          projects.map((p) => {
-            const m = members[p.id] ?? [];
-            if (m.length === 0) return null;
-            return (
-              <div key={p.id}>
-                <p className="mb-1.5 text-[10px] uppercase tracking-wider text-slate-500">{p.title}</p>
-                <div className="flex flex-wrap gap-2">
-                  {m.map(({ profile, role }) => (
-                    <button
-                      key={profile.id}
-                      onClick={() => onPick(profile, p.id, p.title)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/8 bg-white/[0.03] px-2.5 py-1.5 text-xs text-slate-300 hover:border-accent-400/30 hover:text-white transition-colors"
-                    >
-                      <Avatar src={profile.avatar_url} name={profile.display_name} size="xs" />
-                      {profile.display_name}
-                      {role && <span className="text-slate-500">· {role}</span>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-    </div>
-  );
-}

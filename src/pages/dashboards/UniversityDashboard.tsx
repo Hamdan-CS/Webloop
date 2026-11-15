@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   GraduationCap,
   Users,
@@ -31,6 +31,7 @@ import { ToReviewBox } from '@/components/projects/tasks/ToReviewBox';
 
 export function UniversityDashboard() {
   const { profile, unreadMessages, pendingReviews } = useAuth();
+  const navigate = useNavigate();
   const { openPanel } = useFloatingPanel();
   const ws = useWorkspaceMaybe();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -122,7 +123,7 @@ export function UniversityDashboard() {
           <section className="w-box">
             <div className="w-box-h"><b>University actions</b></div>
             <nav className="w-list">
-              <QuickLink onClick={() => openPanel('messages')} icon={<Inbox size={15} />} label="Messages" count={unreadMessages} />
+              <QuickLink onClick={() => navigate('/messages')} icon={<Inbox size={15} />} label="Messages" count={unreadMessages} />
               <QuickLink onClick={() => openPanel('tasks')} icon={<ListChecks size={15} />} label="Tasks" count={pendingReviews} />
               <QuickLink to="/publish" icon={<Plus size={15} />} label="Create a capstone program" />
               <QuickLink to={`/creators/${profile.handle}?tab=applications`} icon={<Users size={15} />} label="Review student requests" count={totalPending} />

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { useNavigate } from 'react-router-dom';
 import { Bell, Check, CheckCheck, Reply } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useFloatingPanel } from '@/components/FloatingPanel';
+import { usePip } from '@/components/messaging/pipContext';
 import { useMessagesData } from '@/components/messaging/messagesContext';
 import { fetchNotifications, markAllNotificationsRead, markNotificationRead } from '@/services/api';
 import type { Notification } from '@/types';
@@ -27,7 +27,7 @@ type Row =
  */
 export function NotificationsMenu({ anchorRef, onClose }: { anchorRef: RefObject<HTMLElement | null>; onClose: () => void }) {
   const { profile, refreshCounts } = useAuth();
-  const { openPanel } = useFloatingPanel();
+  const pip = usePip();
   const { conversations, markConversationRead, requestChat } = useMessagesData();
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -136,9 +136,10 @@ export function NotificationsMenu({ anchorRef, onClose }: { anchorRef: RefObject
 
   const reply = (c: Conversation) => {
     void markConvo(c);
-    requestChat(c.other.id);
-    openPanel('messages');
     onClose();
+    // the Messages mini window is open: show the chat there; otherwise open the chat page
+    if (pip?.open) { requestChat(c.other.id); pip.setConversation(c.other.id); pip.setMinimised(false); return; }
+    navigate(`/messages/${c.other.id}`);
   };
 
   return (

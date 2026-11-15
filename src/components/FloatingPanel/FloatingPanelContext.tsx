@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 
-export type PanelTab = 'messages' | 'tasks' | 'notifications';
+export type PanelTab = 'tasks' | 'notifications';
 
 interface FloatingPanelContextValue {
   isOpen: boolean;
@@ -20,7 +20,7 @@ export function useFloatingPanel() {
 
 export function FloatingPanelProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<PanelTab>('messages');
+  const [activeTab, setActiveTab] = useState<PanelTab>('notifications');
 
   const openPanel = useCallback((tab: PanelTab) => {
     setActiveTab(tab);

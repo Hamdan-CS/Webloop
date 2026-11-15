@@ -10,7 +10,7 @@ import { isSiteView, onSiteViewChange, setSiteView as storeSiteView } from '@/co
 const AUTH_PATHS = new Set(['/signin', '/join', '/forgot-password', '/reset-password']);
 
 /* Personal pages only exist inside the app — never render them in the website frame. */
-const APP_ONLY_PREFIXES = ['/feed', '/my-', '/settings', '/dashboard', '/publish', '/admin', '/build-profile'];
+const APP_ONLY_PREFIXES = ['/feed', '/my-', '/settings', '/dashboard', '/publish', '/admin', '/build-profile', '/messages'];
 const isAppOnly = (p: string) => APP_ONLY_PREFIXES.some((x) => p === x || p.startsWith(x));
 
 /**

@@ -150,3 +150,46 @@ html.wl-in-app, html.wl-in-app body { overflow: hidden; height: 100%; }
 .w-nt-msg:hover .w-nt-reply, .w-nt-msg:focus-within .w-nt-reply { transform: none; opacity: 1; }
 @media (hover: none) { .w-nt-reply { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .w-nt-reply { transition: none; } }
+
+/* ---------- Messages page (Part 2): list + chat; one column on phones ---------- */
+.w-msgs { display: grid; grid-template-columns: minmax(240px, 320px) 1fr; gap: 12px; height: calc(100dvh - 200px); min-height: 440px; margin-top: 16px; }
+.w-msgs-list, .w-msgs-chat { position: relative; min-height: 0; border-radius: var(--r-img, 18px); background: #fff; box-shadow: 0 0 0 1px var(--line-hex); overflow: hidden; }
+.w-msgs-list { overflow-y: auto; padding: 6px; }
+.w-msgs-chat { display: flex; flex-direction: column; }
+.w-msgs-chat > div { flex: 1; min-height: 0; }
+.w-msgs-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 10px; border-radius: 14px; }
+.w-msgs-row:hover { background: rgba(10, 13, 18, .035); }
+.w-msgs-row.on { background: var(--sky); }
+.w-msgs-row-t { min-width: 0; display: grid; gap: 2px; }
+.w-msgs-row-t b { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; font-size: 13.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.w-msgs-row.unread .w-msgs-row-t b { font-weight: 650; }
+.w-msgs-row-t small { font-size: 12.5px; color: var(--graphite); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.w-msgs-row time { align-self: start; font-size: 11px; color: var(--graphite); }
+.w-msgs-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 100%; min-height: 160px; padding: 24px; color: var(--graphite); font-size: 13.5px; text-align: center; }
+/* the thread's back arrow is for the one-column (phone) layout */
+@media (min-width: 860px) { .w-msgs-chat [aria-label="Back to conversations"] { display: none; } }
+@media (max-width: 859px) {
+  .w-msgs { grid-template-columns: 1fr; height: calc(100dvh - 230px); }
+  .w-msgs.w-msgs-chat-open .w-msgs-list { display: none; }
+  .w-msgs:not(.w-msgs-chat-open) .w-msgs-chat { display: none; }
+  .w-msgs-pop { display: none !important; }
+}
+
+/* ---------- Messages picture-in-picture ---------- */
+.w-pip, .w-pip-bubble { position: fixed; z-index: 70; }
+.w-pip-br { right: 18px; bottom: 18px; } .w-pip-bl { left: 18px; bottom: 18px; }
+.w-pip-tr { right: 18px; top: 18px; } .w-pip-tl { left: 18px; top: 18px; }
+.w-pip { width: 380px; height: 520px; max-height: calc(100vh - 36px); display: flex; flex-direction: column; background: #fff; border-radius: 20px; box-shadow: 0 0 0 1px var(--line-hex), var(--shadow-float); overflow: hidden; transition: transform .18s ease-out; }
+.w-pip.w-pip-drag { transition: none; cursor: grabbing; user-select: none; }
+.w-pip-head { display: flex; align-items: center; gap: 6px; padding: 8px 8px 8px 14px; border-bottom: 1px solid var(--line-hex); cursor: grab; touch-action: none; user-select: none; color: var(--ink); }
+.w-pip-head b { font-weight: 600; font-size: 13.5px; }
+.w-pip-sp { flex: 1; }
+.w-pip-head button { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; color: var(--graphite); }
+.w-pip-head button:hover { background: var(--sky); color: var(--ink); }
+.w-pip-body { flex: 1; min-height: 0; }
+.w-pip-bubble { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: var(--charcoal); color: #fff; box-shadow: var(--shadow-float); }
+.w-pip-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--iris); color: #fff; font-size: 11px; font-weight: 600; display: grid; place-items: center; }
+.w-pip-badge.static { position: static; }
+/* phones: the bubble sits above the floating tab bar */
+@media (max-width: 859px) { .w-pip-bubble { bottom: calc(86px + env(safe-area-inset-bottom, 0px)); right: 16px; } }
+@media (prefers-reduced-motion: reduce) { .w-pip { transition: none; } }

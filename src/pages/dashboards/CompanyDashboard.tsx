@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, useAnimationControls, useReducedMotion } from 'framer-motion';
 import {
   Building2,
@@ -15,7 +15,6 @@ import {
   ListChecks,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useFloatingPanel } from '@/components/FloatingPanel';
 import {
   fetchProfileProjects,
   fetchJoinedProjects,
@@ -53,10 +52,10 @@ const ATTENTION_LIMIT = 4;
 
 export function CompanyDashboard() {
   const { profile, unreadMessages, refreshCounts } = useAuth();
+  const navigate = useNavigate();
   const ws = useWorkspaceMaybe();
   const hour = new Date().getHours();
   const hi = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  const { openPanel } = useFloatingPanel();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as Tab | null;
   const tab: Tab = tabParam && TABS.includes(tabParam) ? tabParam : 'overview';
@@ -233,7 +232,7 @@ export function CompanyDashboard() {
                       ))}
                       {unreadMessages > 0 && (
                         <li>
-                          <button type="button" onClick={() => openPanel('messages')}>
+                          <button type="button" onClick={() => navigate('/messages')}>
                             <span className="pf-ic"><Mail size={15} /></span>
                             <span className="sd-next-t">
                               <b>{unreadMessages} unread message{unreadMessages === 1 ? '' : 's'}</b>

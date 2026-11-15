@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Users, GitBranch, Inbox, Plus, ArrowRight, Briefcase,
   ClipboardList, CheckCircle2, Clock, MessageSquare, FileText, Pencil, UserCircle2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useFloatingPanel } from '@/components/FloatingPanel';
 import {
   fetchProfileProjects, fetchJoinedProjects, fetchProfilePortfolio, fetchProfileStats, fetchProjectApplicationsDetailed,
   fetchAssignedTasks, fetchMyApplications, fetchInboxMessages,
@@ -47,8 +46,8 @@ interface FeedItem { id: string; icon: React.ReactNode; text: React.ReactNode; a
 
 export function StudentDashboard() {
   const { profile, unreadMessages, pendingInvites } = useAuth();
+  const navigate = useNavigate();
   const ws = useWorkspaceMaybe();
-  const { openPanel } = useFloatingPanel();
   const [tab, setTab] = useState<Tab>('ov');
   const [taskView, setTaskView] = useState<TaskView>('all');
   const [projects, setProjects] = useState<Project[]>([]);
@@ -232,7 +231,7 @@ export function StudentDashboard() {
 
             <WBox title="Shortcuts">
               <div className="w-links">
-                <button type="button" className="w-btn-l w-btn-sm" onClick={() => openPanel('messages')}><Inbox size={14} /> Messages{unreadMessages > 0 && <span className="w-ct">{unreadMessages}</span>}</button>
+                <button type="button" className="w-btn-l w-btn-sm" onClick={() => navigate('/messages')}><Inbox size={14} /> Messages{unreadMessages > 0 && <span className="w-ct">{unreadMessages}</span>}</button>
                 <button type="button" className="w-btn-l w-btn-sm" onClick={() => setTab('rq')}><Briefcase size={14} /> My applications</button>
                 <Link to={`/creators/${profile.handle}`} className="w-btn-l w-btn-sm"><UserCircle2 size={14} /> View profile</Link>
                 <Link to="/settings/profile" className="w-btn-l w-btn-sm"><Pencil size={14} /> Edit profile</Link>

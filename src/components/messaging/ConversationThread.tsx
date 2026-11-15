@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, X, Send, Loader2, UserPlus, Quote, Calendar } from 'lucide-react';
 import { fetchConversation, markMessageRead, fetchProjectOwnerId, createTaskFromMessage, sendMessage as sendMessageApi } from '@/services/api';
@@ -9,6 +9,7 @@ import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { relativeDate } from '@/utils/labels';
 import { cn } from '@/utils/cn';
 import { AddTaskFromChatModal } from './AddTaskFromChatModal';
+import { useMessagesData } from './messagesContext';
 
 const taskStatusBadge: Record<TaskStatus, { tone: 'default' | 'accent' | 'green' | 'amber' | 'rose'; label: string }> = {
   open: { tone: 'default', label: 'Open' },
@@ -42,7 +43,10 @@ interface Props {
   otherProfile: Profile;
   projectId?: string;
   projectTitle?: string;
-  variant: 'panel' | 'modal';
+  /** panel/pip = compact; modal and page = roomy. */
+  variant: 'panel' | 'modal' | 'page';
+  /** Extra header buttons (e.g. Pop out on the Messages page). */
+  headerExtra?: ReactNode;
   /** Panel mode: shows a back arrow. */
   onBack?: () => void;
   /** Modal mode: shows a close button. */
@@ -51,7 +55,14 @@ interface Props {
   knownIsOwner?: boolean;
 }
 
-export function ConversationThread({ myProfile, otherProfile, projectId, projectTitle, variant, onBack, onClose, knownIsOwner }: Props) {
+export function ConversationThread({ myProfile, otherProfile, projectId, projectTitle, variant, onBack, onClose, knownIsOwner, headerExtra }: Props) {
+  // the shared inbox is live (realtime); when it gets a message from this person we don't have yet, reload the thread
+  const { messages: inbox } = useMessagesData();
+  const latestFromOther = useMemo(
+    () => inbox.find((m) => m.sender_id === otherProfile.id && m.recipient_id === myProfile.id)?.id ?? null,
+    [inbox, otherProfile.id, myProfile.id],
+  );
+  const [reloadKey, setReloadKey] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState('');
@@ -66,7 +77,7 @@ export function ConversationThread({ myProfile, otherProfile, projectId, project
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      setLoading(true);
+      if (reloadKey === 0) setLoading(true); // live reloads keep the thread on screen
       try {
         const msgs = await fetchConversation(myProfile.id, otherProfile.id, projectId);
         if (cancelled) return;
@@ -81,7 +92,12 @@ export function ConversationThread({ myProfile, otherProfile, projectId, project
     return () => {
       cancelled = true;
     };
-  }, [myProfile.id, otherProfile.id, projectId]);
+  }, [myProfile.id, otherProfile.id, projectId, reloadKey]);
+
+  useEffect(() => {
+    if (latestFromOther && !messages.some((m) => m.id === latestFromOther)) setReloadKey((k) => k + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to a new incoming message
+  }, [latestFromOther]);
 
   useEffect(() => {
     if (knownIsOwner !== undefined || !projectId) return;
@@ -156,6 +172,7 @@ export function ConversationThread({ myProfile, otherProfile, projectId, project
             <UserPlus size={13} /> {compact ? 'Task' : 'Add Task'}
           </button>
         )}
+        {headerExtra}
         {onClose && (
           <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:text-white hover:bg-white/5 transition-colors">
             <X size={18} />

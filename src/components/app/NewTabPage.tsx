@@ -23,7 +23,7 @@ export function NewTabPage() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { closed, reopenClosed } = useTabs();
-  const { projects, openMessages } = useWorkspace();
+  const { projects } = useWorkspace();
   const [q, setQ] = useState('');
   const [view, setView] = useState<'grid' | 'list'>(() => { try { return (localStorage.getItem('wl_newtab_view') as 'grid' | 'list') || 'grid'; } catch { return 'grid'; } });
   const [found, setFound] = useState<Project[]>([]);
@@ -45,7 +45,7 @@ export function NewTabPage() {
     { key: 'feed', label: 'Feed', sub: 'What people are building', to: '/feed', icon: 'feed' },
     { key: 'proj', label: 'Projects', sub: 'Yours and joined', to: '/my-projects', icon: 'proj' },
     { key: 'expl', label: 'Explore', sub: 'Briefs and student projects', to: '/explore', icon: 'expl' },
-    { key: 'msg', label: 'Messages', sub: 'Conversations', to: '#messages', icon: 'msg' },
+    { key: 'msg', label: 'Messages', sub: 'Conversations', to: '/messages', icon: 'msg' },
     { key: 'port', label: 'Portfolio', sub: 'Your verified work', to: profile ? `/creators/${profile.handle}` : '/settings', icon: 'port' },
   ];
   const pages: Hit[] = [
@@ -82,7 +82,7 @@ export function NewTabPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, found, projects, companies]);
 
-  const go = (h: Hit) => { if (h.to === '#messages') { openMessages(); return; } navigate(h.to); };
+  const go = (h: Hit) => navigate(h.to);
   const Item = ({ h }: { h: Hit }) => (
     <button type="button" className="w-nt-item" onClick={() => go(h)}>
       <span className="w-nt-ic">{h.avatar ? <WAvatar name={h.avatar.name} src={h.avatar.src} size={28} /> : h.dot ? <i className="w-ws-dot" style={{ background: h.dot }} /> : h.icon ? <WIcon name={h.icon} size={18} /> : null}</span>
