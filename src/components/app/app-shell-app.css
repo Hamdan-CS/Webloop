@@ -193,3 +193,9 @@ html.wl-in-app, html.wl-in-app body { overflow: hidden; height: 100%; }
 /* phones: the bubble sits above the floating tab bar */
 @media (max-width: 859px) { .w-pip-bubble { bottom: calc(86px + env(safe-area-inset-bottom, 0px)); right: 16px; } }
 @media (prefers-reduced-motion: reduce) { .w-pip { transition: none; } }
+
+/* New Tab: Webi's spot (he stands here when on) and his still drawing (when off) */
+.w-nt-webi-spot { background: transparent; box-shadow: none; }
+.w-nt-webi-still { cursor: pointer; transition: transform .15s ease-out; }
+.w-nt-webi-still:hover { transform: translateY(-2px); }
+@media (prefers-reduced-motion: reduce) { .w-nt-webi-still { transition: none; } }

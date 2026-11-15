@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { notify } from '@/utils/notify';
 import {
   claimTask,
   createTask,
@@ -70,11 +70,11 @@ export function useProjectTasks(projectId: string | undefined, profileId: string
       });
       if (input.assignee_id) await notifyAssignee(input.assignee_id, task);
       await load();
-      toast.success('Task created');
+      notify.success('Task created');
       setBusy(false);
       return true;
     } catch {
-      toast.error("Couldn't create the task. Please try again.");
+      notify.error("Couldn't create the task. Please try again.");
       setBusy(false);
       return false;
     }
@@ -90,9 +90,9 @@ export function useProjectTasks(projectId: string | undefined, profileId: string
       await updateTask(task.id, { assignee_id: assigneeId || null, status });
       if (assigneeId) await notifyAssignee(assigneeId, task);
       await load();
-      toast.success(assigneeId ? `Reassigned "${task.title}"` : `Unassigned "${task.title}"`);
+      notify.success(assigneeId ? `Reassigned "${task.title}"` : `Unassigned "${task.title}"`);
     } catch {
-      toast.error(`Couldn't reassign "${task.title}". Please try again.`);
+      notify.error(`Couldn't reassign "${task.title}". Please try again.`);
     }
   };
 
@@ -101,10 +101,10 @@ export function useProjectTasks(projectId: string | undefined, profileId: string
     try {
       await deleteTask(task.id);
       setTasks((list) => list.filter((t) => t.id !== task.id));
-      toast.success(`Deleted "${task.title}"`);
+      notify.success(`Deleted "${task.title}"`);
       return true;
     } catch {
-      toast.error(`Couldn't delete "${task.title}". Please try again.`);
+      notify.error(`Couldn't delete "${task.title}". Please try again.`);
       return false;
     }
   };
@@ -120,9 +120,9 @@ export function useProjectTasks(projectId: string | undefined, profileId: string
       await load();
       await refreshCounts();
       const reviewLabel = status === 'approved' ? 'Approved' : status === 'changes_requested' ? 'Requested changes' : status === 'not_completed' ? 'Marked as not completed' : 'Rejected';
-      toast.success(reviewLabel);
+      notify.success(reviewLabel);
     } catch {
-      toast.error("Couldn't save the review. Please try again.");
+      notify.error("Couldn't save the review. Please try again.");
     }
     setReviewing(null);
   };
@@ -131,9 +131,9 @@ export function useProjectTasks(projectId: string | undefined, profileId: string
     setClaimingId(task.id);
     try {
       await claimTask(task.id);
-      toast.success(`You took "${task.title}"`);
+      notify.success(`You took "${task.title}"`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't take this task. Please try again.");
+      notify.error(err instanceof Error ? err.message : "Couldn't take this task. Please try again.");
     }
     await load();
     setClaimingId(null);

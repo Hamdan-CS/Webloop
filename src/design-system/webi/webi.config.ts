@@ -167,6 +167,37 @@ export const WEBI = {
     doubleClickMs: 320,
   },
 
+  /**
+   * Inside the app (`<Webi variant="app" />`, AppShell): smaller, no intro drip,
+   * no greeting, no tour. He stands next to the sidebar wordmark, and walks to
+   * the New Tab hero (`[data-webi-app-spot]`) while that page is open.
+   * On/off is per user in localStorage (useWebiEnabled), off by default.
+   */
+  app: {
+    scale: 0.3,
+    /** gap from the sidebar wordmark's right edge / vertical nudge, px */
+    logoGap: 22,
+    logoDy: 2,
+    /** distance at which he counts as "arrived" at the New Tab spot */
+    arrivedWithin: 14,
+    /** bubble limits (the sidebar sits at the very top of the screen) */
+    bubbleMinTop: 8,
+    /** short messages said through Webi: how long each stays up, and how many may queue */
+    sayMs: 2500,
+    queueMax: 3,
+    /** longer than this, or with a button → a normal toast */
+    maxChars: 60,
+    comingSoon: {
+      line: "Hi! I'm Webi. I'm still learning — Webi Assistant is coming soon.",
+      thinkMs: 1600,
+      sayMs: 5200,
+      /** shown once per browser session on arrival; afterwards only on hover / click */
+      storageKey: 'webi_app_soon',
+    },
+    searchHint: 'Search projects, people, or a page — asking Webi is coming soon',
+    storageKey: 'webi_app_on',
+  },
+
   /** debug mood bar duration */
   debugMs: 3500,
 

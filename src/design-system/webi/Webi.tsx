@@ -4,19 +4,23 @@ import { useReducedMotion } from '@/design-system/motion/useReducedMotion';
 import { useLenis } from '@/design-system/motion/lenisContext';
 import { WEBI, WEBI_MOODS } from './webi.config';
 import { createWebiEngine, type WebiEngine } from './webiEngine';
+import { webiApp } from './appBridge';
 import './webi.css';
 
 const DEBUG = import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('webi-debug');
 
 /**
- * Webi, the WebLoop character. Render once, on the home page only.
+ * Webi, the WebLoop character. Render once: on the home page (default), or
+ * inside the app with `variant="app"` (AppShell, when the user turned him on).
+ * App mode: smaller, no intro/tour; double-click → he flies into the logo and
+ * `onDismiss` is called (the app then turns him off).
  * `ready` delays the intro (e.g. until the cloud curtain has finished);
  * until then Webi waits inside the solid nav logo.
  *
  * Layers are portalled to <body> so no transformed ancestor can break
  * `position: fixed`. Everything is aria-hidden and pointer-events: none.
  */
-export function Webi({ ready = true }: { ready?: boolean }) {
+export function Webi({ ready = true, variant = 'home', onDismiss }: { ready?: boolean; variant?: 'home' | 'app'; onDismiss?: () => void }) {
   const gooRef = useRef<HTMLCanvasElement>(null);
   const faceRef = useRef<HTMLCanvasElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
@@ -26,14 +30,21 @@ export function Webi({ ready = true }: { ready?: boolean }) {
   const lenis = useLenis();
   const lenisRef = useRef(lenis);
   lenisRef.current = lenis;
+  const dismissRef = useRef(onDismiss);
+  dismissRef.current = onDismiss;
+  const isApp = variant === 'app';
 
   useEffect(() => {
     const goo = gooRef.current, face = faceRef.current, bubble = bubbleRef.current;
     if (!goo || !face || !bubble) return;
-    const engine = createWebiEngine({ goo, face, bubble, debug: debugRef.current, reducedMotion: reduced, getSmoothScroll: () => lenisRef.current });
+    const engine = createWebiEngine({
+      goo, face, bubble, debug: debugRef.current, reducedMotion: reduced, getSmoothScroll: () => lenisRef.current,
+      app: isApp ? { onDismiss: () => dismissRef.current?.() } : undefined,
+    });
     engineRef.current = engine;
-    return () => { engine.destroy(); engineRef.current = null; };
-  }, [reduced]);
+    if (isApp) webiApp.setActive(true);
+    return () => { engine.destroy(); engineRef.current = null; if (isApp) webiApp.setActive(false); };
+  }, [reduced, isApp]);
 
   useEffect(() => {
     if (ready) engineRef.current?.start();
@@ -52,7 +63,7 @@ export function Webi({ ready = true }: { ready?: boolean }) {
       <canvas ref={gooRef} className="webi-goo" aria-hidden="true" />
       <canvas ref={faceRef} className="webi-face" aria-hidden="true" />
       <div ref={bubbleRef} className="webi-bubble" aria-hidden="true" />
-      {DEBUG && (
+      {DEBUG && !isApp && (
         <div
           ref={debugRef}
           className="webi-debug"

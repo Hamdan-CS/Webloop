@@ -15,6 +15,12 @@ export interface WebiEngineOptions {
   reducedMotion: boolean;
   /** the page's smooth-scroll instance (Lenis), read when the tour scrolls; null → native scroll */
   getSmoothScroll?: () => SmoothScrollLike | null;
+  /**
+   * App mode (inside the signed-in app): no intro drip, no greeting, no tour;
+   * stands beside the sidebar wordmark or on the New Tab hero. Double-click
+   * flies him into the logo, then `onDismiss` turns him off.
+   */
+  app?: { onDismiss: () => void };
 }
 
 /** the subset of Lenis the tour uses */
@@ -47,6 +53,8 @@ interface Bead { x: number; y: number; vx: number; vy: number; r: number; col?: 
 
 export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
   const REDUCE = o.reducedMotion;
+  const APP = !!o.app;
+  const AP = WEBI.app;
   const { goo, face, bubble, debug } = o;
   const gx = goo.getContext('2d');
   const fx = face.getContext('2d');
@@ -80,6 +88,10 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
   };
   let started = false;
   let introSaid = false;
+  /* app mode: the New Tab coming-soon moment, once per browser session */
+  let soonDone = false;
+  let soonTimer = 0;
+  try { soonDone = sessionStorage.getItem(WEBI.app.comingSoon.storageKey) === '1'; } catch { /* storage blocked */ }
 
   function sayFor(txt: string, ms: number) { W.say = txt; W.sayUntil = performance.now() + ms; }
   /* public API: setMood('error', 2800, "That email doesn't look right.") */
@@ -97,8 +109,11 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
   let logoEl: SVGSVGElement | null = null;
   let runStyle: HTMLStyleElement | null = null;
   function getLogo(): SVGSVGElement | null {
-    if (logoEl && logoEl.isConnected) return logoEl;
-    logoEl = document.querySelector<SVGSVGElement>('[data-webi-logo]');
+    if (logoEl && logoEl.isConnected && logoEl.getBoundingClientRect().width > 0) return logoEl;
+    const all = [...document.querySelectorAll<SVGSVGElement>('[data-webi-logo]')];
+    const next = all.find((el) => el.getBoundingClientRect().width > 0) ?? all[0] ?? null;
+    if (next !== logoEl) logoEl?.classList.remove('out', 'ripple');
+    logoEl = next;
     if (logoEl) {
       const runP = logoEl.querySelector<SVGPathElement>('.run');
       if (runP) {
@@ -150,10 +165,28 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
   document.addEventListener('pointerover', (e) => setHover((e.target as Element | null)?.closest?.<HTMLElement>(HOVER_SEL) ?? null), { passive: true, signal: ac.signal });
   document.addEventListener('pointerout', (e) => { if (!e.relatedTarget) setHover(null); }, { passive: true, signal: ac.signal });
 
-  const scaleTarget = () => (VW < WEBI.scale.mobileBelow ? WEBI.scale.mobile : WEBI.scale.desktop);
+  const scaleTarget = () => (APP ? AP.scale : VW < WEBI.scale.mobileBelow ? WEBI.scale.mobile : WEBI.scale.desktop);
+
+  /* app mode: the New Tab hero spot when it's on screen, otherwise beside the sidebar wordmark */
+  let atHero = false;
+  function appTarget() {
+    const hero = document.querySelector<HTMLElement>('[data-webi-app-spot]');
+    const hr = hero?.getBoundingClientRect();
+    if (hr && hr.width > 0 && hr.bottom > 0 && hr.top < VH) {
+      atHero = true;
+      return { tx: hr.left + hr.width / 2, ty: hr.top + hr.height / 2 };
+    }
+    atHero = false;
+    const L = getLogo();
+    const a = (L?.closest('a') as Element | null) ?? L;
+    if (!a) return { tx: 80, ty: 32 };
+    const r = a.getBoundingClientRect();
+    return { tx: r.right + AP.logoGap, ty: r.top + r.height / 2 + AP.logoDy };
+  }
 
   /* scroll-driven placement: the side the centred [data-webi-spot] section asks for */
   function spotTarget(t: number) {
+    if (APP) return appTarget();
     const SP = WEBI.spots;
     let spot: WebiSpot = 'r', best = 1e9;
     for (const el of document.querySelectorAll<HTMLElement>('[data-webi-spot]')) {
@@ -275,7 +308,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     const T = WEBI.triggers.tickle;
     return started && !hiddenNow && Math.hypot(x - W.pos.x, y - W.pos.y) < T.radius * W.S + T.pad;
   };
-  const canTour = () => desktopMQ.matches && W.m < 0.5;
+  const canTour = () => !APP && desktopMQ.matches && W.m < 0.5;
   window.addEventListener('pointerdown', (e) => {
     if (parked || leaving) return;
     const near = nearWebi(e.clientX, e.clientY), now = performance.now();
@@ -293,6 +326,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     singleTimer = window.setTimeout(() => {
       if (parked || leaving || tour) return;
       if (tourable) startTour();
+      else if (APP && atHero) setMood('happy', AP.comingSoon.sayMs, AP.comingSoon.line);
       else { const T = WEBI.triggers.tickle; setMood('happy', T.ms, T.line); }
     }, WEBI.dismiss.doubleClickMs);
   }, { capture: true, signal: ac.signal });
@@ -308,11 +342,11 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
   const store = (v: boolean) => { try { if (v) sessionStorage.setItem(DIS.storageKey, '1'); else sessionStorage.removeItem(DIS.storageKey); } catch { /* storage blocked */ } };
   let parked = false;  // inside the logo, not drawn
   let leaving = false; // flying back to the logo
-  try { parked = sessionStorage.getItem(DIS.storageKey) === '1'; } catch { /* storage blocked */ }
+  if (!APP) try { parked = sessionStorage.getItem(DIS.storageKey) === '1'; } catch { /* storage blocked */ }
   function dismiss() {
     if (!started || parked || leaving) return;
     if (tour) endTour(false);
-    leaving = true; store(true);
+    leaving = true; if (!APP) store(true); // in the app, onDismiss turns him off instead
     W.force = 'happy'; W.forceUntil = performance.now() + 2200;
     sayFor(DIS.line, DIS.lineMs);
   }
@@ -325,7 +359,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     sayFor(desktopMQ.matches ? DIS.backLineDesktop : DIS.backLine, DIS.backMs);
   }
   window.addEventListener('click', (e) => {
-    if (!parked && !leaving) return;
+    if (APP || (!parked && !leaving)) return;
     const L = getLogo(), a = L?.closest('a') ?? L;
     if (!a || !a.contains(e.target as Node)) return;
     e.preventDefault(); // stays on the page (React Router skips navigation for a prevented click)
@@ -382,7 +416,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     if (leaving || parked) { // going home: shrink back into the ∞ inside the nav logo
       const L = logoCenter();
       tx = L.x; ty = L.y + 8; St = WEBI.scale.logoStart; mT = 1; k = 0.09; damp = 0.72;
-      if (leaving && (REDUCE || (Math.hypot(tx - W.pos.x, ty - W.pos.y) < 5 && W.m > 0.9))) { leaving = false; parked = true; }
+      if (leaving && (REDUCE || (Math.hypot(tx - W.pos.x, ty - W.pos.y) < 5 && W.m > 0.9))) { leaving = false; parked = true; if (APP) window.setTimeout(() => o.app!.onDismiss(), 0); }
     } else if (sinceIntro < IN.endsAt && sy < IN.nearTop && !REDUCE) { // intro: drip out of the logo as a small ∞
       const L = logoCenter(), q = clamp((sinceIntro - IN.popAt) / IN.dripFor, 0, 1);
       tx = L.x; ty = L.y + 8 + ease(q) * IN.dripDistance; St = lerp(WEBI.scale.logoStart, St, q); mT = 1; k = 0.25; damp = 0.55;
@@ -418,7 +452,16 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     }
     hiddenNow = hidden;
     const webiHover = canTour() && !tour && !leaving && nearWebi(PTR.x, PTR.y);
-    setCursor(webiHover);
+    const appHover = APP && !leaving && nearWebi(PTR.x, PTR.y);
+    setCursor(webiHover || appHover);
+
+    /* app mode, New Tab: the first arrival of the session — think, a little bounce, then the coming-soon line */
+    if (APP && atHero && !soonDone && !leaving && Math.hypot(tx - W.pos.x, ty - W.pos.y) < AP.arrivedWithin) {
+      soonDone = true;
+      try { sessionStorage.setItem(AP.comingSoon.storageKey, '1'); } catch { /* storage blocked */ }
+      setMood('think', AP.comingSoon.thinkMs, '');
+      soonTimer = window.setTimeout(() => setMood('happy', AP.comingSoon.sayMs, AP.comingSoon.line), AP.comingSoon.thinkMs);
+    }
 
     /* --- shape per mood --- */
     let sxk = 1, syk = 1, shakeX = 0, wob = REDUCE ? 0 : 0.7;
@@ -463,15 +506,15 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
 
     /* --- speech bubble --- */
     if (!introSaid && sinceIntro > IN.sayAt && sy < IN.nearTop) { introSaid = true; sayFor(IN.line, IN.lineMs); }
-    let txt = (now < W.sayUntil ? W.say : '') || (webiHover ? TOUR.hoverLine : '') || (tour ? '' : hoverSay) || (mood === 'dizzy' || mood === 'sleep' ? MOODS[mood].say! : '');
-    if (S < 0.3 || W.m > 0.5) txt = '';
+    let txt = (now < W.sayUntil ? W.say : '') || (webiHover ? TOUR.hoverLine : '') || (appHover && atHero ? AP.comingSoon.line : '') || (tour ? '' : hoverSay) || (!APP && (mood === 'dizzy' || mood === 'sleep') ? MOODS[mood].say! : '');
+    if (S < (APP ? 0.2 : 0.3) || W.m > 0.5) txt = '';
     if (leaving || parked) txt = now < W.sayUntil ? W.say : ''; // the goodbye stays readable while he flies home
     if (txt) {
       if (bubble.textContent !== txt) bubble.textContent = txt;
       const B = WEBI.bubble;
       const bw = bubble.offsetWidth, bh = bubble.offsetHeight, flip = W.pos.x + B.gapFlip * S + bw > VW - B.edge;
       const bx = flip ? W.pos.x - B.gapFlip * S - bw : W.pos.x + B.gapRight * S, by = W.pos.y - B.above * S - bh * 0.6;
-      const bTop = clamp(by, B.minTop, VH - bh - B.bottomPad);
+      const bTop = clamp(by, APP ? AP.bubbleMinTop : B.minTop, VH - bh - B.bottomPad);
       bubble.style.transform = `translate(${bx}px,${bTop}px)`;
       bubble.classList.toggle('flip', flip);
       if (now - textCheckAt > 160) { textCheckAt = now; bubble.classList.toggle('over-text', coversText(bx, bTop, bw, bh)); }
@@ -598,6 +641,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
       started = true;
       if (REDUCE) placeAtSpot((performance.now() - T_START) / 1000); else resetBeads();
       if (parked) introSaid = true; // dismissed earlier this session: he stays in the logo until it's clicked
+      if (APP) { introSaid = true; W.introAt -= IN.endsAt * 1000; } // no drip, no greeting: he simply steps out of the logo
     },
     setMood,
     replayIntro() {
@@ -619,6 +663,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
       }
       bubble.classList.remove('show');
       window.clearTimeout(singleTimer);
+      window.clearTimeout(soonTimer);
     },
   };
 }

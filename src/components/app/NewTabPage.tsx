@@ -9,6 +9,9 @@ import { tabMeta } from './tabs/tabMeta';
 import { useWorkspace, projectDot } from './workspaceContext';
 import { WIcon, type IconName } from './icons';
 import { WAvatar } from './ui';
+import { useAppDesktop, useWebiEnabled } from '@/hooks/useWebiEnabled';
+import { WEBI } from '@/design-system/webi/webi.config';
+import { WEBI_LOGO_PATH } from '@/design-system/webi/WebiLogoLoop';
 
 type Hit = { key: string; label: string; sub: string; to: string; icon?: IconName; dot?: string; avatar?: { name: string; src?: string | null } };
 
@@ -24,6 +27,8 @@ export function NewTabPage() {
   const { profile } = useAuth();
   const { closed, reopenClosed } = useTabs();
   const { projects } = useWorkspace();
+  const [webiOn, setWebiOn] = useWebiEnabled();
+  const desktop = useAppDesktop();
   const [q, setQ] = useState('');
   const [view, setView] = useState<'grid' | 'list'>(() => { try { return (localStorage.getItem('wl_newtab_view') as 'grid' | 'list') || 'grid'; } catch { return 'grid'; } });
   const [found, setFound] = useState<Project[]>([]);
@@ -97,14 +102,26 @@ export function NewTabPage() {
           <button type="button" className={view === 'grid' ? 'w-on' : ''} aria-pressed={view === 'grid'} aria-label="Grid" onClick={() => setView('grid')}><WIcon name="grid" size={16} /></button>
           <button type="button" className={view === 'list' ? 'w-on' : ''} aria-pressed={view === 'list'} aria-label="List" onClick={() => setView('list')}><WIcon name="list" size={16} /></button>
         </div>
-        <span className="w-nt-spark" aria-hidden="true"><WIcon name="spark" size={26} /></span>
+        {/* Webi on: he walks here and stands in for the sparkle. Off: a still drawing of him; click = turn him on */}
+        {webiOn && desktop ? (
+          <span className="w-nt-spark w-nt-webi-spot" data-webi-app-spot aria-hidden="true" />
+        ) : desktop ? (
+          <button type="button" className="w-nt-spark w-nt-webi-still" onClick={() => setWebiOn(true)} aria-label="Turn on Webi" title="Turn on Webi">
+            <svg width="22" height="40" viewBox="0 0 32 64" aria-hidden="true">
+              <defs><linearGradient id="wNtWebiG" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#7cb8ff" /><stop offset="1" stopColor="#0069e0" /></linearGradient></defs>
+              <path d={WEBI_LOGO_PATH} transform="rotate(90) translate(0 -32)" fill="none" stroke="url(#wNtWebiG)" strokeWidth={6} strokeLinecap="round" />
+            </svg>
+          </button>
+        ) : (
+          <span className="w-nt-spark" aria-hidden="true"><WIcon name="spark" size={26} /></span>
+        )}
         <input
           ref={inRef}
           className="w-nt-in"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && results[0]) go(results[0]); }}
-          placeholder="Search projects, people, or type a page…"
+          placeholder={webiOn && desktop ? WEBI.app.searchHint : 'Search projects, people, or type a page…'}
           aria-label="Search projects, people, or type a page"
         />
         {q.trim() && (

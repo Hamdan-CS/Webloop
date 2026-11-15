@@ -11,6 +11,7 @@ import { Button } from '@/components/shared/ui/Button';
 import { cn } from '@/utils/cn';
 import { WPageHeader } from '@/components/app/ui';
 import { useWorkspaceMaybe } from '@/components/app/workspaceContext';
+import { useWebiEnabled } from '@/hooks/useWebiEnabled';
 
 type SectionKey = 'account' | 'profile' | 'appearance';
 
@@ -18,7 +19,7 @@ const SECTIONS = ([
   { key: 'account', label: 'Account & security', icon: <ShieldCheck size={16} /> },
   { key: 'profile', label: 'Profile', icon: <UserCircle2 size={16} /> },
   { key: 'appearance', label: 'Appearance', icon: <Palette size={16} /> },
-] as { key: SectionKey; label: string; icon: React.ReactNode }[]).filter((s) => s.key !== 'appearance' || DARK_MODE_ENABLED); // hidden while dark mode is off
+] as { key: SectionKey; label: string; icon: React.ReactNode }[]); // Appearance holds the Webi switch; its theme card shows only while dark mode is enabled
 
 const inputClass =
   'w-full rounded-lg border border-white/10 bg-ink-900/60 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-accent-400/40 focus:outline-none';
@@ -74,7 +75,7 @@ export function SettingsPage() {
         <div className="space-y-6">
           {section === 'account' && <AccountSection />}
           {section === 'profile' && <ProfileSection />}
-          {section === 'appearance' && DARK_MODE_ENABLED && <AppearanceSection />}
+          {section === 'appearance' && <AppearanceSection />}
         </div>
       </div>
     </div>
@@ -231,6 +232,37 @@ function ProfileSection() {
 }
 
 function AppearanceSection() {
+  return (
+    <>
+      <WebiSwitch />
+      {DARK_MODE_ENABLED && <ThemeCard />}
+    </>
+  );
+}
+
+/** Webi in the app: off by default, saved per user in this browser. */
+function WebiSwitch() {
+  const [on, setOn] = useWebiEnabled();
+  return (
+    <Card title="Webi assistant" description="Webi lives in the ∞ of the sidebar logo. Turned on, he stands next to it, says short messages like “Saved” instead of pop-ups, and visits the New Tab page. Not shown on phones.">
+      <label className="flex items-center justify-between gap-4 text-sm">
+        <span className="font-medium">Show Webi in the app</span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={on}
+          aria-label="Webi assistant"
+          onClick={() => setOn(!on)}
+          className={cn('relative h-6 w-11 shrink-0 rounded-full transition-colors', on ? 'bg-accent-500' : 'bg-slate-300/60')}
+        >
+          <span className={cn('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform', on ? 'translate-x-5' : 'translate-x-0.5')} />
+        </button>
+      </label>
+    </Card>
+  );
+}
+
+function ThemeCard() {
   const { theme, setTheme } = useTheme();
   const options = [
     { value: 'light' as const, label: 'Light', icon: <Sun size={18} /> },

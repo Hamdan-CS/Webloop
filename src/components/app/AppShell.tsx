@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useMessagesData } from '@/components/messaging/messagesContext';
 import { PipContext, type PipApi, type PipCorner } from '@/components/messaging/pipContext';
 import { MessagesPip } from '@/components/messaging/MessagesPip';
+import { Webi, WebiLogoLoop } from '@/design-system/webi';
+import { useAppDesktop, useWebiEnabled } from '@/hooks/useWebiEnabled';
 import { fetchProfileProjects, fetchJoinedProjects } from '@/services/api';
 import { checkIsAdmin } from '@/features/feed/services/feedApi';
 import { getDashboardPath, getDashboardLabel } from '@/utils/roles';
@@ -37,6 +39,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user, profile, signOut, unreadMessages, unreadNotifications, pendingReviews, pendingInvites, refreshCounts } = useAuth();
   const { unreadConversations } = useMessagesData();
   const [bellOpen, setBellOpen] = useState(false);
+  // Webi in the app: off by default; desktop only (phones keep toasts, no walking)
+  const [webiOn, setWebiOn] = useWebiEnabled();
+  const desktop = useAppDesktop();
+  const turnWebiOff = useCallback(() => setWebiOn(false), [setWebiOn]);
+  // while he's off, a click on the logo's ∞ brings him out instead of going home
+  const onLogoClick = (e: RMouseEvent) => {
+    if (webiOn || !desktop || !(e.target as Element).closest('[data-webi-logo]')) return;
+    e.preventDefault();
+    setWebiOn(true);
+  };
   const bellRef = useRef<HTMLButtonElement>(null);
   const closeBell = useCallback(() => setBellOpen(false), []);
 
@@ -194,8 +206,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className={`w-app${collapsed ? ' w-collapsed' : ''}`} data-lenis-prevent aria-label="WebLoop workspace">
         <aside className="w-sb" aria-label="Workspace">
           <div className="w-sb-top">
-            <Link className="w-logo" to={home} aria-label="WebLoop home">WebL<svg width="24" height="13" aria-hidden="true"><use href="#loop" /></svg>p</Link>
-            <svg className="w-sb-mark" width="30" height="16" aria-hidden="true"><use href="#loop" /></svg>
+            <Link className="w-logo" to={home} aria-label="WebLoop home" onClick={onLogoClick} title={!webiOn && desktop ? 'Click the ∞ to bring out Webi' : undefined}>WebL<WebiLogoLoop width={24} height={13} />p</Link>
+            <span className="w-sb-mark" onClick={onLogoClick} aria-hidden="true"><WebiLogoLoop width={30} height={16} /></span>
             <button type="button" className="w-icon-btn" aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} aria-pressed={collapsed} onClick={() => setCollapsed((c) => !c)}><WIcon name="side" /></button>
           </div>
           <button type="button" className="w-sb-new" onClick={() => setCmdOpen(true)}><WIcon name="plus" /><span>New project</span><kbd>⌘K</kbd></button>
@@ -270,6 +282,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} commands={commands} />
         <MessagesPip />
+        {webiOn && desktop && <Webi variant="app" onDismiss={turnWebiOff} />}
       </div>
     </PipContext.Provider>
     </WorkspaceContext.Provider>

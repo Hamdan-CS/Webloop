@@ -27,7 +27,7 @@ import { fetchProjectBySlug, fetchProfileStats, createApplication, checkExisting
 import { ProjectTasks } from '@/components/projects/tasks/ProjectTasks';
 import { useProjectTasks } from '@/components/projects/tasks/useProjectTasks';
 import '@/components/projects/tasks/project-page.css';
-import { toast } from 'sonner';
+import { notify } from '@/utils/notify';
 import type { Project, ProjectMember } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
 import { Badge } from '@/components/shared/ui/Badge';
@@ -212,9 +212,9 @@ export function ProjectDetailPage() {
     try {
       await removeProjectMember(project.id, m.profile_id);
       setTeamMembers((list) => list.filter((x) => x.id !== m.id));
-      toast.success(`Removed ${name} from the team`);
+      notify.success(`Removed ${name} from the team`);
     } catch {
-      toast.error(`Couldn't remove ${name}. Please try again.`);
+      notify.error(`Couldn't remove ${name}. Please try again.`);
     }
     setRemovingId(null);
   };
@@ -523,7 +523,7 @@ export function ProjectDetailPage() {
             inline
             project={project}
             onClose={() => setTab('ov')}
-            onSaved={(updated) => { setProject(updated); toast.success('Project saved'); }}
+            onSaved={(updated) => { setProject(updated); notify.success('Project saved'); }}
           />
         )}
       </div>

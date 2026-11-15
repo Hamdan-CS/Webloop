@@ -49,7 +49,7 @@ import { ContactModal } from '@/components/messaging/ContactModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { creatorTypeLabel, relativeDate, statusLabel, statusTone } from '@/utils/labels';
 import { cn } from '@/utils/cn';
-import { toast } from 'sonner';
+import { notify } from '@/utils/notify';
 import { WAvatar, WBox, WKpis, WVerifiedRow } from '@/components/app/ui';
 import { WContribHeat } from '@/components/app/ui/WContribHeat';
 import { useWorkspaceMaybe } from '@/components/app/workspaceContext';
@@ -96,7 +96,7 @@ export function CreatorProfilePage() {
   const ws = useWorkspaceMaybe();
   const copyLink = () => {
     const url = window.location.origin + window.location.pathname;
-    navigator.clipboard?.writeText(url).then(() => toast.success('Link copied'), () => toast.error("Couldn't copy the link"));
+    navigator.clipboard?.writeText(url).then(() => notify.success('Link copied'), () => notify.error("Couldn't copy the link"));
   };
 
   const setTab = useCallback(

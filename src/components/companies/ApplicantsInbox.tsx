@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { notify } from '@/utils/notify';
 import { Link } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, Inbox, Loader2, Mail, Star, X } from 'lucide-react';
 import { fetchProfileContributions, fetchProfilePortfolio, fetchProfileStats, acceptApplicationAndAddMember, updateApplicationStatus } from '@/services/api';
@@ -128,11 +128,11 @@ function ApplicantCard({ application: a, onDecided, onMessage }: {
       if (status === 'accepted') await acceptApplicationAndAddMember(a.id, a.project_id, a.applicant_id, a.role_title);
       else await updateApplicationStatus(a.id, status);
       onDecided(a.id, status);
-      toast.success(status === 'accepted' ? `Accepted ${applicant?.display_name ?? 'applicant'}` : `Declined ${applicant?.display_name ?? 'applicant'}`);
+      notify.success(status === 'accepted' ? `Accepted ${applicant?.display_name ?? 'applicant'}` : `Declined ${applicant?.display_name ?? 'applicant'}`);
     } catch {
       const message = `Couldn't ${status === 'accepted' ? 'accept' : 'decline'} this applicant. Please try again.`;
       setError(message);
-      toast.error(message);
+      notify.error(message);
     } finally {
       setBusy(null);
     }
