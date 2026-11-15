@@ -71,6 +71,10 @@ export function CreatorProfilePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  // visitors don't see an empty Posts box: remember which profile has 0 posts
+  const [noPostsFor, setNoPostsFor] = useState<string | null>(null);
+  const profileId = profile?.id ?? null;
+  const onPostsLoaded = useCallback((count: number) => setNoPostsFor(count === 0 ? profileId : null), [profileId]);
   const [stats, setStats] = useState({ avg: 0, count: 0 });
   const [contributions, setContributions] = useState({ total: 0, approved: 0 });
   const [loading, setLoading] = useState(true);
@@ -544,27 +548,25 @@ export function CreatorProfilePage() {
                 )}
               </SectionCard>
 
-              {/* Posts */}
-              {user && (
-                <SectionCard title="Posts" icon={<Rss size={14} />}>
-                  <MyPostsSection
-                    profileId={profile.id}
-                    isOwner={isOwner}
-                    viewerProfileId={myProfile?.id ?? null}
-                    isAdmin={isAdmin}
-                    onRequireAuth={() =>
-                      prompt({ title: 'Join to do more', reason: 'Create a free account to like, comment, save, and post.' })
-                    }
-                  />
-                </SectionCard>
-              )}
-
               {/* Skills */}
               {profile.interests && profile.interests.length > 0 && (
                 <SectionCard title={isCompany ? 'Focus areas' : 'Skills'} icon={<Award size={14} />}>
                   <div className="flex flex-wrap gap-2">
                     {profile.interests.map((skill) => (
                       <span key={skill} className="ref-tag">{skill}</span>
+                    ))}
+                  </div>
+                </SectionCard>
+              )}
+
+              {/* Published Projects */}
+              {publishedProjects.length > 0 && (
+                <SectionCard title={isCompany ? 'Published Projects' : 'Projects'} icon={<FolderGit2 size={14} />}>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {publishedProjects.map((p) => (
+                      <div key={p.id} className="relative">
+                        <ProjectCard project={p} compact />
+                      </div>
                     ))}
                   </div>
                 </SectionCard>
@@ -611,19 +613,6 @@ export function CreatorProfilePage() {
                 </SectionCard>
               )}
 
-              {/* Published Projects */}
-              {publishedProjects.length > 0 && (
-                <SectionCard title={isCompany ? 'Published Projects' : 'Projects'} icon={<FolderGit2 size={14} />}>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {publishedProjects.map((p) => (
-                      <div key={p.id} className="relative">
-                        <ProjectCard project={p} compact />
-                      </div>
-                    ))}
-                  </div>
-                </SectionCard>
-              )}
-
               {/* Portfolio / Experience */}
               {portfolio.length > 0 && (
                 <SectionCard title={isCompany ? 'Past work' : 'Experience & Portfolio'} icon={<ImageIcon size={14} />}>
@@ -655,6 +644,22 @@ export function CreatorProfilePage() {
                       </div>
                     ))}
                   </div>
+                </SectionCard>
+              )}
+
+              {/* Posts */}
+              {user && !(!isOwner && noPostsFor === profile.id) && (
+                <SectionCard title="Posts" icon={<Rss size={14} />}>
+                  <MyPostsSection
+                    profileId={profile.id}
+                    isOwner={isOwner}
+                    viewerProfileId={myProfile?.id ?? null}
+                    isAdmin={isAdmin}
+                    onRequireAuth={() =>
+                      prompt({ title: 'Join to do more', reason: 'Create a free account to like, comment, save, and post.' })
+                    }
+                    onLoaded={onPostsLoaded}
+                  />
                 </SectionCard>
               )}
             </>

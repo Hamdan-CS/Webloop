@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { WAvatar, WPageHeader } from '@/components/app/ui';
 import { projectDot, useWorkspaceMaybe } from '@/components/app/workspaceContext';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
@@ -40,7 +40,13 @@ export function FeedPage() {
   const [filters, setFilters] = useState(DEFAULT_FEED_FILTERS);
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [playingGuideId, setPlayingGuideId] = useState<string | null>(null);
-  const [composerOpen, setComposerOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  // "Write a post" elsewhere (e.g. an empty profile) opens the composer on arrival
+  const [composerOpen, setComposerOpen] = useState(() => !!(location.state as { compose?: boolean } | null)?.compose);
+  useEffect(() => {
+    if ((location.state as { compose?: boolean } | null)?.compose) navigate(location.pathname, { replace: true, state: null });
+  }, [location.state, location.pathname, navigate]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [interests, setInterests] = useState<FeedTag[] | null>(null);
   const [showInterestPicker, setShowInterestPicker] = useState(false);
