@@ -2,7 +2,15 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Comment, FeedFiltersState, GuideStep, ModerationQueueItem, Post, PostVisibility } from '../types';
 import type { FeedTag } from '../constants';
 
-const POST_SELECT = '*, author:profiles!posts_author_id_fkey(*), images:post_images(*)';
+// posts has column-level grants (migration 021): `*` would also ask for the
+// admin-only counters (report_count, not_helpful_count) and Postgres rejects
+// the whole query with 42501. List exactly the columns `authenticated` may read.
+const POST_COLUMNS = [
+  'id', 'author_id', 'post_type', 'visibility', 'title', 'body', 'steps', 'tags',
+  'like_count', 'comment_count', 'bookmark_count', 'view_count', 'try_count',
+  'is_verified', 'removed_at', 'removed_reason', 'edited_at', 'created_at', 'updated_at',
+].join(', ');
+const POST_SELECT = `${POST_COLUMNS}, author:profiles!posts_author_id_fkey(*), images:post_images(*)`;
 
 function overlapCount(post: Post, interests: Set<string>): number {
   return post.tags.filter((t) => interests.has(t)).length;
