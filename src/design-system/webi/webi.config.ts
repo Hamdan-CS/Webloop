@@ -153,7 +153,7 @@ export const WEBI = {
   },
 
   /**
-   * Dismiss: a small red × beside Webi sends him back into the nav ∞.
+   * Dismiss: double-clicking Webi sends him back into the nav ∞.
    * Clicking the logo brings him out again. Remembered for the browser session.
    */
   dismiss: {
@@ -163,12 +163,8 @@ export const WEBI = {
     backLineDesktop: "I'm back! Hover me if you need an explanation.",
     backMs: 3600,
     storageKey: 'webi_parked',
-    /** × position from Webi's centre (unit space, × scale) and its size in px */
-    cross: { x: 46, y: -58, size: 22 },
-    /** the × appears only while Webi is hovered; it lingers this long after the pointer leaves */
-    hoverGraceMs: 700,
-    /** touch screens have no hover: tapping Webi shows the × for this long */
-    touchShowMs: 3500,
+    /** two clicks on Webi within this many ms count as a double-click (a single click waits this long) */
+    doubleClickMs: 320,
   },
 
   /** debug mood bar duration */

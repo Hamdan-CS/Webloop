@@ -23,15 +23,6 @@
 /* outside the tour, a bubble covering page text fades; while Webi explains it stays fully opaque */
 .webi-bubble.show.over-text:not(.teach) { opacity: .62; }
 
-/* ---------- the × beside Webi (hides him in the nav logo) ---------- */
-/* the one Webi layer that takes clicks; invisible (and out of the tab order) unless .show */
-.webi-close { position: fixed; z-index: 33; left: 0; top: 0; width: 22px; height: 22px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: #fff; color: #e5484d; box-shadow: 0 2px 8px rgba(10,40,90,.18), 0 0 0 1px rgba(229,72,77,.18); cursor: pointer; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .25s, visibility .25s, background-color .15s, color .15s; will-change: transform; }
-.webi-close.show { opacity: 1; visibility: visible; pointer-events: auto; }
-.webi-close:hover { background: #e5484d; color: #fff; }
-.webi-close:focus-visible { outline: 2px solid #e5484d; outline-offset: 2px; }
-/* bigger touch target on phones */
-@media (pointer: coarse) { .webi-close::before { content: ''; position: absolute; inset: -10px; } }
-
 /* ---------- dev-only mood bar (?webi-debug, DEV builds only) ---------- */
 .webi-debug { position: fixed; z-index: 45; left: 16px; bottom: 16px; background: #fff; border-radius: 16px; padding: 8px 10px; box-shadow: 0 8px 30px rgba(10,40,90,.12); display: flex; gap: 6px; flex-wrap: wrap; font-family: 'Geist Variable', Geist, system-ui, sans-serif; }
 .webi-debug button { font: 500 13px 'Geist Variable', Geist, sans-serif; color: #181d27; border: 1px solid #e3eaf3; background: #fff; border-radius: 999px; padding: 6px 12px; cursor: pointer; }

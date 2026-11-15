@@ -37,13 +37,12 @@ The tour only runs where `(hover: hover) and (pointer: fine) and (min-width: 900
 
 ## Hide and bring back
 
-- **Hide.** Hovering Webi shows a small red × on his shoulder, on the side away from his bubble. It isn't there otherwise. On touch screens, tapping Webi shows it for a few seconds. Clicking it:
+- **Hide.** Double-click (or double-tap) Webi. A single click waits about 0.3 s first, so it can tell the two apart. Hiding him:
   1. ends any tour;
   2. Webi says "Thank you! If you need me, click on the loop." and shrinks back into the nav ∞;
   3. the logo turns solid again.
 - **Bring back.** While he's hidden, clicking the nav logo (on the home page) brings him back out. The click is caught, so the page doesn't navigate. He drips out to his spot and says he's back.
 - **Session.** The hidden state lasts for the browser session (`sessionStorage` `webi_parked`). Everything is in `webi.config.ts` under `dismiss`.
-- **Clicks.** The × is the only Webi layer that takes clicks. It's a real `<button aria-label="Hide Webi">`, hidden from the tab order whenever it isn't shown.
 
 ## Files
 
@@ -96,8 +95,8 @@ For a protected component (the 3D Project Stack, the How It Works scene, the Com
 ## Rules
 
 - Mount `<Webi />` only on the home page, and only once.
-- All layers except the × use `pointer-events: none` and `aria-hidden`. Clicks on Webi are detected with a window `pointerdown` distance check.
+- All layers use `pointer-events: none` and `aria-hidden`. Clicks on Webi are detected with a window `pointerdown` distance check.
 - Never give an element the id `webi-goo`. It is the filter id, and a clash breaks `getContext`.
-- z-index: the goo canvas is 30, the face 31, the bubble 32 and the × 33. All are below the nav (90), modals and toasts.
+- z-index: the goo canvas is 30, the face 31 and the bubble 32. All are below the nav (90), modals and toasts.
 - **Reduced motion:** no intro drip, no wobble, bob, hops or drag. Webi appears at his spot. Only blinking and mood colours remain.
 - **Debug:** the mood preview bar renders only when `import.meta.env.DEV` is on **and** the URL has `?webi-debug`. It's never in production builds.

@@ -10,8 +10,6 @@ export interface WebiEngineOptions {
   goo: HTMLCanvasElement;
   face: HTMLCanvasElement;
   bubble: HTMLElement;
-  /** the small red × beside Webi: sends him back into the nav logo */
-  close?: HTMLElement | null;
   /** dev-only mood bar; its buttons get `.on` for the active mood */
   debug?: HTMLElement | null;
   reducedMotion: boolean;
@@ -49,7 +47,7 @@ interface Bead { x: number; y: number; vx: number; vy: number; r: number; col?: 
 
 export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
   const REDUCE = o.reducedMotion;
-  const { goo, face, bubble, debug, close } = o;
+  const { goo, face, bubble, debug } = o;
   const gx = goo.getContext('2d');
   const fx = face.getContext('2d');
   if (!gx || !fx) return { start() {}, setMood() {}, replayIntro() {}, destroy() {} };
@@ -270,7 +268,8 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
   }
   /* clicks: decided on pointerdown (not in the frame) so a click on Webi can be kept from reaching what's under him */
   let hiddenNow = true;
-  let crossUntil = 0; // the × shows only while Webi is hovered (plus a short grace to reach it)
+  let lastNearDown = 0; // for double-click detection
+  let singleTimer = 0;  // a single click waits briefly, in case it becomes a double-click
   let swallowClick = false;
   const nearWebi = (x: number, y: number) => {
     const T = WEBI.triggers.tickle;
@@ -278,13 +277,24 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
   };
   const canTour = () => desktopMQ.matches && W.m < 0.5;
   window.addEventListener('pointerdown', (e) => {
-    if (close && close.contains(e.target as Node)) { if (tour) endTour(false); return; } // the × handles itself
     if (parked || leaving) return;
-    const near = nearWebi(e.clientX, e.clientY);
-    if (tour) { endTour(true); swallowClick = near; return; } // any click — on Webi or anywhere — cancels
+    const near = nearWebi(e.clientX, e.clientY), now = performance.now();
+    // double-click (or double-tap) on Webi: he goes back into the nav logo
+    if (near && now - lastNearDown < WEBI.dismiss.doubleClickMs) {
+      window.clearTimeout(singleTimer); lastNearDown = 0; swallowClick = true;
+      dismiss(); return;
+    }
+    if (tour) { endTour(true); swallowClick = near; if (near) lastNearDown = now; return; } // any click — on Webi or anywhere — cancels
     if (!near) return;
-    if (canTour()) { startTour(); swallowClick = true; }
-    else { const T = WEBI.triggers.tickle; setMood('happy', T.ms, T.line); crossUntil = performance.now() + WEBI.dismiss.touchShowMs; } // no hover on touch: a tap reveals the ×
+    lastNearDown = now;
+    const tourable = canTour();
+    if (tourable) swallowClick = true;
+    window.clearTimeout(singleTimer);
+    singleTimer = window.setTimeout(() => {
+      if (parked || leaving || tour) return;
+      if (tourable) startTour();
+      else { const T = WEBI.triggers.tickle; setMood('happy', T.ms, T.line); }
+    }, WEBI.dismiss.doubleClickMs);
   }, { capture: true, signal: ac.signal });
   window.addEventListener('click', (e) => {
     if (!swallowClick) return;
@@ -293,7 +303,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
   window.addEventListener('pointerup', () => { if (swallowClick) window.setTimeout(() => { swallowClick = false; }, 400); }, { capture: true, signal: ac.signal });
   document.addEventListener('pointerout', (e) => { if (!e.relatedTarget) { PTR.x = PTR.y = -1e4; } }, { passive: true, signal: ac.signal });
 
-  /* ---- dismiss: the × sends Webi back into the nav ∞; clicking the ∞ (the logo link) brings him out again ---- */
+  /* ---- dismiss: a double-click sends Webi back into the nav ∞; clicking the ∞ (the logo link) brings him out again ---- */
   const DIS = WEBI.dismiss;
   const store = (v: boolean) => { try { if (v) sessionStorage.setItem(DIS.storageKey, '1'); else sessionStorage.removeItem(DIS.storageKey); } catch { /* storage blocked */ } };
   let parked = false;  // inside the logo, not drawn
@@ -314,7 +324,6 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     introSaid = true; // no first-visit greeting, just a short hello
     sayFor(desktopMQ.matches ? DIS.backLineDesktop : DIS.backLine, DIS.backMs);
   }
-  close?.addEventListener('click', (e) => { e.preventDefault(); dismiss(); }, { signal: ac.signal });
   window.addEventListener('click', (e) => {
     if (!parked && !leaving) return;
     const L = getLogo(), a = L?.closest('a') ?? L;
@@ -469,18 +478,6 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
     }
     bubble.classList.toggle('show', !!txt);
     bubble.classList.toggle('teach', mood === 'teach');
-
-    /* --- the × sits on Webi's shoulder, on the side away from the bubble --- */
-    if (close) {
-      if (nearWebi(PTR.x, PTR.y) || close.matches(':hover, :focus-visible')) crossUntil = Math.max(crossUntil, now + DIS.hoverGraceMs);
-      const showX = now < crossUntil && !hidden && !leaving && !parked && W.m < 0.5 && S > 0.3 && sinceIntro > IN.faceAt;
-      if (showX) {
-        const C = DIS.cross, left = !(txt && bubble.classList.contains('flip'));
-        const cx = W.pos.x + (left ? -C.x : C.x) * S, cy = W.pos.y + bob + C.y * S;
-        close.style.transform = `translate(${Math.round(cx - C.size / 2)}px,${Math.round(cy - C.size / 2)}px)`;
-      }
-      close.classList.toggle('show', showX);
-    }
   }
 
   /*
@@ -621,7 +618,7 @@ export function createWebiEngine(o: WebiEngineOptions): WebiEngine {
         if (runP) runP.style.strokeDasharray = '';
       }
       bubble.classList.remove('show');
-      close?.classList.remove('show');
+      window.clearTimeout(singleTimer);
     },
   };
 }
