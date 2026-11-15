@@ -34,8 +34,14 @@ html.wl-in-app, html.wl-in-app body { overflow: hidden; height: 100%; }
 .w-app.w-collapsed .w-sb-newtab kbd { display: none; }
 .w-sb-proj button.w-on { background: #e7e9ed; color: var(--ink); }
 .w-sb-foot { position: relative; }
-.w-me-menu { top: auto; bottom: calc(100% + 8px); left: 0; right: auto; margin: 0; }
-.w-app.w-collapsed .w-me-menu { left: 0; }
+/* opens upward from the profile card; scoped so it beats .hdr-menu (index.css, loaded later: top:100%) */
+.w-sb-foot .w-me-menu { top: auto; bottom: calc(100% + 8px); left: 0; right: auto; margin: 0; max-height: calc(100vh - 120px); overflow-y: auto; }
+/* collapsed sidebar (76px, overflow hidden) can't hold the 232px menu: pin it beside the rail instead */
+.w-app.w-collapsed .w-sb-foot .w-me-menu { position: fixed; left: 86px; bottom: 14px; }
+/* profile menu header: who is signed in (not clickable) */
+.w-me-head { display: grid; gap: 2px; padding: 8px 12px 6px; min-width: 0; }
+.w-me-head b { font-weight: 600; font-size: 13.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.w-me-head small { font-size: 12px; color: var(--graphite); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .w-menu-ct { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--iris); color: #fff; font: 600 10.5px var(--f-ui); display: grid; place-items: center; }
 
 /* ---- New tab page (in the spirit of the reference "Make a Wish" screen) ---- */

@@ -9,6 +9,8 @@ import { useTheme, DARK_MODE_ENABLED } from '@/design-system/components/ThemePro
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/shared/ui/Button';
 import { cn } from '@/utils/cn';
+import { WPageHeader } from '@/components/app/ui';
+import { useWorkspaceMaybe } from '@/components/app/workspaceContext';
 
 type SectionKey = 'account' | 'profile' | 'appearance';
 
@@ -24,6 +26,7 @@ const inputClass =
 export function SettingsPage() {
   const { user, profile } = useAuth();
   const [section, setSection] = useState<SectionKey>('account');
+  const ws = useWorkspaceMaybe(); // inside the app: app page header instead of the website hero
 
   if (!user || !profile) {
     return (
@@ -36,11 +39,15 @@ export function SettingsPage() {
 
   return (
     <div className="container-page pf py-8 max-w-5xl w-forms">
-      <div className="mb-6">
-        <span className="label-overline">Settings</span>
-        <h1 className="mt-2 font-display text-3xl font-bold pf-name">Your settings</h1>
-        <p className="mt-2 text-slate-400">Manage your account, your profile and how WebLoop looks.</p>
-      </div>
+      {ws ? (
+        <WPageHeader title="Settings" subtitle="Manage your account, your profile and how WebLoop looks." />
+      ) : (
+        <div className="mb-6">
+          <span className="label-overline">Settings</span>
+          <h1 className="mt-2 font-display text-3xl font-bold pf-name">Your settings</h1>
+          <p className="mt-2 text-slate-400">Manage your account, your profile and how WebLoop looks.</p>
+        </div>
+      )}
 
       <div className="grid gap-6 md:grid-cols-[220px_1fr]">
         <nav className="surface-raised p-2 h-fit md:sticky md:top-24" aria-label="Settings sections">

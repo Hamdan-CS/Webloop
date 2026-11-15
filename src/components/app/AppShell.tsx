@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type MouseEvent as RMouseEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, User, FileText, Mail, Settings, ShieldAlert, Image as ImageIcon, Building2, FolderKanban } from 'lucide-react';
+import { LogOut, User, Settings, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFloatingPanel } from '@/components/FloatingPanel';
 import { fetchProfileProjects, fetchJoinedProjects } from '@/services/api';
@@ -21,7 +21,7 @@ import './app-shell.css';
 import './app-shell-app.css';
 import './workspace-pages.css';
 
-type View = { key: string; label: string; icon: IconName; to?: string; count?: number; dot?: number; action?: () => void; match: (p: string) => boolean };
+type View = { key: string; label: string; icon: IconName; to?: string; count?: number; dot?: number; action?: () => void; match: (p: string) => boolean; sidebarOnly?: boolean };
 
 /**
  * Signed-in workspace (brief §3), the demo's #app: mist background, 248px
@@ -118,6 +118,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     { key: 'feed', label: 'Feed', icon: 'feed', to: '/feed', match: (p) => p.startsWith('/feed') },
     { key: 'projects', label: 'Projects', icon: 'proj', to: '/my-projects', count: projects.length || undefined, match: (p) => p.startsWith('/my-projects') || p.startsWith('/projects/') },
     { key: 'explore', label: 'Explore', icon: 'expl', to: '/explore', match: (p) => p.startsWith('/explore') },
+    // their home in the app now that the profile menu no longer lists them (kept off the phone tab bar)
+    { key: 'gallery', label: 'Student work', icon: 'work', to: '/gallery', match: (p) => p.startsWith('/gallery'), sidebarOnly: true },
+    { key: 'companies', label: 'Companies', icon: 'org', to: '/companies', match: (p) => p.startsWith('/companies'), sidebarOnly: true },
     { key: 'messages', label: 'Messages', icon: 'msg', dot: unreadMessages || undefined, action: openMessages, match: () => false },
     { key: 'portfolio', label: 'Portfolio', icon: 'port', to: portfolio, match: (p) => p === portfolio },
   ];
@@ -206,12 +209,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             <button type="button" className={`w-icon-btn${alerts ? ' w-bell' : ''}`} aria-label={alerts ? `Notifications (${alerts})` : 'Notifications'} onClick={bell}><WIcon name="bell" /></button>
             {meOpen && (
               <div className="hdr-menu w-me-menu" role="menu">
+                <div className="w-me-head" role="presentation">
+                  <b>{shownName}</b>
+                  {user?.email && <small>{user.email}</small>}
+                </div>
+                <div className="hdr-menu-sep" />
                 <MenuItem icon={<User size={15} />} label="My profile" onClick={() => { setMeOpen(false); navigate(portfolio); }} />
-                <MenuItem icon={<FolderKanban size={15} />} label="My projects" onClick={() => { setMeOpen(false); navigate('/my-projects'); }} />
-                {profile?.creator_type !== 'company' && <MenuItem icon={<FileText size={15} />} label="My applications" onClick={() => { setMeOpen(false); navigate('/my-applications'); }} />}
-                <MenuItem icon={<Mail size={15} />} label="My invitations" count={pendingInvites} onClick={() => { setMeOpen(false); navigate('/my-invitations'); }} />
-                <MenuItem icon={<ImageIcon size={15} />} label="Student work" onClick={() => { setMeOpen(false); navigate('/gallery'); }} />
-                <MenuItem icon={<Building2 size={15} />} label="Companies" onClick={() => { setMeOpen(false); navigate('/companies'); }} />
                 <MenuItem icon={<Settings size={15} />} label="Settings" onClick={() => { setMeOpen(false); navigate('/settings'); }} />
                 {isAdmin && <MenuItem icon={<ShieldAlert size={15} />} label="Moderation queue" onClick={() => { setMeOpen(false); navigate('/admin/moderation'); }} />}
                 <div className="hdr-menu-sep" />
@@ -229,7 +232,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </main>
 
         <nav className="w-tabbar" aria-label="Main">
-          {views.map((v) => (
+          {views.filter((v) => !v.sidebarOnly).map((v) => (
             <button key={v.key} type="button" className={v.match(pathname) ? 'w-on' : ''} aria-current={v.match(pathname) ? 'page' : undefined} onClick={go(v)}>
               <WIcon name={v.icon} />{v.label}
             </button>

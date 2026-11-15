@@ -15,6 +15,8 @@ const IC = {
   grid: <><rect x="4" y="4" width="7" height="7" rx="2" /><rect x="13" y="4" width="7" height="7" rx="2" /><rect x="4" y="13" width="7" height="7" rx="2" /><rect x="13" y="13" width="7" height="7" rx="2" /></>,
   list: <path d="M5 6h14M5 12h14M5 18h14" />,
   clock: <><circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" /></>,
+  work: <><rect x="4" y="5" width="16" height="14" rx="3" /><circle cx="9.5" cy="10" r="1.6" /><path d="m4.5 17 4.5-4 3.5 3 2.5-2 4.5 3.5" /></>,
+  org: <><path d="M5 20V6a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v14M14 10h4a1 1 0 0 1 1 1v9M3.5 20h17" /><path d="M8 9h2M8 12.5h2M8 16h2" /></>,
   gear: <><circle cx="12" cy="12" r="3" /><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" /></>,
 } as const;
 export type IconName = keyof typeof IC;
