@@ -1,14 +1,10 @@
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, User, LayoutDashboard, FileText, Mail, FolderKanban, Settings, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback, type MouseEvent as ReactMouseEvent } from 'react';
 import { cn } from '@/utils/cn';
 import { Avatar } from '@/components/shared/ui/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { NotificationBell } from '@/components/FloatingPanel';
-import { getDashboardPath, getDashboardLabel } from '@/utils/roles';
-import { MobileTabBar, type NavItem } from '@/components/navigation/MobileTabBar';
-import { checkIsAdmin, fetchLatestPostTimestamp } from '@/features/feed/services/feedApi';
-import { LAST_FEED_VISIT_KEY } from '@/features/feed/constants';
+import { getDashboardPath } from '@/utils/roles';
 import { useLenis } from '@/design-system/motion/lenisContext';
 import './nav.css';
 import { setSiteView } from '@/components/app/siteView';
@@ -44,29 +40,18 @@ const AUTHED_PAGES: Item[] = [
   { to: '/companies', label: 'Companies' },
 ];
 
-// mobile tab bar for signed-in visitors (unchanged; the app shell replaces it in Phase 3)
-const AUTHED_TABS: NavItem[] = [
-  { to: '/explore', label: 'Explore Projects' },
-  { to: '/feed', label: 'Feed', isFeed: true },
-  { to: '/gallery', label: 'Student Work' },
-  { to: '/companies', label: 'Companies' },
-];
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [compact, setCompact] = useState(false);
-  const [hasUnseenFeed, setHasUnseenFeed] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [spyOn, setSpyOn] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const linksRef = useRef<HTMLDivElement>(null);
   const pillRef = useRef<HTMLSpanElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const lenis = useLenis();
-  const { user, profile, signOut, pendingInvites } = useAuth();
+  const { user, profile } = useAuth();
   const shownName: string =
     profile?.display_name ||
     (user?.user_metadata?.display_name as string | undefined) ||
@@ -75,32 +60,8 @@ export function Navbar() {
     'User';
   const onHome = location.pathname === '/';
   const items: Item[] = onHome ? HOME_SECTIONS : user ? AUTHED_PAGES : GUEST_PAGES;
-  // Feed: signed-in → /feed; signed-out → sign in (sign-in has no return-to yet)
-  const feedTo = user ? '/feed' : '/signin';
-
-  useEffect(() => {
-    if (!user) return;
-    fetchLatestPostTimestamp().then((latest) => {
-      if (!latest) return;
-      const lastVisit = localStorage.getItem(LAST_FEED_VISIT_KEY);
-      setHasUnseenFeed(!lastVisit || new Date(latest) > new Date(lastVisit));
-    });
-  }, [user, location.pathname]);
-
-  useEffect(() => {
-    if (!user) return;
-    checkIsAdmin().then(setIsAdmin);
-  }, [user]);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.closest('[data-wl-select-portal]')) return;
-      if (menuRef.current && !menuRef.current.contains(target)) setMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  // Feed is shown to guests only (signed-in users reach it in Lab) and sends them to sign in
+  const feedTo = '/signin';
 
   useEffect(() => { setOpen(false); }, [location.pathname]);
 
@@ -154,10 +115,10 @@ export function Navbar() {
     if (lenis) lenis.scrollTo(t as HTMLElement, { duration: 1.6 }); else t.scrollIntoView();
   };
 
-  const handleSignOut = async () => {
-    setMenuOpen(false);
+  const openApp = () => {
     setOpen(false);
-    try { await signOut(); } finally { navigate('/'); }
+    setSiteView(false);
+    navigate(profile ? getDashboardPath(profile.creator_type) : '/my-projects');
   };
 
   const renderLink = (it: Item, inSheet = false) =>
@@ -168,7 +129,7 @@ export function Navbar() {
     );
 
   const feedLink = (inSheet = false) => (
-    <NavLink to={feedTo} className={({ isActive }) => cn(!inSheet && isActive && user && 'gh-on')} aria-label={hasUnseenFeed ? 'Feed, new posts' : 'Feed'}>
+    <NavLink to={feedTo} className={({ isActive }) => cn(!inSheet && isActive && 'gh-on')} aria-label="Feed">
       Feed<i className="gh-live" aria-hidden="true" />
     </NavLink>
   );
@@ -183,42 +144,19 @@ export function Navbar() {
           <div ref={linksRef} className="gh-nav-links" onPointerLeave={() => movePill(activeEl())}>
             <span ref={pillRef} className="gh-nav-pill" aria-hidden="true" />
             <span onPointerOver={(e) => { const a = (e.target as HTMLElement).closest('a'); if (a) movePill(a); }} style={{ display: 'contents' }}>
-              {feedLink()}
+              {!user && feedLink()}
               {items.map((it) => renderLink(it))}
             </span>
           </div>
           <div className="gh-nav-r">
             {user ? (
-              <>
-                <NotificationBell />
-                {profile && (
-                  <button type="button" className="gh-pill gh-dark" onClick={() => { setSiteView(false); navigate(getDashboardPath(profile.creator_type)); }} title={getDashboardLabel(profile.creator_type)}>
-                    <LayoutDashboard size={16} /> Open app
-                  </button>
-                )}
-                <div className="relative" ref={menuRef}>
-                  <button type="button" onClick={() => setMenuOpen((v) => !v)} className="hdr-user" aria-expanded={menuOpen} aria-haspopup="menu">
-                    <Avatar src={profile?.avatar_url} name={shownName} size="sm" />
-                    <span className="hdr-user-n">{shownName}</span>
-                  </button>
-                  {menuOpen && (
-                    <div className="hdr-menu animate-fade-in-up" role="menu">
-                      <MenuItem icon={<User size={15} />} label="My Profile" onClick={() => { setMenuOpen(false); navigate(`/creators/${profile?.handle}`); }} />
-                      <MenuItem icon={<FolderKanban size={15} />} label="My Projects" onClick={() => { setMenuOpen(false); navigate('/my-projects'); }} />
-                      {profile?.creator_type !== 'company' && (
-                        <MenuItem icon={<FileText size={15} />} label="My Applications" onClick={() => { setMenuOpen(false); navigate('/my-applications'); }} />
-                      )}
-                      <MenuItem icon={<Mail size={15} />} label="My Invitations" count={pendingInvites} onClick={() => { setMenuOpen(false); navigate('/my-invitations'); }} />
-                      <MenuItem icon={<Settings size={15} />} label="Settings" onClick={() => { setMenuOpen(false); navigate('/settings'); }} />
-                      {isAdmin && (
-                        <MenuItem icon={<ShieldAlert size={15} />} label="Moderation queue" onClick={() => { setMenuOpen(false); navigate('/admin/moderation'); }} />
-                      )}
-                      <div className="hdr-menu-sep" />
-                      <MenuItem icon={<LogOut size={15} />} label="Sign Out" onClick={handleSignOut} danger />
-                    </div>
-                  )}
-                </div>
-              </>
+              /* Signed in: the website stays the same as for guests — everything
+                 personal (feed, projects, applications, invitations, settings,
+                 sign out) lives in the app, so the site only offers the way in. */
+              <button type="button" className="gh-pill gh-dark" onClick={openApp} title="Lab" aria-label="Lab">
+                <LayoutDashboard size={16} /> Lab
+                <Avatar src={profile?.avatar_url} name={shownName} size="xs" />
+              </button>
             ) : (
               <>
                 <Link className="gh-si" to="/signin" {...(onHome ? { 'data-webi-mood': 'happy', 'data-webi-say': 'Welcome back!' } : {})}>Sign in</Link>
@@ -229,19 +167,13 @@ export function Navbar() {
           </div>
         </div>
         <div className="gh-nav-sheet" onClick={(e) => { if ((e.target as HTMLElement).closest('a')) setOpen(false); }}>
-          {feedLink(true)}
+          {!user && feedLink(true)}
           {items.map((it) => renderLink(it, true))}
           {user ? (
-            <>
-              {profile && <Link to={getDashboardPath(profile.creator_type)}>{getDashboardLabel(profile.creator_type)}</Link>}
-              <Link to={`/creators/${profile?.handle}`}>My Profile</Link>
-              <Link to="/my-projects">My Projects</Link>
-              {profile?.creator_type !== 'company' && <Link to="/my-applications">My Applications</Link>}
-              <Link to="/my-invitations">{pendingInvites ? `My Invitations (${pendingInvites})` : 'My Invitations'}</Link>
-              <Link to="/settings">Settings</Link>
-              {isAdmin && <Link to="/admin/moderation">Moderation queue</Link>}
-              <a href="#" onClick={(e) => { e.preventDefault(); handleSignOut(); }}>Sign Out</a>
-            </>
+            <a href="#" className="gh-pill gh-dark" title="Lab" aria-label="Lab" onClick={(e) => { e.preventDefault(); openApp(); }}>
+              <LayoutDashboard size={16} /> Lab
+              <Avatar src={profile?.avatar_url} name={shownName} size="xs" />
+            </a>
           ) : (
             <>
               <Link to="/signin">Sign in</Link>
@@ -250,17 +182,7 @@ export function Navbar() {
           )}
         </div>
       </nav>
-      {user && <MobileTabBar items={AUTHED_TABS} hasUnseenFeed={hasUnseenFeed} />}
     </>
   );
 }
 
-function MenuItem({ icon, label, onClick, danger, count }: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean; count?: number }) {
-  return (
-    <button onClick={onClick} role="menuitem" className={cn('hdr-menu-item', danger && 'danger')}>
-      {icon}
-      <span className="flex-1 text-left">{label}</span>
-      {!!count && <span className="rounded-full bg-accent-500 px-1.5 py-0.5 text-[10px] font-semibold text-ink-950">{count}</span>}
-    </button>
-  );
-}

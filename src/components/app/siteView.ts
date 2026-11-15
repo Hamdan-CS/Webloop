@@ -1,7 +1,7 @@
 /*
  * Signed-in visitors normally see every page inside the workspace shell.
  * "← Back to site" switches to the public layout for this browser session;
- * "Open app" in the public nav switches back. Purely presentational.
+ * "Lab" in the public nav switches back. Purely presentational.
  */
 const KEY = 'wl_site_view';
 const EVT = 'wl-site-view';
