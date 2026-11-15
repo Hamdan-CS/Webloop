@@ -95,7 +95,19 @@
 .pf .pf-banner-fade { background: linear-gradient(to top, rgba(10, 13, 18, .18), transparent 70%); }
 
 /* How It Works: cloud banks above the first step and under the last */
-.how-outro { position: relative; overflow: hidden; }
+/* Full-bleed (the page column is 1240px; html/body overflow-x: clip stops
+   sideways scroll). The outro is not clipped: its cloud bank is lifted so the
+   hanging cloud bottoms stay inside it, and ::after fades clouds + the fixed
+   3D city into the footer's white (.gh-footer background) — no hard line. */
+.how-page .how-page-clouds,
+.how-page .how-outro { width: 100vw; margin-left: calc(50% - 50vw); }
+.how-page .how-outro { position: relative; overflow: visible; height: 52vh; }
+.how-outro .g-cloudbank { height: clamp(120px, 16vw, 240px); bottom: clamp(40px, 5vw, 76px); }
+.how-outro::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 62%; /* -2px covers the sub-pixel seam at the footer */
+  z-index: 1; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, .8) 50%, #fff 85%);
+}
 
 /* ---------- workspace pages (F8): dashboards, publish, settings, lists ---------- */
 .pf .pf-kpi { background: var(--g-aqua); border: 0; border-radius: var(--r-img); padding: 18px 20px; color: var(--graphite); font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; }
@@ -134,4 +146,4 @@
 
 /* no sideways scroll from decorative overflow (clip keeps sticky/fixed working) */
 html, body { overflow-x: clip; }
-.how-page { overflow-x: clip; }
+/* .how-page is not clipped: its cloud rows are full-bleed (html/body clip already stops sideways scroll) */
