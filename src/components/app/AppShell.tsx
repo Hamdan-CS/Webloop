@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type MouseEvent as RMouseEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, User, Settings, ShieldAlert } from 'lucide-react';
+import { LogOut, User, Settings, ShieldAlert, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFloatingPanel } from '@/components/FloatingPanel';
+import { useMessagesData } from '@/components/messaging/messagesContext';
 import { fetchProfileProjects, fetchJoinedProjects } from '@/services/api';
 import { checkIsAdmin } from '@/features/feed/services/feedApi';
 import { getDashboardPath, getDashboardLabel } from '@/utils/roles';
@@ -16,6 +17,7 @@ import { WorkspaceContext, projectDot, type WorkspaceApi } from './workspaceCont
 import { setSiteView } from './siteView';
 import { WIcon, type IconName } from './icons';
 import { WAvatar } from './ui';
+import { NotificationsMenu } from './NotificationsMenu';
 import { useSlidingTabInk } from './slidingTabInk';
 import './app-shell.css';
 import './app-shell-app.css';
@@ -31,7 +33,17 @@ type View = { key: string; label: string; icon: IconName; to?: string; count?: n
  * pages themselves (and their data, auth and guards) are unchanged.
  */
 export function AppShell({ children }: { children: ReactNode }) {
-  const { user, profile, signOut, unreadMessages, unreadNotifications, pendingReviews, pendingInvites } = useAuth();
+  const { user, profile, signOut, unreadMessages, unreadNotifications, pendingReviews, pendingInvites, refreshCounts } = useAuth();
+  const { unreadConversations } = useMessagesData();
+  const [bellOpen, setBellOpen] = useState(false);
+  const bellRef = useRef<HTMLButtonElement>(null);
+  const closeBell = useCallback(() => setBellOpen(false), []);
+
+  // keep the bell and badges current without a reload (notifications have no realtime feed)
+  useEffect(() => {
+    const t = setInterval(() => { if (document.visibilityState === 'visible') void refreshCounts(); }, 60_000);
+    return () => clearInterval(t);
+  }, [refreshCounts]);
   const { openPanel } = useFloatingPanel();
   const { open: openTab, newTab } = useTabs();
   const navigate = useNavigate();
@@ -116,7 +128,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const views: View[] = [
     { key: 'home', label: 'Home', icon: 'home', to: home, match: (p) => p.startsWith('/dashboard/') },
     { key: 'feed', label: 'Feed', icon: 'feed', to: '/feed', match: (p) => p.startsWith('/feed') },
-    { key: 'projects', label: 'Projects', icon: 'proj', to: '/my-projects', count: projects.length || undefined, match: (p) => p.startsWith('/my-projects') || p.startsWith('/projects/') },
+    // dot = submitted tasks waiting for your review (moved here from the bell)
+    { key: 'projects', label: 'Projects', icon: 'proj', to: '/my-projects', count: projects.length || undefined, dot: pendingReviews || undefined, match: (p) => p.startsWith('/my-projects') || p.startsWith('/projects/') },
     { key: 'explore', label: 'Explore', icon: 'expl', to: '/explore', match: (p) => p.startsWith('/explore') },
     // their home in the app now that the profile menu no longer lists them (kept off the phone tab bar)
     { key: 'gallery', label: 'Student work', icon: 'work', to: '/gallery', match: (p) => p.startsWith('/gallery'), sidebarOnly: true },
@@ -153,15 +166,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   ], [navigate, home, portfolio, projects, profile, isAdmin, openMessages, newTab, backToSite]);
 
   const api: WorkspaceApi = { projects, isAdmin, openPalette: () => setCmdOpen(true), openMessages, backToSite };
-  const alerts = unreadMessages + unreadNotifications + pendingReviews + pendingInvites;
+  // the bell counts notifications and conversations with unread messages; tasks to review sit on Projects, invitations in the profile menu
+  const alerts = unreadConversations + unreadNotifications;
   const shownName = profile?.display_name || user?.email?.split('@')[0] || 'You';
   const roleLine = profile ? getDashboardLabel(profile.creator_type).replace(' Dashboard', '') : '';
 
   const handleSignOut = async () => { setMeOpen(false); try { await signOut(); } finally { setSiteView(false); navigate('/'); } };
-  const bell = () => {
-    if (unreadMessages === 0 && unreadNotifications === 0 && pendingReviews === 0 && pendingInvites > 0) { navigate('/my-invitations'); return; }
-    openPanel(unreadMessages > 0 ? 'messages' : unreadNotifications > 0 ? 'notifications' : pendingReviews > 0 ? 'tasks' : 'messages');
-  };
 
   return (
     <WorkspaceContext.Provider value={api}>
@@ -202,11 +212,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           ))}
           <div className="w-sb-foot" ref={meRef}>
-            <button type="button" className="w-me" aria-haspopup="menu" aria-expanded={meOpen} onClick={() => setMeOpen((o) => !o)}>
+            <button type="button" className="w-me" aria-haspopup="menu" aria-expanded={meOpen} onClick={() => { setBellOpen(false); setMeOpen((o) => !o); }}>
               <WAvatar name={shownName} src={profile?.avatar_url} />
               <div><b>{shownName}</b><small>{roleLine}</small></div>
             </button>
-            <button type="button" className={`w-icon-btn${alerts ? ' w-bell' : ''}`} aria-label={alerts ? `Notifications (${alerts})` : 'Notifications'} onClick={bell}><WIcon name="bell" /></button>
+            <button ref={bellRef} type="button" className={`w-icon-btn${alerts ? ' w-bell' : ''}`} aria-label={alerts ? `Notifications (${alerts})` : 'Notifications'} aria-haspopup="dialog" aria-expanded={bellOpen} onClick={() => { setMeOpen(false); setBellOpen((o) => !o); }}><WIcon name="bell" /></button>
+            {bellOpen && <NotificationsMenu anchorRef={bellRef} onClose={closeBell} />}
             {meOpen && (
               <div className="hdr-menu w-me-menu" role="menu">
                 <div className="w-me-head" role="presentation">
@@ -215,6 +226,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </div>
                 <div className="hdr-menu-sep" />
                 <MenuItem icon={<User size={15} />} label="My profile" onClick={() => { setMeOpen(false); navigate(portfolio); }} />
+                {/* pending invitations get a badge here while there are any (the permanent item moved to the palette / New Tab) */}
+                {pendingInvites > 0 && <MenuItem icon={<Mail size={15} />} label="My invitations" count={pendingInvites} onClick={() => { setMeOpen(false); navigate('/my-invitations'); }} />}
                 <MenuItem icon={<Settings size={15} />} label="Settings" onClick={() => { setMeOpen(false); navigate('/settings'); }} />
                 {isAdmin && <MenuItem icon={<ShieldAlert size={15} />} label="Moderation queue" onClick={() => { setMeOpen(false); navigate('/admin/moderation'); }} />}
                 <div className="hdr-menu-sep" />

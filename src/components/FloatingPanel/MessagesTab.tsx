@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, Plus, Inbox, AlertCircle } from 'lucide-react';
-import { useMessages, type Conversation } from '@/hooks/useMessages';
+import type { Conversation } from '@/hooks/useMessages';
+import { useMessagesData } from '@/components/messaging/messagesContext';
 import { fetchProfileProjects, fetchProjectMembers } from '@/services/api';
 import type { Profile, Project } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
@@ -24,17 +25,23 @@ const viewVariants = {
 };
 
 export function MessagesTab({ profileId, myProfile }: Props) {
-  const { conversations, loading, error, markRead, refresh } = useMessages(profileId);
+  const { conversations, loading, error, markConversationRead, refresh, pendingChatId, requestChat } = useMessagesData();
   const [selected, setSelected] = useState<Conversation | null>(null);
   const [composing, setComposing] = useState(false);
+
+  // a chat requested from elsewhere (bell → Reply) opens straight away
+  useEffect(() => {
+    if (!pendingChatId || loading) return;
+    const c = conversations.find((x) => x.other.id === pendingChatId);
+    requestChat(null);
+    if (c) { setComposing(false); setSelected(c); }
+  }, [pendingChatId, loading, conversations, requestChat]);
 
   const view: View = selected ? 'thread' : composing ? 'compose' : 'list';
   const dir: 1 | -1 = view === 'list' ? -1 : 1;
 
   const openConversation = (c: Conversation) => {
-    if (c.lastMessage.recipient_id === profileId && !c.lastMessage.is_read) {
-      markRead(c.lastMessage.id);
-    }
+    if (c.unreadCount > 0) void markConversationRead(c.other.id);
     setSelected(c);
   };
 

@@ -154,6 +154,15 @@ export async function deletePost(id: string): Promise<void> {
   if (error) throw error;
 }
 
+/** One post by id (a notification links to it; it may be older than the loaded feed page). */
+export async function fetchPost(postId: string): Promise<Post | null> {
+  const { data, error } = await supabase.from('posts').select(POST_SELECT).eq('id', postId).maybeSingle();
+  if (error) throw error;
+  const post = data as unknown as Post | null;
+  post?.images?.sort((a, b) => a.position - b.position);
+  return post;
+}
+
 export async function fetchMyPosts(profileId: string): Promise<Post[]> {
   const { data, error } = await supabase
     .from('posts')

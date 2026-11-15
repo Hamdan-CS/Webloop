@@ -22,6 +22,7 @@ import { cn } from '@/utils/cn';
 import { WBox, WKpis, WPageHeader } from '@/components/app/ui';
 import { WContribHeat } from '@/components/app/ui/WContribHeat';
 import { projectDot, useWorkspaceMaybe } from '@/components/app/workspaceContext';
+import { ToReviewBox } from '@/components/projects/tasks/ToReviewBox';
 
 type Tab = 'ov' | 'pj' | 'tk' | 'rq';
 type TaskView = 'all' | 'todo' | 'submitted' | 'approved' | 'changes';
@@ -185,6 +186,7 @@ export function StudentDashboard() {
       {tab === 'ov' && (
         <div className="dpane mt-6 w-grid2">
           <div className="w-col">
+            <ToReviewBox />
             <WBox title="This week" meta={`${nextUp.length} task${nextUp.length !== 1 ? 's' : ''}`}>
               {loading ? (
                 <div className="flex justify-center py-3"><LoopLoader size={22} /></div>

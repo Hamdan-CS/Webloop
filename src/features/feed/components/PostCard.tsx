@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Bookmark,
   CheckCircle2,
@@ -39,6 +39,8 @@ interface PostCardProps {
   /** Profile-page context: show Edit/Delete instead of Report/admin items. */
   onEdit?: (post: Post) => void;
   onDelete?: (post: Post) => void;
+  /** Opened from a notification: open the comments and focus the comment box. */
+  focusComment?: boolean;
 }
 
 export function PostCard({
@@ -53,9 +55,22 @@ export function PostCard({
   onTagClick,
   onEdit,
   onDelete,
+  focusComment = false,
 }: PostCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(focusComment);
+
+  // comments load async: wait for the box, then focus it
+  useEffect(() => {
+    if (!focusComment) return;
+    setCommentsOpen(true);
+    let tries = 0;
+    const t = setInterval(() => {
+      const input = document.querySelector<HTMLInputElement>(`[data-post-id="${post.id}"] input[placeholder^="Add a comment"]`);
+      if (input) { input.focus({ preventScroll: true }); clearInterval(t); } else if (++tries > 30) clearInterval(t);
+    }, 100);
+    return () => clearInterval(t);
+  }, [focusComment, post.id]);
   const menuRef = useRef<HTMLDivElement>(null);
   const author = post.author;
   const isPlaying = playingGuideId === post.id;
@@ -117,7 +132,7 @@ export function PostCard({
   }
 
   return (
-    <GlassCard raised className="overflow-hidden">
+    <GlassCard raised className="overflow-hidden" data-post-id={post.id}>
       {post.removed_at && (
         <div className="bg-signal-rose/10 px-5 py-2 text-xs font-medium text-signal-rose">
           Removed by admin{post.removed_reason ? `: ${post.removed_reason}` : ''}

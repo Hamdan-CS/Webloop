@@ -113,3 +113,40 @@ html.wl-in-app, html.wl-in-app body { overflow: hidden; height: 100%; }
 @media (prefers-reduced-motion: reduce) {
   .w-sb-ink, .w-sb-nav svg, .w-sb-nav svg * { transition: none !important; animation: none !important; }
 }
+
+/* ---------- bell dropdown (NotificationsMenu): ~5 rows visible, scrolls ---------- */
+.w-nt-menu { position: fixed; z-index: 80; display: flex; flex-direction: column; max-height: min(560px, calc(100vh - 24px)); background: #fff; border-radius: 20px; box-shadow: 0 0 0 1px var(--line-hex), var(--shadow-float); overflow: hidden; }
+.w-nt-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 16px 8px; }
+.w-nt-head b { font-weight: 600; font-size: 15px; color: var(--ink); }
+.w-nt-all { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--iris); border-radius: 999px; padding: 4px 8px; }
+.w-nt-all:hover:not(:disabled) { background: var(--sky); }
+.w-nt-all:disabled { color: var(--fog, #9aa3ae); cursor: default; }
+.w-nt-filter { display: flex; gap: 4px; padding: 0 12px 8px; }
+.w-nt-filter button { font-size: 12.5px; padding: 4px 10px; border-radius: 999px; color: var(--graphite); }
+.w-nt-filter button.on { background: var(--charcoal); color: #fff; }
+.w-nt-list { overflow-y: auto; max-height: 400px; padding: 0 8px 8px; overscroll-behavior: contain; }
+.w-nt-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 28px 12px; color: var(--graphite); font-size: 13px; }
+.w-nt-row { position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 10px; border-radius: 14px; overflow: hidden; }
+.w-nt-row + .w-nt-row { margin-top: 2px; }
+.w-nt-row.unread { background: var(--sky); }
+.w-nt-row:not(.unread):hover { background: rgba(10, 13, 18, .03); }
+.w-nt-ic { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: #fff; color: var(--iris); box-shadow: 0 0 0 1px var(--line-hex); }
+.w-nt-body { flex: 1; min-width: 0; }
+.w-nt-body p { margin: 0; font-size: 13px; line-height: 1.4; color: var(--ink); }
+.w-nt-body b { font-weight: 600; }
+.w-nt-body .w-nt-prev { color: var(--graphite); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.w-nt-body small { display: inline-flex; align-items: center; gap: 6px; margin-top: 3px; font-size: 11.5px; color: var(--graphite); }
+.w-nt-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--iris); }
+.w-nt-detail { margin-top: 6px !important; padding: 8px 10px; border-radius: 10px; background: #fff; box-shadow: 0 0 0 1px var(--line-hex); color: var(--graphite) !important; font-size: 12.5px !important; }
+.w-nt-acts { margin-top: 6px; }
+.w-nt-main { font-size: 12.5px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: var(--charcoal); color: #fff; }
+.w-nt-main:hover { opacity: .9; }
+.w-nt-check { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 999px; color: var(--graphite); background: #fff; box-shadow: 0 0 0 1px var(--line-hex); }
+.w-nt-check:hover { color: var(--iris); }
+.w-nt-side { flex: none; display: flex; align-items: center; gap: 6px; }
+/* Reply slides in from the right on hover (always shown where there is no hover) */
+.w-nt-reply { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: var(--charcoal); color: #fff;
+  transform: translateX(calc(100% + 12px)); opacity: 0; transition: transform .15s ease-out, opacity .15s ease-out; }
+.w-nt-msg:hover .w-nt-reply, .w-nt-msg:focus-within .w-nt-reply { transform: none; opacity: 1; }
+@media (hover: none) { .w-nt-reply { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .w-nt-reply { transition: none; } }

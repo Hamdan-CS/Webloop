@@ -19,7 +19,7 @@ import { SkeletonFeed } from '@/features/feed/components/SkeletonCard';
 import { InterestPicker } from '@/features/feed/components/InterestPicker';
 import { PostComposer } from '@/features/feed/components/PostComposer';
 import { GuestFadeWrapper, GuestJoinGate } from '@/features/feed/components/GuestJoinGate';
-import { checkIsAdmin, fetchFeed, fetchGuestFeed, fetchUserInterests } from '@/features/feed/services/feedApi';
+import { checkIsAdmin, fetchFeed, fetchGuestFeed, fetchPost, fetchUserInterests } from '@/features/feed/services/feedApi';
 import { DEFAULT_FEED_FILTERS, type Post } from '@/features/feed/types';
 import type { FeedTag } from '@/features/feed/constants';
 import { LAST_FEED_VISIT_KEY } from '@/features/feed/constants';
@@ -47,6 +47,10 @@ export function FeedPage() {
   useEffect(() => {
     if ((location.state as { compose?: boolean } | null)?.compose) navigate(location.pathname, { replace: true, state: null });
   }, [location.state, location.pathname, navigate]);
+  // /feed?post=<id>[&reply=1] — opened from a notification: show that post, focus its comment box
+  const params = new URLSearchParams(location.search);
+  const focusPostId = params.get('post');
+  const focusReply = params.get('reply') === '1';
   const [isAdmin, setIsAdmin] = useState(false);
   const [interests, setInterests] = useState<FeedTag[] | null>(null);
   const [showInterestPicker, setShowInterestPicker] = useState(false);
@@ -99,6 +103,18 @@ export function FeedPage() {
     fetchProjects({ sort: 'most_active' }).then((r) => { if (alive) setTrending(r.slice(0, 4)); }).catch(() => { if (alive) setTrending([]); });
     return () => { alive = false; };
   }, [ws, user]);
+
+  // make sure the linked post is in the list (it may be older than this page), then scroll to it
+  useEffect(() => {
+    if (!focusPostId || !posts || isGuest) return;
+    if (!posts.some((p) => p.id === focusPostId)) {
+      let alive = true;
+      fetchPost(focusPostId).then((p) => { if (alive && p) setPosts((prev) => (prev && !prev.some((x) => x.id === p.id) ? [p, ...prev] : prev)); }).catch(() => {});
+      return () => { alive = false; };
+    }
+    const t = setTimeout(() => document.querySelector(`[data-post-id="${focusPostId}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 120);
+    return () => clearTimeout(t);
+  }, [focusPostId, posts, isGuest]);
 
   function updatePostInList(postId: string, patch: Partial<Post>) {
     setPosts((prev) => (prev ? prev.map((p) => (p.id === postId ? { ...p, ...patch } : p)) : prev));
@@ -155,6 +171,7 @@ export function FeedPage() {
             onPlayGuide={setPlayingGuideId}
             onRequireAuth={requireAuth}
             onChange={updatePostInList}
+            focusComment={focusReply && post.id === focusPostId}
             onTagClick={(tag) => setFilters((f) => ({ ...f, tags: f.tags.includes(tag as FeedTag) ? f.tags : [...f.tags, tag as FeedTag] }))}
           />
         );
@@ -267,6 +284,7 @@ export function FeedPage() {
                     onPlayGuide={setPlayingGuideId}
                     onRequireAuth={requireAuth}
                     onChange={updatePostInList}
+                    focusComment={focusReply && post.id === focusPostId}
                     onTagClick={(tag) => setFilters((f) => ({ ...f, tags: f.tags.includes(tag as FeedTag) ? f.tags : [...f.tags, tag as FeedTag] }))}
                   />
                 );

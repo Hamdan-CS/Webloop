@@ -27,6 +27,7 @@ import { ProjectCard } from '@/components/projects/ProjectCard';
 
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { statusLabel, statusTone } from '@/utils/labels';
+import { ToReviewBox } from '@/components/projects/tasks/ToReviewBox';
 
 export function UniversityDashboard() {
   const { profile, unreadMessages, pendingReviews } = useAuth();
@@ -75,6 +76,7 @@ export function UniversityDashboard() {
 
       <div className="w-grid2">
         <div className="w-col">
+          <ToReviewBox />
           {/* Programs */}
           <section className="w-box">
             <div className="w-box-h">
