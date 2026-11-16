@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, ArrowRight, Check, Loader2, AlertCircle, Plus, X, Sparkles,
-  GraduationCap, Building2, Landmark, GitFork,
+  GraduationCap, Building2, Landmark, GitFork, Lightbulb, FlaskConical,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { createProject, inviteUserToProject, createTeam, fetchMyTeams, inviteToTeam } from '@/services/api';
@@ -25,6 +25,8 @@ const PROJECT_TYPES = [
   { value: 'company', label: 'Company project', hint: 'Real product work', icon: Building2 },
   { value: 'university', label: 'University project', hint: 'Research or coursework', icon: Landmark },
   { value: 'open_source', label: 'Open source', hint: 'Public, community-led', icon: GitFork },
+  { value: 'independent', label: 'Independent project', hint: 'Your own idea, for students', icon: Lightbulb },
+  { value: 'research', label: 'Research project', hint: 'A question to investigate', icon: FlaskConical },
 ];
 const DIFFICULTIES = [
   { value: 'beginner', label: 'Beginner' },

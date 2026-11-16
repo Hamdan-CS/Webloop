@@ -23,6 +23,8 @@ export const projectTypeLabel: Record<ProjectType, string> = {
   company: 'Company Project',
   university: 'University Project',
   open_source: 'Open Source',
+  independent: 'Independent Project',
+  research: 'Research Project',
 };
 
 export const compensationLabel: Record<Compensation, string> = {
@@ -47,6 +49,7 @@ export const creatorTypeLabel: Record<CreatorType, string> = {
   student: 'Student',
   company: 'Company',
   university: 'University',
+  independent: 'Independent',
 };
 
 export function formatDate(iso: string | null): string {

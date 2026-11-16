@@ -14,6 +14,7 @@ import {
   Eye,
   EyeOff,
   Laptop,
+  Lightbulb,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/shared/ui/Button';
@@ -22,7 +23,7 @@ import { cn } from '@/utils/cn';
 import { getDashboardPath } from '@/utils/roles';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 
-type Role = 'student' | 'company' | 'university';
+type Role = 'student' | 'company' | 'university' | 'independent';
 
 const roleCards: { role: Role; tint: string; icon: React.ReactNode; title: string; desc: string; benefits: string[] }[] = [
   {
@@ -48,6 +49,14 @@ const roleCards: { role: Role; tint: string; icon: React.ReactNode; title: strin
     title: 'University',
     desc: 'Run capstone programs, form student teams, and connect coursework with real industry projects.',
     benefits: ['Run mentored capstone programs', 'Form and track student teams', 'Connect with sponsoring companies', 'Showcase educational outcomes'],
+  },
+  {
+    role: 'independent',
+    tint: 'r-i',
+    icon: <Lightbulb />,
+    title: 'Independent',
+    desc: 'Share projects and research, guide students, and recommend talent.',
+    benefits: ['Publish independent and research projects', 'Let students join, assign tasks and review work', 'Recommend students to companies', 'Endorse skills and get a Verified Independent badge'],
   },
 ];
 

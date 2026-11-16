@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import {
-  Bell, UserPlus, CheckCircle2, XCircle, UserCheck, MessageSquare, Heart, ShieldAlert, AlertCircle, Users,
+  Bell, UserPlus, CheckCircle2, XCircle, UserCheck, MessageSquare, Heart, ShieldAlert, AlertCircle, Users, ThumbsUp, Award, BadgeCheck,
 } from 'lucide-react';
 import type { Notification, NotificationType } from '@/types';
 
@@ -13,6 +13,10 @@ export const NOTIFICATION_ICONS: Record<NotificationType, ReactNode> = {
   application_declined: <XCircle size={15} />,
   invitation_accepted: <UserCheck size={15} />,
   team_invitation: <Users size={15} />,
+  recommendation: <ThumbsUp size={15} />,
+  skill_endorsed: <Award size={15} />,
+  independent_verified: <BadgeCheck size={15} />,
+  independent_declined: <AlertCircle size={15} />,
   post_comment: <MessageSquare size={15} />,
   post_like: <Heart size={15} />,
   post_removed: <ShieldAlert size={15} />,
@@ -36,6 +40,16 @@ export function describe(n: Notification): string {
       return `${p.invitee_name ?? 'Someone'} accepted your invitation to ${p.project_title ?? 'the project'}`;
     case 'team_invitation':
       return `${p.inviter_name ?? 'Someone'} invited you to join team ${p.team_name ?? ''}${p.project_title ? ` on project ${p.project_title}` : ''}`;
+    case 'recommendation':
+      return p.kind === 'student_to_company'
+        ? `${p.from_name ?? 'Someone'} recommends ${p.about_name ?? 'a student'} to you`
+        : `${p.from_name ?? 'Someone'} recommended ${p.project_title ?? 'a project'} to you`;
+    case 'skill_endorsed':
+      return `${p.from_name ?? 'Someone'} endorsed your ${p.skill ?? ''} skill`;
+    case 'independent_verified':
+      return 'WebLoop approved you: you are now a Verified Independent';
+    case 'independent_declined':
+      return 'Your Verified Independent request was declined. You can update your links and ask again.';
     case 'post_comment':
       return `${p.commenter_name ?? 'Someone'} commented on your post${p.post_title ? ` "${p.post_title}"` : ''}`;
     case 'post_like':
@@ -68,6 +82,15 @@ export function destinationFor(n: Notification, myHandle: string | null): string
       return p.project_slug ? `/projects/${p.project_slug}` : null;
     case 'team_invitation':
       return '/my-invitations';
+    case 'recommendation':
+      return p.kind === 'student_to_company'
+        ? (p.about_handle ? `/creators/${p.about_handle}` : null)
+        : (p.project_slug ? `/projects/${p.project_slug}` : null);
+    case 'skill_endorsed':
+      return myHandle ? `/creators/${myHandle}` : null;
+    case 'independent_verified':
+    case 'independent_declined':
+      return '/dashboard/independent';
     case 'post_comment':
       return p.post_id ? `/feed?post=${p.post_id}&reply=1` : '/feed';
     case 'post_like':
@@ -77,6 +100,8 @@ export function destinationFor(n: Notification, myHandle: string | null): string
   }
 }
 
+const p_kind_label = (n: Notification) => (n.payload.kind === 'student_to_company' ? 'View student' : 'View project');
+
 /** Label of the main button. */
 export function actionFor(n: Notification): string {
   switch (n.type) {
@@ -85,6 +110,10 @@ export function actionFor(n: Notification): string {
     case 'application_declined':
     case 'invitation_accepted': return 'Open project';
     case 'team_invitation': return 'View invite';
+    case 'recommendation': return p_kind_label(n);
+    case 'skill_endorsed': return 'View profile';
+    case 'independent_verified':
+    case 'independent_declined': return 'Open dashboard';
     case 'post_comment': return 'Reply';
     case 'post_like': return 'View post';
     default: return isModeration(n) ? 'View details' : 'Open';

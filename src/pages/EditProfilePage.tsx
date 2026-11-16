@@ -21,6 +21,7 @@ const emptyForm = {
   website_url: '',
   github_url: '',
   linkedin_url: '',
+  orcid_url: '',
   experience_level: '',
   availability: '',
 };
@@ -51,6 +52,7 @@ export function EditProfilePage() {
       website_url: profile.website_url ?? '',
       github_url: profile.github_url ?? '',
       linkedin_url: profile.linkedin_url ?? '',
+      orcid_url: profile.orcid_url ?? '',
       experience_level: profile.experience_level ?? '',
       availability: profile.availability ?? '',
     });
@@ -128,6 +130,11 @@ export function EditProfilePage() {
       );
       return;
     }
+    const orcid = form.orcid_url.trim();
+    if (orcid && !/^https:\/\/orcid\.org\/\d{4}-\d{4}-\d{4}-\d{3}[\dX]\/?$/.test(orcid)) {
+      setError('Invalid ORCID link. Use this format: https://orcid.org/0000-0002-1825-0097');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -140,6 +147,7 @@ export function EditProfilePage() {
         website_url: form.website_url.trim() || undefined,
         github_url: form.github_url.trim() || undefined,
         linkedin_url: form.linkedin_url.trim() || undefined,
+        ...(profile.creator_type === 'independent' ? { orcid_url: orcid || null } : {}),
         experience_level: form.experience_level || undefined,
         availability: form.availability || undefined,
         interests,
@@ -216,6 +224,12 @@ export function EditProfilePage() {
           <Field label="Website URL" value={form.website_url} onChange={(v) => set('website_url', v)} placeholder="https://..." />
           <Field label="GitHub URL" value={form.github_url} onChange={(v) => set('github_url', v)} placeholder="https://github.com/..." />
           <Field label="LinkedIn URL" value={form.linkedin_url} onChange={(v) => set('linkedin_url', v)} placeholder={isCompany ? 'https://www.linkedin.com/company/...' : 'https://www.linkedin.com/in/...'} />
+          {profile.creator_type === 'independent' && (
+            <>
+              <Field label="ORCID link" value={form.orcid_url} onChange={(v) => set('orcid_url', v)} placeholder="https://orcid.org/0000-0000-0000-0000" />
+              <p className="-mt-2 text-xs text-slate-500">Independents need a LinkedIn or ORCID link to publish projects and to get verified.</p>
+            </>
+          )}
         </Section>
 
         {/* Experience */}

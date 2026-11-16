@@ -22,13 +22,16 @@ import {
   Star,
   Eye,
   GitCommit,
+  ThumbsUp,
+  BadgeCheck,
 } from 'lucide-react';
 import { fetchProjectBySlug, fetchProfileStats, createApplication, checkExistingApplication, fetchProjectMembers, updateMemberRole, removeProjectMember } from '@/services/api';
 import { ProjectTasks } from '@/components/projects/tasks/ProjectTasks';
 import { useProjectTasks } from '@/components/projects/tasks/useProjectTasks';
 import '@/components/projects/tasks/project-page.css';
 import { TeamOnlyYouNote } from '@/components/teams/TeamOnlyYouNote';
-import { activeTeamMembers } from '@/services/api';
+import { activeTeamMembers, isVerifiedIndependent } from '@/services/api';
+import { RecommendProjectDialog, ReportButton } from '@/components/independent/IndependentDialogs';
 import { notify } from '@/utils/notify';
 import type { Project, ProjectMember } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
@@ -84,6 +87,7 @@ export function ProjectDetailPage() {
   const tasks = taskApi.tasks;
 
   const [reloadKey, setReloadKey] = useState(0);
+  const [recommendOpen, setRecommendOpen] = useState(false);
   useEffect(() => {
     if (!slug) return;
     setLoading(true);
@@ -225,6 +229,10 @@ export function ProjectDetailPage() {
   };
 
   const dashboardPath = profile ? getDashboardPath(profile.creator_type) : '/';
+  // Part C: Independents never join; only students join an Independent's project
+  const viewerIsIndependent = profile?.creator_type === 'independent';
+  const ownerIsIndependent = owner?.creator_type === 'independent';
+  const cannotJoin = !!profile && !isOwner && !isMember && (viewerIsIndependent || (ownerIsIndependent && profile.creator_type !== 'student'));
   const created = new Date(project.published_at ?? project.created_at).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' });
 
   /* One action row under the header: the only place for these actions. */
@@ -241,6 +249,10 @@ export function ProjectDetailPage() {
         <span className="w-pd-note">Completed showcase</span>
       ) : alreadyApplied ? (
         <span className="w-pd-note amber">Application submitted</span>
+      ) : viewerIsIndependent ? (
+        <button type="button" className="w-btn-d" onClick={() => setRecommendOpen(true)}><ThumbsUp size={15} /> Recommend to a student</button>
+      ) : cannotJoin ? (
+        <span className="w-pd-note">Only students can join this project</span>
       ) : (
         <button type="button" className="w-btn-d" onClick={handleJoin}>
           <Sparkles size={15} /> {openRoles.length > 0 ? `Apply to join (${openRoles.length} role${openRoles.length !== 1 ? 's' : ''})` : 'Apply to join'}
@@ -249,6 +261,7 @@ export function ProjectDetailPage() {
       {project.demo_url && <a href={project.demo_url} target="_blank" rel="noopener noreferrer" className="w-btn-l"><Play size={15} /> Demo</a>}
       {project.repo_url && <a href={project.repo_url} target="_blank" rel="noopener noreferrer" className="w-btn-l"><GitBranch size={15} /> Repository</a>}
       {!isOwner && <button type="button" className="w-btn-l" onClick={contactTeam}><Send size={15} /> Contact team</button>}
+      {!isOwner && ownerIsIndependent && profile && <ReportButton reporterId={profile.id} target={{ projectId: project.id }} />}
       <button type="button" className={`w-btn-l w-star${starred ? ' on' : ''}`} onClick={toggleStar} aria-pressed={starred}>
         <Star size={15} fill={starred ? 'currentColor' : 'none'} /> {starred ? 'Starred' : 'Star'}
       </button>
@@ -330,6 +343,7 @@ export function ProjectDetailPage() {
         </div>
       )}
       {actions}
+      {recommendOpen && profile && <RecommendProjectDialog fromId={profile.id} projectId={project.id} projectTitle={project.title} onClose={() => setRecommendOpen(false)} />}
       {isOwner && <div className="mb-4"><TeamOnlyYouNote project={project} onSwitched={() => setReloadKey((k) => k + 1)} /></div>}
 
       <div className="pd-tabs" role="tablist">
@@ -385,7 +399,9 @@ export function ProjectDetailPage() {
                   {owner && (
                     <div className="flex items-center justify-between gap-3">
                       <span className="flex items-center gap-2 text-xs text-slate-500"><Users size={14} /> Owner</span>
-                      <Link to={`/creators/${owner.handle}`} className="text-sm font-medium text-right link-accent">{owner.display_name}</Link>
+                      <Link to={`/creators/${owner.handle}`} className="text-sm font-medium text-right link-accent">
+                        {owner.display_name}{isVerifiedIndependent(owner) && <BadgeCheck size={13} className="ml-1 inline text-accent-400" aria-label="Verified Independent" />}
+                      </Link>
                     </div>
                   )}
                   {project.license && <MetaRow icon={<CheckCircle2 size={14} />} label="License" value={project.license} />}
@@ -421,6 +437,9 @@ export function ProjectDetailPage() {
         )}
 
         {/* TASKS: the one place for everything task-related */}
+        {tab === 'tk' && ownerIsIndependent && !isVerifiedIndependent(owner) && (
+          <p className="pub-note mb-3">Tasks approved here are approved by the project owner — not WebLoop-verified. They count as verified once WebLoop approves {owner?.display_name ?? 'the owner'}.</p>
+        )}
         {tab === 'tk' && (
           <ProjectTasks
             api={taskApi}

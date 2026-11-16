@@ -1,6 +1,6 @@
-export type CreatorType = 'student' | 'company' | 'university';
+export type CreatorType = 'student' | 'company' | 'university' | 'independent';
 export type ProjectStatus = 'draft' | 'published' | 'recruiting' | 'in_progress' | 'completed' | 'archived';
-export type ProjectType = 'student' | 'company' | 'university' | 'open_source';
+export type ProjectType = 'student' | 'company' | 'university' | 'open_source' | 'independent' | 'research';
 export type Compensation = 'paid' | 'unpaid_educational' | 'open_source';
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
 
@@ -22,6 +22,11 @@ export interface Profile {
   website_url: string | null;
   github_url: string | null;
   linkedin_url: string | null;
+  /** Independent accounts (migration 027). */
+  orcid_url?: string | null;
+  independent_verified_at?: string | null;
+  independent_verification_requested_at?: string | null;
+  independent_verification_note?: string | null;
   experience_level: string | null;
   availability: string | null;
   interests: string[] | null;
@@ -275,6 +280,10 @@ export type NotificationType =
   | 'application_declined'
   | 'invitation_accepted'
   | 'team_invitation'
+  | 'recommendation'
+  | 'skill_endorsed'
+  | 'independent_verified'
+  | 'independent_declined'
   | 'post_comment'
   | 'post_like'
   | 'post_removed'

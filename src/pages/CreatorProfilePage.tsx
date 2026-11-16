@@ -57,6 +57,8 @@ import { MyPostsSection } from '@/features/feed/components/MyPostsSection';
 import { checkIsAdmin } from '@/features/feed/services/feedApi';
 import { TeamList } from '@/components/teams/ProfileTeams';
 import { useProfileTeams } from '@/components/teams/teamUtils';
+import { EndorsementList, ProfileIndependentActions, VerifiedIndependentBadge } from '@/components/independent/ProfileIndependentBits';
+import { useEndorsements } from '@/components/independent/useEndorsements';
 
 const ContributionGrid = lazy(() =>
   import('@/components/contributions').then((m) => ({ default: m.ContributionGrid })),
@@ -77,6 +79,8 @@ export function CreatorProfilePage() {
   const [noPostsFor, setNoPostsFor] = useState<string | null>(null);
   const profileId = profile?.id ?? null;
   const teams = useProfileTeams(profile?.creator_type === 'student' ? profile.id : undefined);
+  const endorsements = useEndorsements(profile?.creator_type === 'student' ? profile.id : undefined);
+  const endorsedByMe = endorsements.list.filter((e) => e.from_profile === myProfile?.id).map((e) => e.skill);
   const onPostsLoaded = useCallback((count: number) => setNoPostsFor(count === 0 ? profileId : null), [profileId]);
   const [stats, setStats] = useState({ avg: 0, count: 0 });
   const [contributions, setContributions] = useState({ total: 0, approved: 0 });
@@ -241,6 +245,7 @@ export function CreatorProfilePage() {
               <WAvatar name={profile.display_name} src={profile.avatar_url} size={64} />
               <div className="min-w-0">
                 <h1>{profile.display_name}{profile.verified && <CheckCircle2 size={18} className="w-pf-ok" aria-label="Verified" />}</h1>
+                <VerifiedIndependentBadge profile={profile} />
                 <p>{[
                   profile.major ?? creatorTypeLabel[profile.creator_type],
                   `${publishedProjects.length} project${publishedProjects.length !== 1 ? 's' : ''}`,
@@ -255,6 +260,9 @@ export function CreatorProfilePage() {
                 <Link to="/settings/profile" className="w-btn-l"><Sparkles size={14} /> Edit profile</Link>
               ) : (
                 <button type="button" className="w-btn-d" onClick={handleContact}><Mail size={14} /> Message</button>
+              )}
+              {!isOwner && (
+                <ProfileIndependentActions viewed={profile} viewer={myProfile} endorsedByMe={endorsedByMe} onEndorsed={endorsements.reload} />
               )}
             </div>
           </header>
@@ -278,6 +286,11 @@ export function CreatorProfilePage() {
                   </div>
                 )}
               </WBox>
+              {endorsements.list.length > 0 && (
+                <WBox title="Skill endorsements" meta="From Independents">
+                  <EndorsementList list={endorsements.list} />
+                </WBox>
+              )}
               {teams.length > 0 && (
                 <WBox title="Teams" meta={`${teams.length}`}>
                   <TeamList teams={teams} ownerId={profile.id} />
@@ -338,6 +351,7 @@ export function CreatorProfilePage() {
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="pf-name">{profile.display_name}</h1>
                 {profile.verified && <CheckCircle2 size={18} className="text-accent-400 shrink-0" />}
+                <VerifiedIndependentBadge profile={profile} />
               </div>
               {profile.major && <p className="mt-0.5 text-sm font-semibold text-slate-200">{profile.major}</p>}
               <div className="pf-meta mt-2 flex flex-wrap items-center gap-2 text-xs">
@@ -396,6 +410,9 @@ export function CreatorProfilePage() {
                 <Mail size={14} /> Message
               </Button>
             )}
+            {!isOwner && (
+              <ProfileIndependentActions viewed={profile} viewer={myProfile} endorsedByMe={endorsedByMe} onEndorsed={endorsements.reload} buttonClass="btn btn-ghost btn-sm" />
+            )}
             {profile.website_url && (
               <a
                 href={profile.website_url}
@@ -444,6 +461,12 @@ export function CreatorProfilePage() {
             <ContributionGrid studentId={profile.id} size="full" />
           </Suspense>
         </div>
+      )}
+      {endorsements.list.length > 0 && (
+        <section className="surface pf-card mt-6 p-5" aria-labelledby="pf-endorse">
+          <h2 id="pf-endorse" className="pf-h4 mb-3">Skill endorsements</h2>
+          <EndorsementList list={endorsements.list} />
+        </section>
       )}
       {teams.length > 0 && (
         <section className="surface pf-card mt-6 p-5" aria-labelledby="pf-teams">

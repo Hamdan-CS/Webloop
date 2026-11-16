@@ -770,7 +770,8 @@ html.light .home-redesign .hr-btn.primary { background: #0a6c8f; color: #fff; }
    icon-prefixed inputs, laptop mockup illustration)
    ============================================================ */
 .auth2 { display: flex; flex-direction: column; gap: 20px; }
-.roles { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.roles { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 1280px) { .roles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .role-card {
   position: relative; display: grid; grid-template-columns: auto 1fr auto; column-gap: 14px; row-gap: 6px;
   align-items: start; width: 100%; text-align: left; height: 100%; padding: 20px 22px 22px; border-radius: 18px;
@@ -863,7 +864,7 @@ html.light .home-redesign .hr-btn.primary { background: #0a6c8f; color: #fff; }
 .role-card b { font-weight: 500; color: var(--ink); }
 .role-card .role-desc { color: var(--graphite); }
 .role-card .rad { border-color: #c9dcf2; }
-.r-s { --rc: var(--iris); --rbg: var(--g-aqua); } .r-c { --rc: #7c3aed; --rbg: var(--g-violet); } .r-u { --rc: var(--ok-hex); --rbg: linear-gradient(#ecfbf3, #c9f1dc); }
+.r-s { --rc: var(--iris); --rbg: var(--g-aqua); } .r-c { --rc: #7c3aed; --rbg: var(--g-violet); } .r-u { --rc: var(--ok-hex); --rbg: linear-gradient(#ecfbf3, #c9f1dc); } .r-i { --rc: #d97706; --rbg: linear-gradient(#fff8e6, #ffe7b0); }
 .role-card.on { background: var(--rbg); border-color: transparent; box-shadow: 0 0 0 2px var(--rc); }
 .role-card .ri { background: rgba(255, 255, 255, .7); }
 .auth-get { background: var(--g-aqua); }

@@ -9,6 +9,8 @@ export const ALLOWED_PROJECT_TYPES: Record<CreatorType, ProjectType[]> = {
   student: ['student', 'open_source'],
   company: ['company', 'open_source'],
   university: ['university', 'open_source'],
+  // Independents (Part C): their own, research or open-source projects; never paid
+  independent: ['independent', 'research', 'open_source'],
 };
 
 /** Which compensation options an account is allowed to offer. Paying contributors is a
@@ -17,6 +19,7 @@ export const ALLOWED_COMPENSATIONS: Record<CreatorType, Compensation[]> = {
   student: ['unpaid_educational', 'open_source'],
   company: ['paid', 'unpaid_educational', 'open_source'],
   university: ['paid', 'unpaid_educational', 'open_source'],
+  independent: ['unpaid_educational', 'open_source'],
 };
 
 export function getDashboardPath(role: CreatorType): string {
@@ -25,6 +28,8 @@ export function getDashboardPath(role: CreatorType): string {
       return '/dashboard/company';
     case 'university':
       return '/dashboard/university';
+    case 'independent':
+      return '/dashboard/independent';
     case 'student':
     default:
       return '/dashboard/student';
@@ -37,6 +42,8 @@ export function getDashboardLabel(role: CreatorType): string {
       return 'Company Dashboard';
     case 'university':
       return 'University Dashboard';
+    case 'independent':
+      return 'Independent Dashboard';
     case 'student':
     default:
       return 'Student Dashboard';

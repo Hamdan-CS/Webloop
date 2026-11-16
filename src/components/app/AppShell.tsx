@@ -184,7 +184,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     ...projects.slice(0, 8).map((p) => ({ label: `Open ${p.title}`, hint: 'Project', run: () => navigate(`/projects/${p.slug}`) })),
     { label: 'Student work', hint: 'Page', run: () => navigate('/gallery') },
     { label: 'Companies', hint: 'Page', run: () => navigate('/companies') },
-    ...(profile?.creator_type !== 'company' ? [{ label: 'My applications', hint: 'Page', run: () => navigate('/my-applications') }] : []),
+    ...(profile?.creator_type !== 'company' && profile?.creator_type !== 'independent' ? [{ label: 'My applications', hint: 'Page', run: () => navigate('/my-applications') }] : []),
     { label: 'My invitations', hint: 'Page', run: () => navigate('/my-invitations') },
     { label: 'Settings', hint: 'Page', run: () => navigate('/settings') },
     ...(isAdmin ? [{ label: 'Moderation queue', hint: 'Admin', run: () => navigate('/admin/moderation') }] : []),

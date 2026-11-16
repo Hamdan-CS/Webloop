@@ -381,6 +381,21 @@ function slugify(text: string): string {
     .slice(0, 80);
 }
 
+/** Readable messages for the Independent publishing rules (migration 027). */
+const PROJECT_RULES: Record<string, string> = {
+  EMAIL_NOT_CONFIRMED: 'Confirm your email address before publishing a project.',
+  NEEDS_LINKEDIN_OR_ORCID: 'Add your LinkedIn or ORCID link in Settings → Profile before publishing.',
+  INDEPENDENT_PROJECT_LIMIT: 'You can have 3 open projects until WebLoop approves your account. Close one or ask to get verified.',
+  INDEPENDENT_NO_PAID: 'Independent projects are unpaid/educational or open-source only.',
+  INDEPENDENT_PROJECT_TYPE: 'Choose Independent, Research or Open-source as the project type.',
+  NOT_TEAM_MEMBER: "You can only use a team you're an active member of.",
+  CANNOT_JOIN_PROJECT: "This account can't join that project.",
+};
+export function projectRuleMessage(raw: string): string {
+  const key = Object.keys(PROJECT_RULES).find((k) => raw.includes(k));
+  return key ? PROJECT_RULES[key] : raw;
+}
+
 export async function createProject(
   profileId: string,
   input: CreateProjectInput,
@@ -419,7 +434,7 @@ export async function createProject(
     .select('*')
     .single();
 
-  if (error) throw error;
+  if (error) throw new Error(projectRuleMessage(error.message));
   const project = data as unknown as Project;
 
   // Insert skills
@@ -518,6 +533,7 @@ export async function updateProfile(
     website_url?: string;
     github_url?: string;
     linkedin_url?: string;
+    orcid_url?: string | null;
     experience_level?: string;
     availability?: string;
     interests?: string[];
@@ -1315,4 +1331,154 @@ export async function searchStudents(query: string, excludeIds: string[] = []): 
 export async function setProjectTeam(projectId: string, teamId: string | null): Promise<void> {
   const { error } = await supabase.from('projects').update({ team_id: teamId }).eq('id', projectId);
   if (error) throw teamError(error);
+}
+
+// ============================================================
+// Independent accounts (Part C, migration 027)
+// ============================================================
+
+const INDEPENDENT_ERRORS: Record<string, string> = {
+  NEEDS_LINKEDIN_OR_ORCID: 'Add your LinkedIn or ORCID link in Settings → Profile first.',
+  NOTE_TOO_SHORT: 'Write a short note about who you are (at least 10 characters).',
+  ONLY_INDEPENDENTS: 'Only Independent accounts can do that.',
+  RECIPIENT_MUST_BE_STUDENT: 'Projects can only be recommended to students.',
+  RECIPIENT_MUST_BE_COMPANY: 'Students can only be recommended to companies.',
+  MUST_RECOMMEND_A_STUDENT: 'Only students can be recommended to companies.',
+  NOT_ADMIN: 'Admins only.',
+};
+function indepError(error: { message: string; code?: string }): Error {
+  if (error.code === '23505') return new Error('You already endorsed this skill.');
+  const key = Object.keys(INDEPENDENT_ERRORS).find((k) => error.message.includes(k));
+  return new Error(key ? INDEPENDENT_ERRORS[key] : error.message);
+}
+
+/** Approved by WebLoop ("Verified Independent"). */
+export const isVerifiedIndependent = (p?: Pick<Profile, 'creator_type' | 'independent_verified_at'> | null): boolean =>
+  !!p && p.creator_type === 'independent' && !!p.independent_verified_at;
+
+export async function requestIndependentVerification(note: string): Promise<void> {
+  const { error } = await supabase.rpc('request_independent_verification', { p_note: note });
+  if (error) throw indepError(error);
+}
+
+export interface Recommendation {
+  id: string;
+  from_profile: string;
+  to_profile: string;
+  about_profile: string | null;
+  project_id: string | null;
+  kind: 'project_to_student' | 'student_to_company';
+  note: string | null;
+  created_at: string;
+  to?: Profile | null;
+  about?: Profile | null;
+  project?: { title: string; slug: string } | null;
+}
+
+export async function recommendProjectToStudent(fromId: string, studentId: string, projectId: string, note?: string): Promise<void> {
+  const { error } = await supabase.from('recommendations').insert({ from_profile: fromId, to_profile: studentId, project_id: projectId, kind: 'project_to_student', note: note?.trim() || null });
+  if (error) throw indepError(error);
+}
+
+export async function recommendStudentToCompany(fromId: string, companyId: string, studentId: string, note?: string): Promise<void> {
+  const { error } = await supabase.from('recommendations').insert({ from_profile: fromId, to_profile: companyId, about_profile: studentId, kind: 'student_to_company', note: note?.trim() || null });
+  if (error) throw indepError(error);
+}
+
+export async function fetchRecommendationsMade(fromId: string): Promise<Recommendation[]> {
+  const { data, error } = await supabase
+    .from('recommendations')
+    .select('*, to:profiles!recommendations_to_profile_fkey(*), about:profiles!recommendations_about_profile_fkey(*), project:projects(title, slug)')
+    .eq('from_profile', fromId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as Recommendation[];
+}
+
+export interface SkillEndorsement {
+  id: string;
+  from_profile: string;
+  to_profile: string;
+  skill: string;
+  created_at: string;
+  from?: Profile | null;
+  to?: Profile | null;
+}
+
+export async function endorseSkill(fromId: string, studentId: string, skill: string): Promise<void> {
+  const { error } = await supabase.from('skill_endorsements').insert({ from_profile: fromId, to_profile: studentId, skill: skill.trim() });
+  if (error) throw indepError(error);
+}
+
+export async function fetchEndorsementsFor(studentId: string): Promise<SkillEndorsement[]> {
+  const { data, error } = await supabase
+    .from('skill_endorsements')
+    .select('*, from:profiles!skill_endorsements_from_profile_fkey(id, display_name, handle, avatar_url, creator_type, independent_verified_at)')
+    .eq('to_profile', studentId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as SkillEndorsement[];
+}
+
+export async function fetchEndorsementsGiven(fromId: string): Promise<SkillEndorsement[]> {
+  const { data, error } = await supabase
+    .from('skill_endorsements')
+    .select('*, to:profiles!skill_endorsements_to_profile_fkey(id, display_name, handle, avatar_url)')
+    .eq('from_profile', fromId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as SkillEndorsement[];
+}
+
+/** Companies by name or @handle (for "Recommend to a company"). */
+export async function searchCompanies(query: string): Promise<Profile[]> {
+  const term = query.trim().replace(/^@/, '').replace(/[%,()]/g, '');
+  if (term.length < 2) return [];
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('creator_type', 'company')
+    .or(`display_name.ilike.%${term}%,handle.ilike.%${term}%`)
+    .limit(8);
+  if (error) throw error;
+  return (data ?? []) as Profile[];
+}
+
+export async function reportContent(reporterId: string, target: { projectId?: string; profileId?: string }, reason: string): Promise<void> {
+  const { error } = await supabase.from('content_reports').insert({
+    reporter_id: reporterId,
+    project_id: target.projectId ?? null,
+    profile_id: target.projectId ? null : target.profileId ?? null,
+    reason: reason.trim() || null,
+  });
+  if (error) throw error;
+}
+
+export interface IndependentRequest {
+  profile_id: string; display_name: string; handle: string; avatar_url: string | null;
+  linkedin_url: string | null; orcid_url: string | null; note: string | null; requested_at: string;
+}
+export async function adminListIndependentRequests(): Promise<IndependentRequest[]> {
+  const { data, error } = await supabase.rpc('admin_list_independent_requests');
+  if (error) throw indepError(error);
+  return (data ?? []) as IndependentRequest[];
+}
+export async function adminVerifyIndependent(profileId: string, approve: boolean): Promise<void> {
+  const { error } = await supabase.rpc('admin_verify_independent', { p_profile_id: profileId, p_approve: approve });
+  if (error) throw indepError(error);
+}
+
+export interface ContentReport {
+  id: string; reason: string | null; created_at: string; reporter_name: string;
+  project_id: string | null; project_title: string | null; project_slug: string | null;
+  profile_id: string | null; profile_name: string | null; profile_handle: string | null;
+}
+export async function adminListContentReports(): Promise<ContentReport[]> {
+  const { data, error } = await supabase.rpc('admin_list_content_reports');
+  if (error) throw indepError(error);
+  return (data ?? []) as ContentReport[];
+}
+export async function adminResolveContentReport(reportId: string): Promise<void> {
+  const { error } = await supabase.rpc('admin_resolve_content_report', { p_report_id: reportId });
+  if (error) throw indepError(error);
 }

@@ -42,6 +42,7 @@ const BuildProfilePage = lazy(() => import('@/pages/BuildProfilePage').then((m) 
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
 const StudentDashboard = lazy(() => import('@/pages/dashboards/StudentDashboard').then((m) => ({ default: m.StudentDashboard })));
 const CompanyDashboard = lazy(() => import('@/pages/dashboards/CompanyDashboard').then((m) => ({ default: m.CompanyDashboard })));
+const IndependentDashboard = lazy(() => import('@/pages/dashboards/IndependentDashboard').then((m) => ({ default: m.IndependentDashboard })));
 const UniversityDashboard = lazy(() => import('@/pages/dashboards/UniversityDashboard').then((m) => ({ default: m.UniversityDashboard })));
 
 /**
@@ -179,6 +180,7 @@ function App() {
                   <Route path="/dashboard/student" element={<RoleRoute allowed={['student']}><StudentDashboard /></RoleRoute>} />
                   <Route path="/dashboard/company" element={<RoleRoute allowed={['company']}><CompanyDashboard /></RoleRoute>} />
                   <Route path="/dashboard/university" element={<RoleRoute allowed={['university']}><UniversityDashboard /></RoleRoute>} />
+                  <Route path="/dashboard/independent" element={<RoleRoute allowed={['independent']}><IndependentDashboard /></RoleRoute>} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </PageTransition>

@@ -34,7 +34,8 @@ const statusClass: Partial<Record<ProjectStatus, string>> = {
 };
 
 const ownerRole = (t: Project['project_type']) =>
-  t === 'company' ? 'Company' : t === 'university' ? 'University' : t === 'open_source' ? 'Open source' : 'Student';
+  t === 'company' ? 'Company' : t === 'university' ? 'University' : t === 'open_source' ? 'Open source'
+    : t === 'independent' || t === 'research' ? 'Independent' : 'Student';
 
 export function ProjectCard({ project, selected, onClick, manage }: ProjectCardProps) {
   const owner = project.owner;
@@ -95,7 +96,7 @@ export function ProjectCard({ project, selected, onClick, manage }: ProjectCardP
               {owner && <Avatar src={owner.avatar_url} name={owner.display_name} className="!h-[34px] !w-[34px]" />}
               <div>
                 {owner?.display_name}
-                <small>{ownerRole(project.project_type)}</small>
+                <small>{owner?.creator_type === 'independent' ? (owner.independent_verified_at ? 'Verified Independent' : 'Independent') : ownerRole(project.project_type)}</small>
               </div>
             </div>
           )}
