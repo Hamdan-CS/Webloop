@@ -170,7 +170,9 @@ export function PublishProjectPage() {
     bar.style.width = `${on.offsetWidth}px`;
     bar.style.transform = `translateX(${on.offsetLeft}px)`;
   }, []);
-  useLayoutEffect(placeBar, [step, placeBar]);
+  // the step list only mounts once the user and profile are loaded, so re-measure then too
+  const formShown = !!(user && profile);
+  useLayoutEffect(placeBar, [step, placeBar, formShown]);
   useEffect(() => {
     let alive = true;
     window.addEventListener('resize', placeBar);
