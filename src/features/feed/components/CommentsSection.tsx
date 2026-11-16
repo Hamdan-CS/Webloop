@@ -1,3 +1,5 @@
+import { VerifiedBadge } from '@/components/shared/ui/VerifiedBadge';
+import { useIsOfficial } from '@/hooks/useOfficialIds';
 import { useState } from 'react';
 import { Send, Trash2 } from 'lucide-react';
 import { Avatar } from '@/components/shared/ui/Avatar';
@@ -18,6 +20,7 @@ interface CommentsSectionProps {
 
 export function CommentsSection({ post, viewerProfileId, isGuest, expanded, onToggle, onRequireAuth, onCommentCountChange }: CommentsSectionProps) {
   const [comments, setComments] = useState<Comment[] | null>(null);
+  const isOfficial = useIsOfficial();
   const [loading, setLoading] = useState(false);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
@@ -59,9 +62,10 @@ export function CommentsSection({ post, viewerProfileId, isGuest, expanded, onTo
     <div className="border-t border-white/5 px-5 py-3">
       {!expanded && post.top_comment && (
         <button type="button" onClick={expand} className="flex w-full items-start gap-2 text-left text-sm">
-          <Avatar src={post.top_comment.author?.avatar_url} name={post.top_comment.author?.display_name ?? '?'} size="xs" />
+          <Avatar src={post.top_comment.author?.avatar_url} name={post.top_comment.author?.display_name ?? '?'} size="xs" official={isOfficial(post.top_comment.author_id)} />
           <span className="text-slate-300">
-            <span className="font-medium text-white">{post.top_comment.author?.display_name}</span>{' '}
+            <span className="font-medium text-white">{post.top_comment.author?.display_name}</span>
+            {isOfficial(post.top_comment.author_id) && <VerifiedBadge size={12} label className="ml-1" />}{' '}
             {post.top_comment.body}
           </span>
         </button>
@@ -77,10 +81,11 @@ export function CommentsSection({ post, viewerProfileId, isGuest, expanded, onTo
           {loading && <p className="text-xs text-slate-500">Loading comments…</p>}
           {comments?.map((c) => (
             <div key={c.id} className="flex items-start gap-2 text-sm">
-              <Avatar src={c.author?.avatar_url} name={c.author?.display_name ?? '?'} size="xs" />
+              <Avatar src={c.author?.avatar_url} name={c.author?.display_name ?? '?'} size="xs" official={isOfficial(c.author_id)} />
               <div className="flex-1">
                 <p className="text-slate-300">
-                  <span className="font-medium text-white">{c.author?.display_name}</span> {c.body}
+                  <span className="font-medium text-white">{c.author?.display_name}</span>
+                  {isOfficial(c.author_id) && <VerifiedBadge size={12} label className="ml-1" />} {c.body}
                 </p>
                 <p className="text-[11px] text-slate-500">
                   {relativeDate(c.created_at)}

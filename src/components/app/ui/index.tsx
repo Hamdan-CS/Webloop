@@ -1,3 +1,4 @@
+import { WebLoopMark } from '@/components/shared/ui/VerifiedBadge';
 import { useId, useMemo, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -50,10 +51,10 @@ export function WPageHeader({ title, subtitle, actions }: { title: ReactNode; su
 }
 
 /* ---------- avatar (.av, pastel initials or image) ---------- */
-export function WAvatar({ name, src, size = 32, className }: { name: string; src?: string | null; size?: number; className?: string }) {
+export function WAvatar({ name, src, size = 32, className, official }: { name: string; src?: string | null; size?: number; className?: string; official?: boolean }) {
   return (
-    <span className={cn('w-av', className)} style={{ width: size, height: size, background: src ? undefined : toneFor(name), fontSize: Math.max(10, size * 0.34) }} title={name}>
-      {src ? <img src={src} alt={name} loading="lazy" /> : initialsOf(name)}
+    <span className={cn('w-av', className)} style={{ width: size, height: size, background: src || official ? undefined : toneFor(name), fontSize: Math.max(10, size * 0.34) }} title={name}>
+      {official ? <WebLoopMark /> : src ? <img src={src} alt={name} loading="lazy" /> : initialsOf(name)}
     </span>
   );
 }

@@ -1,3 +1,5 @@
+import { VerifiedBadge, WebLoopMark } from '@/components/shared/ui/VerifiedBadge';
+import { useIsOfficial } from '@/hooks/useOfficialIds';
 import { useEffect, useRef, useState } from 'react';
 import {
   BadgeCheck,
@@ -31,14 +33,13 @@ import type { Post } from '../types';
 /* Card styled after Abbas's design demo (webloop-posts-demo.html: .post,
    .acts). Colours are the feed-only --feed-* variables in index.css. */
 
-/** Avatar colour by role (demo values); the official WebLoop account is teal. */
+/** Avatar colour by role (demo values). The official WebLoop account shows the WebLoop mark. */
 const ROLE_COLOR: Record<CreatorType, string> = {
   student: '#6d5bd0',
   company: '#2563eb',
   university: '#b45309',
   independent: '#475569',
 };
-const OFFICIAL_HANDLES = new Set(['webloop']);
 
 const initials = (name: string) =>
   name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || '?';
@@ -92,13 +93,14 @@ export function PostCard({
   const menuRef = useRef<HTMLDivElement>(null);
   const author = post.author;
   const isPlaying = playingGuideId === post.id;
-  const official = !!author && OFFICIAL_HANDLES.has(author.handle);
+  const isOfficial = useIsOfficial();
+  const official = isOfficial(author?.id);
   // the guest feed (get_guest_feed) doesn't send every counter: default to 0
   const likes = post.like_count ?? 0;
   const comments = post.comment_count ?? 0;
   const tries = post.try_count ?? 0;
   const views = post.view_count ?? 0;
-  const roleLine = official ? 'Official' : author ? creatorTypeLabel[author.creator_type] : '';
+  const roleLine = official ? 'WebLoop team' : author ? creatorTypeLabel[author.creator_type] : '';
   const avatarBg = official ? 'var(--feed-teal)' : author ? ROLE_COLOR[author.creator_type] : 'var(--feed-faint)';
   const [trying, setTrying] = useState(false);
 
@@ -191,12 +193,12 @@ export function PostCard({
 
       <div className="fp-ph">
         <div className="fp-av" style={{ background: avatarBg }} aria-hidden="true">
-          {author?.avatar_url ? <img src={author.avatar_url} alt="" /> : initials(author?.display_name ?? '?')}
+          {official ? <WebLoopMark /> : author?.avatar_url ? <img src={author.avatar_url} alt="" /> : initials(author?.display_name ?? '?')}
         </div>
         <div className="min-w-0">
           <div className="fp-name">
             <span>{author?.display_name}</span>
-            {(post.is_verified || official) && <BadgeCheck aria-label="Verified" />}
+            {official ? <VerifiedBadge size={15} label /> : post.is_verified && <BadgeCheck aria-label="Verified" />}
           </div>
           <div className="fp-sub">
             {roleLine} · {relativeDate(post.created_at)}

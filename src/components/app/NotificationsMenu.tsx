@@ -1,3 +1,5 @@
+import { VerifiedBadge } from '@/components/shared/ui/VerifiedBadge';
+import { useIsOfficial } from '@/hooks/useOfficialIds';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Check, CheckCheck, Reply } from 'lucide-react';
@@ -32,6 +34,7 @@ export function NotificationsMenu({ anchorRef, onClose }: { anchorRef: RefObject
   const pip = usePip();
   const { conversations, groups, markConversationRead, markGroupConversationRead, requestChat } = useMessagesData();
   const navigate = useNavigate();
+  const isOfficial = useIsOfficial();
   const menuRef = useRef<HTMLDivElement>(null);
   const [items, setItems] = useState<Notification[] | null>(null);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
@@ -207,10 +210,10 @@ export function NotificationsMenu({ anchorRef, onClose }: { anchorRef: RefObject
           </div>
         ) : (
           <div key={`m-${r.c.other.id}`} className={cn('w-nt-row w-nt-msg', r.unread && 'unread')}>
-            <WAvatar name={r.c.other.display_name} src={r.c.other.avatar_url} size={28} />
+            <WAvatar name={r.c.other.display_name} src={r.c.other.avatar_url} size={28} official={isOfficial(r.c.other.id)} />
             <div className="w-nt-body">
               <p>
-                <b>{r.c.other.display_name}</b>{' '}
+                <b>{r.c.other.display_name}</b>{isOfficial(r.c.other.id) && <VerifiedBadge size={12} label className="ml-1" />}{' '}
                 {r.unread ? `sent you ${r.c.unreadCount} message${r.c.unreadCount === 1 ? '' : 's'}` : 'messages read'}
               </p>
               {r.c.lastMessage.body && <p className="w-nt-prev">{r.c.lastMessage.body}</p>}

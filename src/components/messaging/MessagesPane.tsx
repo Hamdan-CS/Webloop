@@ -1,3 +1,5 @@
+import { VerifiedBadge } from '@/components/shared/ui/VerifiedBadge';
+import { useIsOfficial } from '@/hooks/useOfficialIds';
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Plus, Inbox, AlertCircle } from 'lucide-react';
@@ -37,6 +39,7 @@ const viewVariants = {
  */
 export function MessagesPane({ profileId, myProfile, initialChatId = null, onChatChange }: Props) {
   const { conversations, groups, loading, error, markConversationRead, refresh, pendingChatId, requestChat } = useMessagesData();
+  const isOfficial = useIsOfficial();
   // group chats (Part E) open here too; their chat id is g:<conversation id>
   const [groupId, setGroupId] = useState<string | null>(parseGroupChatId(initialChatId));
   const selectedGroup = groupId ? groups.find((g) => g.conversation_id === groupId) ?? null : null;
@@ -243,10 +246,11 @@ export function MessagesPane({ profileId, myProfile, initialChatId = null, onCha
                       )}
                     >
                       <div className="flex items-center gap-2.5">
-                        <Avatar src={c.other.avatar_url} name={c.other.display_name} size="sm" />
+                        <Avatar src={c.other.avatar_url} name={c.other.display_name} size="sm" official={isOfficial(c.other.id)} />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <span className="truncate text-xs font-medium text-white">{c.other.display_name}</span>
+                            {isOfficial(c.other.id) && <VerifiedBadge size={12} label />}
                             {c.unreadCount > 0 && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent-400" />}
                           </div>
                           <p className="text-[10px] text-slate-500">{relativeDate(c.lastMessage.created_at)}</p>

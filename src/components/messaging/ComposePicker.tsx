@@ -1,3 +1,5 @@
+import { VerifiedBadge } from '@/components/shared/ui/VerifiedBadge';
+import { useIsOfficial } from '@/hooks/useOfficialIds';
 import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { fetchProfileProjects, fetchProjectMembers } from '@/services/api';
@@ -18,6 +20,7 @@ export function ComposePicker({
   const [projects, setProjects] = useState<Project[]>([]);
   const [members, setMembers] = useState<Record<string, { profile: Profile; role: string | null }[]>>({});
   const [loading, setLoading] = useState(true);
+  const isOfficial = useIsOfficial();
 
   useEffect(() => {
     (async () => {
@@ -74,8 +77,9 @@ export function ComposePicker({
                       onClick={() => onPick(profile, p.id, p.title)}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-white/8 bg-white/[0.03] px-2.5 py-1.5 text-xs text-slate-300 hover:border-accent-400/30 hover:text-white transition-colors"
                     >
-                      <Avatar src={profile.avatar_url} name={profile.display_name} size="xs" />
+                      <Avatar src={profile.avatar_url} name={profile.display_name} size="xs" official={isOfficial(profile.id)} />
                       {profile.display_name}
+                      {isOfficial(profile.id) && <VerifiedBadge size={12} />}
                       {role && <span className="text-slate-500">· {role}</span>}
                     </button>
                   ))}

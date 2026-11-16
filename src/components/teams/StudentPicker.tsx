@@ -1,3 +1,5 @@
+import { VerifiedBadge } from '@/components/shared/ui/VerifiedBadge';
+import { useIsOfficial } from '@/hooks/useOfficialIds';
 import { useEffect, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import type { Profile } from '@/types';
@@ -18,6 +20,7 @@ export function StudentPicker({
 }) {
   const [q, setQ] = useState('');
   const [results, setResults] = useState<Profile[]>([]);
+  const isOfficial = useIsOfficial();
   // string key so a new array from the parent each render doesn't re-run the search
   const skip = [...excludeIds, ...picked.map((p) => p.id)].join(',');
 
@@ -55,8 +58,8 @@ export function StudentPicker({
                   className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-slate-200 hover:bg-white/5"
                   onClick={() => { onChange([...picked, p]); setQ(''); setResults([]); }}
                 >
-                  <Avatar src={p.avatar_url} name={p.display_name} size="xs" />
-                  <span className="min-w-0 flex-1 truncate">{p.display_name}</span>
+                  <Avatar src={p.avatar_url} name={p.display_name} size="xs" official={isOfficial(p.id)} />
+                  <span className="min-w-0 flex-1 truncate">{p.display_name}{isOfficial(p.id) && <VerifiedBadge size={12} className="ml-1" />}</span>
                   <span className="shrink-0 text-xs text-slate-500">@{p.handle}</span>
                 </button>
               </li>

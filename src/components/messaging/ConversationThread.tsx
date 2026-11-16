@@ -1,3 +1,5 @@
+import { VerifiedBadge } from '@/components/shared/ui/VerifiedBadge';
+import { useIsOfficial } from '@/hooks/useOfficialIds';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, X, Send, Loader2, UserPlus, Quote, Calendar } from 'lucide-react';
@@ -57,6 +59,8 @@ interface Props {
 export function ConversationThread({ myProfile, otherProfile, projectId, projectTitle, variant, onBack, onClose, headerExtra }: Props) {
   // the shared inbox is live (realtime); when it gets a message from this person we don't have yet, reload the thread
   const { messages: inbox } = useMessagesData();
+  const isOfficial = useIsOfficial();
+  const otherOfficial = isOfficial(otherProfile.id);
   const latestFromOther = useMemo(
     () => inbox.find((m) => m.sender_id === otherProfile.id && m.recipient_id === myProfile.id)?.id ?? null,
     [inbox, otherProfile.id, myProfile.id],
@@ -160,9 +164,12 @@ export function ConversationThread({ myProfile, otherProfile, projectId, project
             <ArrowLeft size={16} />
           </button>
         )}
-        <Avatar src={otherProfile.avatar_url} name={otherProfile.display_name} size={compact ? 'sm' : 'md'} />
+        <Avatar src={otherProfile.avatar_url} name={otherProfile.display_name} size={compact ? 'sm' : 'md'} official={otherOfficial} />
         <div className="min-w-0 flex-1">
-          <p className={cn('truncate font-medium text-white', compact ? 'text-xs' : 'font-display text-lg font-bold')}>{otherProfile.display_name}</p>
+          <p className={cn('flex items-center gap-1.5 font-medium text-white', compact ? 'text-xs' : 'font-display text-lg font-bold')}>
+            <span className="truncate">{otherProfile.display_name}</span>
+            {otherOfficial && <VerifiedBadge size={compact ? 12 : 16} label />}
+          </p>
           {projectTitle && <p className={cn('truncate text-slate-500', compact ? 'text-[10px]' : 'text-xs')}>re: {projectTitle}</p>}
         </div>
         {canAddTask && (
@@ -196,7 +203,7 @@ export function ConversationThread({ myProfile, otherProfile, projectId, project
             return (
               <div key={gi} className={cn('flex flex-col gap-1', isMine ? 'items-end' : 'items-start')}>
                 <div className="flex items-center gap-1.5 px-1">
-                  <Avatar src={sender.avatar_url} name={sender.display_name} size="xs" />
+                  <Avatar src={sender.avatar_url} name={sender.display_name} size="xs" official={isOfficial(sender.id)} />
                   <span className="text-[10px] text-slate-500">{relativeDate(group.items[group.items.length - 1].created_at)}</span>
                 </div>
                 <div className={cn('flex max-w-[85%] flex-col gap-1', isMine ? 'items-end' : 'items-start')}>

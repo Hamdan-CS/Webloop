@@ -1,3 +1,4 @@
+import { WebLoopMark } from './VerifiedBadge';
 import { cn } from '@/utils/cn';
 
 interface AvatarProps {
@@ -6,6 +7,8 @@ interface AvatarProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   style?: React.CSSProperties;
+  /** Official WebLoop account: show the WebLoop mark instead of the photo/initials. */
+  official?: boolean;
 }
 
 const sizeClass = {
@@ -16,7 +19,7 @@ const sizeClass = {
   xl: 'h-20 w-20 text-lg',
 };
 
-export function Avatar({ src, name, size = 'md', className, style }: AvatarProps) {
+export function Avatar({ src, name, size = 'md', className, style, official }: AvatarProps) {
   const initials = name
     .split(' ')
     .map((w) => w[0])
@@ -32,7 +35,9 @@ export function Avatar({ src, name, size = 'md', className, style }: AvatarProps
       )}
       style={style}
     >
-      {src ? (
+      {official ? (
+        <WebLoopMark />
+      ) : src ? (
         <img src={src} alt={name} className="h-full w-full object-cover" loading="lazy" />
       ) : (
         <span>{initials}</span>

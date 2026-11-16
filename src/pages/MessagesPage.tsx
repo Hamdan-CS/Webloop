@@ -1,3 +1,5 @@
+import { VerifiedBadge } from '@/components/shared/ui/VerifiedBadge';
+import { useIsOfficial } from '@/hooks/useOfficialIds';
 import { useEffect, useState, type MouseEvent } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AlertCircle, Inbox, PictureInPicture2, Plus } from 'lucide-react';
@@ -25,6 +27,7 @@ type ChatState = { profile?: Profile; projectId?: string; projectTitle?: string 
  */
 export function MessagesPage() {
   const { profile } = useAuth();
+  const isOfficial = useIsOfficial();
   const { conversationId = null } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -133,9 +136,9 @@ export function MessagesPage() {
                   onClick={openChat(c.other.id)}
                   onAuxClick={(e) => { if (e.button === 1) openChat(c.other.id)(e); }}
                 >
-                  <WAvatar name={c.other.display_name} src={c.other.avatar_url} size={36} />
+                  <WAvatar name={c.other.display_name} src={c.other.avatar_url} size={36} official={isOfficial(c.other.id)} />
                   <span className="w-msgs-row-t">
-                    <b>{c.other.display_name}{c.unreadCount > 0 && <i className="w-nt-dot" aria-label="Unread" />}</b>
+                    <b>{c.other.display_name}{isOfficial(c.other.id) && <VerifiedBadge label className="ml-1" />}{c.unreadCount > 0 && <i className="w-nt-dot" aria-label="Unread" />}</b>
                     <small>{mine && !c.lastMessage.task_id ? 'You: ' : ''}{preview}</small>
                   </span>
                   <time>{relativeDate(c.lastMessage.created_at)}</time>

@@ -1,3 +1,5 @@
+import { VerifiedBadge } from '@/components/shared/ui/VerifiedBadge';
+import { useIsOfficial } from '@/hooks/useOfficialIds';
 import { lazy, Suspense, useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -71,6 +73,7 @@ export function CreatorProfilePage() {
   const { handle } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, profile: myProfile } = useAuth();
+  const isOfficial = useIsOfficial();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
@@ -242,9 +245,14 @@ export function CreatorProfilePage() {
           {/* ===== The demo's Portfolio view: avatar header + Copy link, Verified work, Contributions ===== */}
           <header className="w-vh">
             <div className="w-pf-id">
-              <WAvatar name={profile.display_name} src={profile.avatar_url} size={64} />
+              <WAvatar name={profile.display_name} src={profile.avatar_url} size={64} official={isOfficial(profile.id)} />
               <div className="min-w-0">
-                <h1>{profile.display_name}{profile.verified && <CheckCircle2 size={18} className="w-pf-ok" aria-label="Verified" />}</h1>
+                <h1>
+                  {profile.display_name}
+                  {isOfficial(profile.id)
+                    ? <VerifiedBadge size={20} label className="ml-2" />
+                    : profile.verified && <CheckCircle2 size={18} className="w-pf-ok" aria-label="Verified" />}
+                </h1>
                 <VerifiedIndependentBadge profile={profile} />
                 <p>{[
                   profile.major ?? creatorTypeLabel[profile.creator_type],
@@ -344,13 +352,16 @@ export function CreatorProfilePage() {
               src={profile.avatar_url}
               name={profile.display_name}
               size="xl"
+              official={isOfficial(profile.id)}
               className="shrink-0"
               style={{ width: 104, height: 104, fontSize: 28, boxShadow: '0 0 0 4px var(--panel-solid), 0 0 0 5px var(--glass-line-2)' }}
             />
             <div className="flex-1 min-w-0 pb-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="pf-name">{profile.display_name}</h1>
-                {profile.verified && <CheckCircle2 size={18} className="text-accent-400 shrink-0" />}
+                {isOfficial(profile.id)
+                  ? <VerifiedBadge size={20} label />
+                  : profile.verified && <CheckCircle2 size={18} className="text-accent-400 shrink-0" />}
                 <VerifiedIndependentBadge profile={profile} />
               </div>
               {profile.major && <p className="mt-0.5 text-sm font-semibold text-slate-200">{profile.major}</p>}
