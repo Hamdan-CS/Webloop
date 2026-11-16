@@ -359,6 +359,44 @@ async function main() {
     if (p.author === 'webloop') remember('posts', post.id);
   }
 
+  // 7d-2. "Repos worth knowing": pictures post, each image with its own command + link
+  {
+    const rp = D.repoPost;
+    const TYPES = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
+    const files = rp.images.map((im) => {
+      for (const ext of Object.keys(TYPES)) {
+        const buf = asset(`repos/${im.file}.${ext}`);
+        if (buf) return { ...im, buf, ext };
+      }
+      return null;
+    }).filter(Boolean);
+    let post = await q(sb.from('posts').select('id').eq('author_id', P.webloop.id).eq('title', rp.title).maybeSingle(), 'Repo post lookup');
+    if (!post && files.length === 0) {
+      console.log('  ! "Repos worth knowing" skipped: add images to scripts/demo/assets/repos/ (ragflow, dify, open-webui)');
+    } else {
+      if (!post) {
+        post = await q(sb.from('posts').insert({
+          author_id: P.webloop.id, post_type: 'pictures', visibility: 'everyone',
+          title: rp.title, body: rp.body, steps: [], tags: rp.tags, created_at: rp.at, updated_at: rp.at,
+        }).select('id').single(), 'Repo post');
+        console.log(`  + post "${rp.title}"`);
+      }
+      remember('posts', post.id);
+      postId[rp.id] = post.id;
+      const have = await q(sb.from('post_images').select('id, position').eq('post_id', post.id), 'Repo images');
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        const details = { caption: f.caption, command: f.command, link_url: f.link_url, link_label: f.link_label };
+        const hit = have.find((h) => h.position === i);
+        if (hit) { await q(sb.from('post_images').update(details).eq('id', hit.id), 'Repo image details'); continue; }
+        const path = `${U.webloop.id}/${post.id}/${i}.${f.ext}`;
+        await upload('post-media', path, f.buf, TYPES[f.ext]);
+        remember('storage', `post-media/${path}`);
+        await q(sb.from('post_images').insert({ post_id: post.id, path, position: i, ...details }), 'Repo image');
+      }
+    }
+  }
+
   for (const c of D.comments) {
     const pid = postId[c.post];
     const has = await q(sb.from('comments').select('id').eq('post_id', pid).eq('author_id', P[c.author].id).eq('body', c.body).maybeSingle(), 'Comment lookup');

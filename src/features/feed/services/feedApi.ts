@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { Comment, FeedFiltersState, GuideStep, ModerationQueueItem, PinnedPost, Post, PostVisibility } from '../types';
+import type { Comment, FeedFiltersState, GuideStep, ModerationQueueItem, PinnedPost, Post, PostImage, PostVisibility } from '../types';
 import type { FeedTag } from '../constants';
 
 // posts has column-level grants (migration 021): `*` would also ask for the
@@ -11,7 +11,8 @@ const POST_COLUMNS = [
   'is_verified', 'removed_at', 'removed_reason', 'edited_at', 'created_at', 'updated_at',
   'pinned_rank', 'pinned_until',
 ].join(', ');
-const POST_SELECT = `${POST_COLUMNS}, author:profiles!posts_author_id_fkey(*), images:post_images(*)`;
+const IMAGE_COLUMNS = 'id, post_id, path, position, caption, command, link_url, link_label, created_at';
+const POST_SELECT = `${POST_COLUMNS}, author:profiles!posts_author_id_fkey(*), images:post_images(${IMAGE_COLUMNS})`;
 
 function overlapCount(post: Post, interests: Set<string>): number {
   return post.tags.filter((t) => interests.has(t)).length;
@@ -147,10 +148,23 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
 
 export async function addPostImages(
   postId: string,
-  images: { path: string; position: number; caption: string | null }[],
+  images: { path: string; position: number; caption: string | null; command?: string | null; link_url?: string | null; link_label?: string | null }[],
+): Promise<PostImage[]> {
+  if (images.length === 0) return [];
+  const { data, error } = await supabase
+    .from('post_images')
+    .insert(images.map((img) => ({ post_id: postId, ...img })))
+    .select(IMAGE_COLUMNS);
+  if (error) throw error;
+  return ((data ?? []) as unknown as PostImage[]).sort((x, y) => x.position - y.position);
+}
+
+/** Edit one image's caption / command / link (author only: migration 031 policy). */
+export async function updatePostImage(
+  imageId: string,
+  patch: { caption: string | null; command: string | null; link_url: string | null; link_label: string | null },
 ): Promise<void> {
-  if (images.length === 0) return;
-  const { error } = await supabase.from('post_images').insert(images.map((img) => ({ post_id: postId, ...img })));
+  const { error } = await supabase.from('post_images').update(patch).eq('id', imageId);
   if (error) throw error;
 }
 

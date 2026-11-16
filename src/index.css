@@ -2290,6 +2290,21 @@ html .pf .cw-tabs .pf-tab.on .pf-count { background: rgba(255, 255, 255, .28); c
 .fp-caret { display: inline-block; width: 7px; height: 15px; background: var(--feed-term-ink); vertical-align: -2px; animation: feed-blink 1s steps(1) infinite; }
 .fp-copy { position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, .1); color: #fff !important; border-radius: 7px; padding: 4px 10px; font-size: 12px; font-family: inherit; transition: background-color .2s; }
 .fp-copy:hover { background: rgba(255, 255, 255, .18); }
+/* Pictures post: per-image caption, Terminal / link pills, terminal box (migration 031) */
+.fp-pic-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; }
+.fp-pic-cap { margin: 0; flex: 1 1 180px; min-width: 0; font-size: 13.5px; line-height: 1.5; color: var(--feed-muted); }
+.fp-pic-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.fp-pic-pill { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--feed-line); background: var(--feed-card); color: var(--feed-ink) !important; font-size: 12.5px; font-weight: 600; text-decoration: none; white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; transition: background-color .2s, border-color .2s, color .2s; }
+.fp-pic-pill:hover { border-color: var(--feed-teal); color: var(--feed-teal-ink) !important; }
+.fp-pic-pill.on { background: var(--feed-term-bg); border-color: var(--feed-term-bg); color: #fff !important; }
+.fp-pic-pill svg { flex: none; }
+.fp-pic-pill:focus-visible { outline: 2px solid var(--feed-teal); outline-offset: 2px; }
+.fp-pic-term { margin-top: 8px; }
+.fp-pic-term.open > * { animation: fp-pic-open .22s ease-out; transform-origin: top; }
+.fp-term.fp-term-sm { min-height: 0; padding: 14px 16px; }
+.fp-term-sm .ps { user-select: none; }
+@keyframes fp-pic-open { from { opacity: 0; transform: translateY(-6px) scaleY(.96); } }
+@media (prefers-reduced-motion: reduce) { .fp-pic-term.open > * { animation: none; } }
 .fp-code { background: var(--feed-term-bg); border-radius: 12px; padding: 12px 0; font-family: var(--feed-mono); font-size: 12.5px; overflow: auto; }
 .fp-code div { padding: 2px 16px; color: #7f9e9b; white-space: pre; transition: background .3s, color .3s; }
 .fp-code div.h { background: rgba(45, 212, 191, .16); color: #fff; }

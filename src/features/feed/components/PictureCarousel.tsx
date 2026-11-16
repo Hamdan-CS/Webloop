@@ -1,8 +1,10 @@
-import { useRef, useState } from 'react';
-import { Heart } from 'lucide-react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { ArrowUpRight, Heart, SquareTerminal } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { notify } from '@/utils/notify';
 import { getPostImageUrl } from '../services/feedApi';
 import { DOUBLE_TAP_WINDOW_MS, MEDIA_BOX_HEIGHT } from '../constants';
+import { commandLines, domainOf } from '../imageDetails';
 import type { PostImage } from '../types';
 
 interface PictureCarouselProps {
@@ -14,13 +16,19 @@ interface PictureCarouselProps {
 export function PictureCarousel({ images, liked, onDoubleTapLike }: PictureCarouselProps) {
   const [active, setActive] = useState(0);
   const [bursts, setBursts] = useState<number[]>([]);
+  const [termOpen, setTermOpen] = useState(false);
   const lastTap = useRef(0);
   const trackRef = useRef<HTMLDivElement>(null);
+  const termId = useId();
 
   function onScroll() {
     const el = trackRef.current;
     if (!el) return;
-    setActive(Math.round(el.scrollLeft / el.clientWidth));
+    const next = Math.round(el.scrollLeft / el.clientWidth);
+    if (next !== active) {
+      setActive(next);
+      setTermOpen(false); // each image has its own command: close on swipe
+    }
   }
 
   function onPointerUp() {
@@ -37,6 +45,10 @@ export function PictureCarousel({ images, liked, onDoubleTapLike }: PictureCarou
   }
 
   if (images.length === 0) return null;
+  const img = images[active];
+  const lines = img?.command ? commandLines(img.command) : [];
+  const link = img?.link_url ?? null;
+  const linkLabel = link ? img?.link_label?.trim() || domainOf(link) || 'Open link' : '';
 
   return (
     <div>
@@ -46,8 +58,8 @@ export function PictureCarousel({ images, liked, onDoubleTapLike }: PictureCarou
         onPointerUp={onPointerUp}
       >
         <div ref={trackRef} onScroll={onScroll} className="feed-track h-full w-full">
-          {images.map((img) => (
-            <img key={img.id} src={getPostImageUrl(img.path)} alt={img.caption ?? ''} className="h-full w-full object-cover" />
+          {images.map((im, i) => (
+            <img key={im.id ?? i} src={getPostImageUrl(im.path)} alt={im.caption ?? ''} className="h-full w-full object-cover" />
           ))}
         </div>
         {images.length > 1 && (
@@ -65,7 +77,83 @@ export function PictureCarousel({ images, liked, onDoubleTapLike }: PictureCarou
           />
         ))}
       </div>
-      {images[active]?.caption && <p className="mt-2 text-sm text-slate-400">{images[active].caption}</p>}
+
+      {(img?.caption || lines.length > 0 || link) && (
+        <div className="fp-pic-meta">
+          {img?.caption && <p className="fp-pic-cap">{img.caption}</p>}
+          {(lines.length > 0 || link) && (
+            <div className="fp-pic-acts">
+              {lines.length > 0 && (
+                <button
+                  type="button"
+                  className={cn('fp-pic-pill', termOpen && 'on')}
+                  onClick={() => setTermOpen((v) => !v)}
+                  aria-expanded={termOpen}
+                  aria-controls={termId}
+                >
+                  <SquareTerminal size={13} /> Terminal
+                </button>
+              )}
+              {link && (
+                <a className="fp-pic-pill" href={link} target="_blank" rel="noopener noreferrer">
+                  <ArrowUpRight size={13} /> {linkLabel}
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {lines.length > 0 && (
+        <div id={termId} className={cn('fp-pic-term', termOpen && 'open')} hidden={!termOpen}>
+          {/* key: a new image gets a fresh terminal (and Copy state) */}
+          {termOpen && <PicTerminal key={active} lines={lines} />}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PicTerminal({ lines }: { lines: string[] }) {
+  const [copied, setCopied] = useState(false);
+  const preRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 1600);
+    return () => clearTimeout(t);
+  }, [copied]);
+
+  async function copy() {
+    const text = lines.join('\n');
+    try {
+      if (!navigator.clipboard) throw new Error('no clipboard');
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+    } catch {
+      // copying blocked (http, iframe, permissions): select the commands instead
+      const node = preRef.current;
+      if (node) {
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
+      notify.info('Copy is blocked here. The commands are selected: press Ctrl+C (⌘C on Mac).');
+    }
+  }
+
+  return (
+    <div className="fp-term fp-term-sm">
+      <div ref={preRef}>
+        {lines.map((l, i) => (
+          <div key={i} className="cl"><span className="ps" aria-hidden="true">$ </span>{l}</div>
+        ))}
+      </div>
+      <button type="button" className="fp-copy" onClick={copy} aria-label="Copy all commands">
+        {copied ? 'Copied' : 'Copy'}
+      </button>
     </div>
   );
 }

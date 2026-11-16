@@ -18,6 +18,10 @@ export interface PostImage {
   path: string;
   position: number;
   caption: string | null;
+  /** Per-image terminal command and link (migration 031); null = none. */
+  command?: string | null;
+  link_url?: string | null;
+  link_label?: string | null;
   created_at: string;
 }
 

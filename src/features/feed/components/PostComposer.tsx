@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Check, Code2, FileText, Image as ImageIcon, Lock, Plus, Terminal, Trash2, X } from 'lucide-react';
+import { Check, Code2, FileText, Image as ImageIcon, Link2, Lock, Plus, SlidersHorizontal, Terminal, Trash2, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/shared/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,6 +8,8 @@ import { cropToSquareWebp, pointToPercent, resizeToWebp } from '../utils/image';
 import { parseWriteIt } from '../utils/writeItParser';
 import { addPostImages, createPost, getPostImageUrl, updatePost, uploadPostImage } from '../services/feedApi';
 import type { GuideStep, Post, PostType, PostVisibility } from '../types';
+import { cleanImageDetails, EMPTY_DETAILS, hasDetails, linkError, type ImageDetailsDraft } from '../imageDetails';
+import { ImageDetailsEditor } from './ImageDetailsEditor';
 
 type ComposerMode = 'steps' | 'write' | 'pictures' | 'text';
 
@@ -28,11 +30,10 @@ function newDraftStep(type: GuideStep['type']): DraftStep {
   return { localId: `${Date.now()}-${Math.random()}`, type, title: '', cmd: '', code: '', text: '', file: null, previewUrl: null, hotspot: null, callout: '' };
 }
 
-interface DraftPic {
+interface DraftPic extends ImageDetailsDraft {
   localId: string;
   file: File;
   previewUrl: string;
-  caption: string;
 }
 
 interface PostComposerProps {
@@ -50,6 +51,8 @@ export function PostComposer({ onClose, onPublished }: PostComposerProps) {
   const [draftSteps, setDraftSteps] = useState<DraftStep[]>([newDraftStep('terminal')]);
   const [writeText, setWriteText] = useState('');
   const [pics, setPics] = useState<DraftPic[]>([]);
+  const [detailsId, setDetailsId] = useState<string | null>(null); // picture whose details panel is open
+  const [badLinks, setBadLinks] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const picInputRef = useRef<HTMLInputElement>(null);
@@ -80,7 +83,7 @@ export function PostComposer({ onClose, onPublished }: PostComposerProps) {
     const remaining = MAX_POST_IMAGES - pics.length;
     const toAdd = Array.from(files).slice(0, remaining);
     toAdd.forEach((file) => {
-      setPics((prev) => [...prev, { localId: `${Date.now()}-${Math.random()}`, file, previewUrl: URL.createObjectURL(file), caption: '' }]);
+      setPics((prev) => [...prev, { localId: `${Date.now()}-${Math.random()}`, file, previewUrl: URL.createObjectURL(file), ...EMPTY_DETAILS }]);
     });
   }
 
@@ -108,6 +111,12 @@ export function PostComposer({ onClose, onPublished }: PostComposerProps) {
     } else if (mode === 'pictures') {
       post_type = 'pictures';
       if (pics.length === 0) return setError('Add at least 1 picture');
+      const bad = pics.findIndex((p) => linkError(p.link_url));
+      if (bad >= 0) {
+        setBadLinks(true);
+        setDetailsId(pics[bad].localId);
+        return setError(`Image ${bad + 1}: ${linkError(pics[bad].link_url)}`);
+      }
     }
 
     setPublishing(true);
@@ -144,10 +153,9 @@ export function PostComposer({ onClose, onPublished }: PostComposerProps) {
         for (let i = 0; i < pics.length; i++) {
           const blob = await cropToSquareWebp(pics[i].file);
           const path = await uploadPostImage(user.id, post.id, i, blob);
-          images.push({ path, position: i, caption: pics[i].caption || null });
+          images.push({ path, position: i, ...cleanImageDetails(pics[i]) });
         }
-        await addPostImages(post.id, images);
-        post.images = images.map((img, i) => ({ id: `${i}`, post_id: post.id, ...img, created_at: new Date().toISOString() }));
+        post.images = await addPostImages(post.id, images);
       }
 
       post.author = profile;
@@ -255,25 +263,43 @@ export function PostComposer({ onClose, onPublished }: PostComposerProps) {
             {mode === 'pictures' && (
               <div>
                 <div className="grid grid-cols-3 gap-2">
-                  {pics.map((p) => (
-                    <div key={p.localId} className="relative">
-                      <img src={p.previewUrl} className="aspect-square w-full rounded-lg object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => setPics((prev) => prev.filter((x) => x.localId !== p.localId))}
-                        className="absolute right-1 top-1 rounded-full bg-ink-950/80 p-1 text-white"
-                        aria-label="Remove image"
-                      >
-                        <X size={12} />
-                      </button>
-                      <input
-                        value={p.caption}
-                        onChange={(e) => setPics((prev) => prev.map((x) => (x.localId === p.localId ? { ...x, caption: e.target.value } : x)))}
-                        placeholder="Caption"
-                        className="mt-1 w-full rounded-md border border-white/10 bg-ink-900/60 px-2 py-1 text-[11px] text-white placeholder:text-slate-500 focus:outline-none"
-                      />
-                    </div>
-                  ))}
+                  {pics.map((p) => {
+                    const has = hasDetails(p);
+                    const open = detailsId === p.localId;
+                    return (
+                      <div key={p.localId} className="relative">
+                        <img src={p.previewUrl} alt="" className={cn('aspect-square w-full rounded-lg object-cover', open && 'ring-2 ring-accent-400')} />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPics((prev) => prev.filter((x) => x.localId !== p.localId));
+                            if (open) setDetailsId(null);
+                          }}
+                          className="absolute right-1 top-1 rounded-full bg-ink-950/80 p-1 text-white"
+                          aria-label="Remove image"
+                        >
+                          <X size={12} />
+                        </button>
+                        {(has.command || has.link) && (
+                          <span className="absolute left-1 top-1 flex gap-1" aria-label={[has.command && 'Has a terminal command', has.link && 'Has a link'].filter(Boolean).join(', ')}>
+                            {has.command && <span className="grid h-5 w-5 place-items-center rounded-full bg-ink-950/80 text-white"><Terminal size={11} /></span>}
+                            {has.link && <span className="grid h-5 w-5 place-items-center rounded-full bg-ink-950/80 text-white"><Link2 size={11} /></span>}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setDetailsId(open ? null : p.localId)}
+                          aria-expanded={open}
+                          className={cn(
+                            'mt-1 flex w-full items-center justify-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors',
+                            open ? 'border-accent-400/50 bg-accent-500/10 text-accent-200' : 'border-white/10 text-slate-400 hover:text-white',
+                          )}
+                        >
+                          <SlidersHorizontal size={11} /> {has.command || has.link || p.caption.trim() ? 'Edit details' : 'Add details'}
+                        </button>
+                      </div>
+                    );
+                  })}
                   {pics.length < MAX_POST_IMAGES && (
                     <button
                       type="button"
@@ -284,6 +310,22 @@ export function PostComposer({ onClose, onPublished }: PostComposerProps) {
                     </button>
                   )}
                 </div>
+                {(() => {
+                  const i = pics.findIndex((x) => x.localId === detailsId);
+                  if (i < 0) return null;
+                  const p = pics[i];
+                  return (
+                    <div className="mt-3">
+                      <ImageDetailsEditor
+                        index={i}
+                        previewUrl={p.previewUrl}
+                        value={p}
+                        showLinkError={badLinks}
+                        onChange={(d) => setPics((prev) => prev.map((x) => (x.localId === p.localId ? { ...x, ...d } : x)))}
+                      />
+                    </div>
+                  );
+                })()}
                 <input ref={picInputRef} type="file" accept="image/*" multiple hidden onChange={(e) => onPicsSelected(e.target.files)} />
                 <p className="mt-1.5 text-xs text-slate-500">Up to {MAX_POST_IMAGES} images, cropped to square automatically.</p>
               </div>

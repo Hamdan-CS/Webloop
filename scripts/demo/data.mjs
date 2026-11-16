@@ -343,6 +343,26 @@ export const aiGuides = [
   },
 ];
 
+// WebLoop pictures post with a terminal command + link per image (migration 031).
+// Images: scripts/demo/assets/repos/<file> (.png, .jpg or .webp; the seed tries all three).
+// The post is skipped until at least one image exists.
+export const repoPost = {
+  id: 'repos', at: '2026-11-16T09:00:00Z', tags: ['AI tools', 'Python'],
+  title: 'Repos worth knowing',
+  body: 'Three open-source repos you can run today. Open the terminal under each picture to copy the commands.',
+  images: [
+    { file: 'ragflow', caption: 'RAGFlow: build document-based RAG apps with visual knowledge retrieval.',
+      command: 'git clone https://github.com/infiniflow/ragflow.git\ncd ragflow/docker && docker compose up -d',
+      link_url: 'https://github.com/infiniflow/ragflow', link_label: 'github.com' },
+    { file: 'dify', caption: 'Dify: build and run LLM apps and agents with a visual workflow editor.',
+      command: 'git clone https://github.com/langgenius/dify.git\ncd dify/docker && cp .env.example .env\ndocker compose up -d',
+      link_url: 'https://github.com/langgenius/dify', link_label: 'github.com' },
+    { file: 'open-webui', caption: 'Open WebUI: a self-hosted chat interface for local and cloud models.',
+      command: 'pip install open-webui\nopen-webui serve',
+      link_url: 'https://github.com/open-webui/open-webui', link_label: 'github.com' },
+  ],
+};
+
 // comments: { post, author, body, at, replyTo? } — replyTo is shown as "@name" in the text
 export const comments = [
   { post: 'featured', author: 'hamdan', at: '2026-11-14T11:00:00Z', body: 'Thank you WebLoop! Next up: dark mode and an accessibility audit.' },
