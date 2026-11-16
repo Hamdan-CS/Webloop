@@ -353,6 +353,7 @@ export interface CreateProjectInput {
   slug: string;
   summary: string;
   overview?: string;
+  highlights?: string[];
   problem?: string;
   target_users?: string;
   category?: string;
@@ -411,6 +412,7 @@ export async function createProject(
       slug,
       summary: input.summary,
       overview: input.overview ?? null,
+      highlights: input.highlights ?? [],
       problem: input.problem ?? null,
       target_users: input.target_users ?? null,
       category: input.category ?? null,
@@ -588,6 +590,7 @@ export async function updateProject(
     title?: string;
     summary?: string;
     overview?: string | null;
+    highlights?: string[];
     problem?: string | null;
     target_users?: string | null;
     category?: string | null;
@@ -624,6 +627,28 @@ export async function updateProject(
     .single();
   if (error) throw error;
   return data as unknown as Project;
+}
+
+/**
+ * Make the project's technologies match `names`: insert new ones, delete
+ * removed ones (case-insensitive). Owner-only via the manage_own_project_skills policy.
+ */
+export async function setProjectSkills(projectId: string, names: string[]): Promise<void> {
+  const { data, error } = await supabase.from('project_skills').select('id, name').eq('project_id', projectId);
+  if (error) throw error;
+  const current = (data ?? []) as { id: string; name: string }[];
+  const want = new Map(names.map((n) => [n.trim().toLowerCase(), n.trim()] as const).filter(([k]) => k));
+  const have = new Set(current.map((c) => c.name.toLowerCase()));
+  const toDelete = current.filter((c) => !want.has(c.name.toLowerCase())).map((c) => c.id);
+  const toInsert = [...want].filter(([k]) => !have.has(k)).map(([, name]) => ({ project_id: projectId, name }));
+  if (toDelete.length) {
+    const { error: dErr } = await supabase.from('project_skills').delete().in('id', toDelete);
+    if (dErr) throw dErr;
+  }
+  if (toInsert.length) {
+    const { error: iErr } = await supabase.from('project_skills').insert(toInsert);
+    if (iErr) throw iErr;
+  }
 }
 
 export async function updateMemberRole(

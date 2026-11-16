@@ -18,6 +18,8 @@
 .w-pd-pt { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
 .w-pd-pt small, .w-pd-tech small { display: block; margin-bottom: 6px; font: 500 10.5px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--fog); }
 .w-pd-pt p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--graphite); }
+.w-pd-hl { margin: 0; padding-left: 20px; list-style: disc; display: grid; gap: 8px; font-size: 14px; line-height: 1.55; color: var(--graphite); }
+.w-pd-hl li::marker { color: var(--accent); }
 .w-pd-tech { margin-top: 18px; padding-top: 16px; border-top: 1px solid #eef1f4; }
 .w-pd-role { margin-left: 4px; height: 20px; padding: 0 8px; border-radius: 999px; background: var(--sky); color: var(--iris); font: 500 10.5px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; display: inline-flex; align-items: center; }
 @media (max-width: 900px) { .w-pd-ov { grid-template-columns: minmax(0, 1fr); } }

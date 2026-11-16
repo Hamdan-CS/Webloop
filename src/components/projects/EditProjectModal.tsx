@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { X, Loader2, AlertCircle, Save } from 'lucide-react';
-import { updateProject } from '@/services/api';
+import { setProjectSkills, updateProject } from '@/services/api';
+import { HighlightsField, SkillsField } from './ProjectListFields';
+import { cleanHighlights } from '@/utils/projectLists';
 import type { Compensation, Project, ProjectType } from '@/types';
 import { Button } from '@/components/shared/ui/Button';
 import { Select } from '@/components/shared/ui/Select';
@@ -24,6 +26,8 @@ const COMPENSATIONS = [
   { value: 'unpaid_educational', label: 'Unpaid · Educational' },
   { value: 'open_source', label: 'Open source' },
 ];
+const INPUT_CLS = 'w-full rounded-lg border border-white/10 bg-ink-900/60 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-accent-400/40 focus:bg-ink-900 transition-colors';
+
 const STATUSES = [
   { value: 'recruiting', label: 'Recruiting' },
   { value: 'published', label: 'Published' },
@@ -67,6 +71,8 @@ export function EditProjectModal({ project, onClose, onSaved, inline }: Props) {
     time_commitment_hours: project.time_commitment_hours ?? '',
     location: project.location ?? '',
   });
+  const [skills, setSkills] = useState<string[]>(() => (project.skills ?? []).map((s) => s.name));
+  const [highlights, setHighlights] = useState<string[]>(() => project.highlights ?? []);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,10 +86,13 @@ export function EditProjectModal({ project, onClose, onSaved, inline }: Props) {
     setSaving(true);
     setError(null);
     try {
+      // skills first: updateProject's returned row embeds the fresh project_skills
+      await setProjectSkills(project.id, skills);
       const updated = await updateProject(project.id, {
         title: form.title.trim(),
         summary: form.summary.trim(),
         overview: form.overview.trim() || null,
+        highlights: cleanHighlights(highlights),
         problem: form.problem.trim() || null,
         target_users: form.target_users.trim() || null,
         category: form.category,
@@ -129,6 +138,14 @@ export function EditProjectModal({ project, onClose, onSaved, inline }: Props) {
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Problem" value={form.problem} onChange={(v) => set('problem', v)} placeholder="What problem does this solve?" textarea />
               <Field label="Target users" value={form.target_users} onChange={(v) => set('target_users', v)} placeholder="Who is this for?" textarea />
+            </div>
+            <div>
+              <FieldLabel label="What we built" hint="One point per row · up to 12" />
+              <HighlightsField rows={highlights} onChange={setHighlights} inputClassName={INPUT_CLS} />
+            </div>
+            <div>
+              <FieldLabel label="Technologies" hint="Press Enter to add" />
+              <SkillsField skills={skills} onChange={setSkills} inputClassName={INPUT_CLS} />
             </div>
           </div>
 
@@ -217,6 +234,15 @@ function Field({
         />
       )}
     </label>
+  );
+}
+
+function FieldLabel({ label, hint }: { label: string; hint?: string }) {
+  return (
+    <span className="flex items-baseline justify-between gap-3 text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">
+      {label}
+      {hint && <span className="normal-case tracking-normal text-slate-600">{hint}</span>}
+    </span>
   );
 }
 

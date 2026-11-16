@@ -1,3 +1,5 @@
+import { HighlightsField, SkillsField } from '@/components/projects/ProjectListFields';
+import { cleanHighlights } from '@/utils/projectLists';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -43,7 +45,6 @@ const STATUSES = [
   { value: 'published', label: 'Published' },
   { value: 'draft', label: 'Draft (hidden)' },
 ];
-const SUGGEST = ['React', 'TypeScript', 'Node.js', 'Python', 'Supabase', 'Tailwind', 'PostgreSQL', 'Figma', 'Swift', 'Go'];
 const STEPS = ['Basics', 'Type & level', 'Team & links', 'Review'];
 
 const hashStr = (s: string) => {
@@ -69,7 +70,7 @@ export function PublishProjectPage() {
   const [touched, setTouched] = useState(false);
   const [focus, setFocus] = useState<string>('');
   const [skills, setSkills] = useState<string[]>([]);
-  const [skillInput, setSkillInput] = useState('');
+  const [highlights, setHighlights] = useState<string[]>([]);
   const [roles, setRoles] = useState<{ title: string; description: string }[]>([{ title: '', description: '' }]);
   const [invites, setInvites] = useState<string[]>(['']);
   const [inviteResults, setInviteResults] = useState<{ email: string; ok: boolean; error?: string }[]>([]);
@@ -196,12 +197,6 @@ export function PublishProjectPage() {
   }
 
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm((f) => ({ ...f, [key]: value }));
-  const addSkill = (v?: string) => {
-    const s = (v ?? skillInput).trim();
-    if (s && !skills.some((x) => x.toLowerCase() === s.toLowerCase())) setSkills([...skills, s]);
-    setSkillInput('');
-  };
-  const removeSkill = (s: string) => setSkills(skills.filter((x) => x !== s));
   const addRole = () => setRoles([...roles, { title: '', description: '' }]);
   const removeRole = (i: number) => setRoles(roles.filter((_, idx) => idx !== i));
   const setRole = (i: number, key: 'title' | 'description', value: string) =>
@@ -236,6 +231,7 @@ export function PublishProjectPage() {
           slug: '',
           summary: form.summary.trim(),
           overview: form.overview.trim() || undefined,
+          highlights: cleanHighlights(highlights),
           problem: form.problem.trim() || undefined,
           target_users: form.target_users.trim() || undefined,
           category: form.category,
@@ -348,6 +344,9 @@ export function PublishProjectPage() {
                 <PField label="Overview" hint="Optional">
                   <textarea className="pub-in" rows={4} value={form.overview} onChange={(e) => set('overview', e.target.value)} placeholder="Describe what you're building and where it's going" {...fp('overview')} />
                 </PField>
+                <PField label="What we built" hint="Optional · one point per row">
+                  <HighlightsField rows={highlights} onChange={setHighlights} />
+                </PField>
                 <div className="pub-two">
                   <PField label="Problem" hint="Optional">
                     <textarea className="pub-in" rows={3} value={form.problem} onChange={(e) => set('problem', e.target.value)} placeholder="What problem does it solve?" {...fp('problem')} />
@@ -428,22 +427,7 @@ export function PublishProjectPage() {
               <>
                 <StepHead n="Step 3" title="Team & links" sub="Tell people what stack you use and who you need." />
                 <PField label="Technologies" hint="Press Enter to add">
-                  <div className="pub-add">
-                    <input className="pub-in" value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); addSkill(); } }} placeholder="Type a technology…" {...fp('skills')} />
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => addSkill()}><Plus size={14} /> Add</button>
-                  </div>
-                  {skills.length > 0 && (
-                    <div className="pub-chips">
-                      {skills.map((s) => (
-                        <span key={s} className="pub-skill">{s}<button type="button" aria-label={`Remove ${s}`} onClick={() => removeSkill(s)}><X size={12} /></button></span>
-                      ))}
-                    </div>
-                  )}
-                  <div className="pub-sugg">
-                    {SUGGEST.filter((s) => !skills.includes(s)).slice(0, 8).map((s) => (
-                      <button type="button" key={s} onClick={() => addSkill(s)}>+ {s}</button>
-                    ))}
-                  </div>
+                  <SkillsField skills={skills} onChange={setSkills} onFocus={() => setFocus('skills')} onBlur={() => setFocus('')} />
                 </PField>
                 {!personal && <PField label="Open roles" hint="Who are you looking for?">
                   <div className="pub-roles">

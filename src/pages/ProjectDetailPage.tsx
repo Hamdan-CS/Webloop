@@ -360,7 +360,7 @@ export function ProjectDetailPage() {
               <div className="space-y-6 min-w-0">
                 <Section title="About the project">
                   {project.overview
-                    ? <p className="text-sm text-slate-300 leading-relaxed">{project.overview}</p>
+                    ? <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">{project.overview}</p>
                     : <p className="text-sm text-slate-400 leading-relaxed">{project.summary}</p>}
                   {(project.problem || project.target_users) && (
                     <div className="w-pd-pt">
@@ -369,6 +369,14 @@ export function ProjectDetailPage() {
                     </div>
                   )}
                 </Section>
+
+                {(project.highlights?.length ?? 0) > 0 && (
+                  <Section title="What we built">
+                    <ul className="w-pd-hl">
+                      {project.highlights!.map((h, i) => <li key={i}>{h}</li>)}
+                    </ul>
+                  </Section>
+                )}
 
                 {openRoles.length > 0 && (
                   <Section title={`Open positions (${openRoles.length})`}>

@@ -51,6 +51,8 @@ export interface Project {
   slug: string;
   summary: string;
   overview: string | null;
+  /** "What we built" points (migration 029); empty array when none. */
+  highlights?: string[];
   problem: string | null;
   target_users: string | null;
   category: string | null;
