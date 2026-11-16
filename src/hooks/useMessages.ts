@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchInboxMessages, markMessageRead, sendMessage } from '@/services/api';
+import { fetchInboxMessages, fetchMyGroups, markMessageRead, sendMessage, type GroupConversation } from '@/services/api';
 import type { Message, Profile } from '@/types';
 
 export interface Conversation {
@@ -41,6 +41,14 @@ export function useMessages(profileId: string | undefined) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // group chats (Part E): one row per project/team group; groupTick bumps on any new group message
+  const [groups, setGroups] = useState<GroupConversation[]>([]);
+  const [groupTick, setGroupTick] = useState(0);
+
+  const refreshGroups = useCallback(async () => {
+    if (!profileId) return;
+    try { setGroups(await fetchMyGroups()); } catch { /* keep the last list */ }
+  }, [profileId]);
 
   const refresh = useCallback(async () => {
     if (!profileId) return;
@@ -57,7 +65,24 @@ export function useMessages(profileId: string | undefined) {
 
   useEffect(() => {
     refresh();
-  }, [refresh]);
+    refreshGroups();
+  }, [refresh, refreshGroups]);
+
+  // live group messages: RLS limits realtime rows to groups I can read
+  const groupKey = groups.map((g) => g.conversation_id).sort().join(',');
+  useEffect(() => {
+    if (!profileId || !groupKey) return;
+    const channel = supabase
+      .channel(`group-messages-${profileId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=in.(${groupKey})` }, () => {
+        setGroupTick((t) => t + 1);
+        void refreshGroups();
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profileId, groupKey, refreshGroups]);
 
   useEffect(() => {
     if (!profileId) return;
@@ -89,5 +114,5 @@ export function useMessages(profileId: string | undefined) {
     [profileId],
   );
 
-  return { messages, conversations, unreadCount, loading, error, refresh, markRead, send };
+  return { messages, conversations, unreadCount, loading, error, refresh, markRead, send, groups, refreshGroups, groupTick };
 }

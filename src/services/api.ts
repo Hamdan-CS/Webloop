@@ -707,6 +707,7 @@ export async function fetchInboxMessages(profileId: string): Promise<Message[]> 
     .from('messages')
     .select(MESSAGE_SELECT)
     .or(`recipient_id.eq.${profileId},sender_id.eq.${profileId}`)
+    .is('conversation_id', null)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as unknown as Message[];
@@ -1481,4 +1482,101 @@ export async function adminListContentReports(): Promise<ContentReport[]> {
 export async function adminResolveContentReport(reportId: string): Promise<void> {
   const { error } = await supabase.rpc('admin_resolve_content_report', { p_report_id: reportId });
   if (error) throw indepError(error);
+}
+
+// ============================================================
+// Group chats (Part E, migration 028)
+// ============================================================
+
+export interface GroupConversation {
+  conversation_id: string;
+  kind: 'project' | 'team';
+  project_id: string | null;
+  team_id: string | null;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  owner_id: string | null;
+  member_count: number;
+  muted: boolean;
+  left_at: string | null;
+  last_read_at: string;
+  last_body: string | null;
+  last_sender_name: string | null;
+  last_at: string | null;
+  unread: number;
+}
+
+/** Route id for a group chat: /messages/g:<conversation id>. */
+export const groupChatId = (conversationId: string) => `g:${conversationId}`;
+export const parseGroupChatId = (id: string | null | undefined): string | null => (id && id.startsWith('g:') ? id.slice(2) : null);
+
+export async function fetchMyGroups(): Promise<GroupConversation[]> {
+  const { data, error } = await supabase.rpc('get_my_group_conversations');
+  if (error) throw error;
+  return (data ?? []) as GroupConversation[];
+}
+
+export async function fetchGroupMessages(conversationId: string): Promise<Message[]> {
+  const { data, error } = await supabase
+    .from('messages')
+    .select(MESSAGE_SELECT)
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as unknown as Message[];
+}
+
+export async function fetchGroupMembers(conversationId: string): Promise<Profile[]> {
+  const { data, error } = await supabase
+    .from('conversation_members')
+    .select('profile:profiles!conversation_members_profile_id_fkey(*)')
+    .eq('conversation_id', conversationId)
+    .is('left_at', null)
+    .order('joined_at', { ascending: true });
+  if (error) throw error;
+  return ((data ?? []) as unknown as { profile: Profile | null }[]).map((r) => r.profile).filter((p): p is Profile => !!p);
+}
+
+export async function sendGroupMessage(
+  senderId: string,
+  conversationId: string,
+  body: string,
+  opts: { projectId?: string | null; taskId?: string | null; replyToId?: string | null } = {},
+): Promise<Message> {
+  const { data, error } = await supabase
+    .from('messages')
+    .insert({
+      sender_id: senderId,
+      conversation_id: conversationId,
+      project_id: opts.projectId ?? null,
+      body,
+      task_id: opts.taskId ?? null,
+      reply_to_id: opts.replyToId ?? null,
+    })
+    .select(MESSAGE_SELECT)
+    .single();
+  if (error) throw error;
+  return data as unknown as Message;
+}
+
+/** Owner creates a task from a project group chat and posts the card there. */
+export async function createTaskInGroup(
+  projectId: string,
+  createdBy: string,
+  conversationId: string,
+  input: { title: string; description?: string; acceptance_criteria?: string; due_date?: string | null; assignee_id?: string | null },
+): Promise<Message> {
+  const task = await createTask(projectId, createdBy, { ...input, assignee_id: input.assignee_id || null });
+  return sendGroupMessage(createdBy, conversationId, `Created a task: ${task.title}`, { projectId, taskId: task.id });
+}
+
+export async function markGroupRead(conversationId: string): Promise<void> {
+  const { error } = await supabase.rpc('mark_conversation_read', { p_conversation_id: conversationId });
+  if (error) throw error;
+}
+
+export async function setGroupMuted(conversationId: string, muted: boolean): Promise<void> {
+  const { error } = await supabase.rpc('set_conversation_muted', { p_conversation_id: conversationId, p_muted: muted });
+  if (error) throw error;
 }

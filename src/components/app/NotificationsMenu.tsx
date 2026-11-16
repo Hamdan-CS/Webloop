@@ -4,7 +4,8 @@ import { Bell, Check, CheckCheck, Reply } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePip } from '@/components/messaging/pipContext';
 import { useMessagesData } from '@/components/messaging/messagesContext';
-import { fetchNotifications, markAllNotificationsRead, markNotificationRead } from '@/services/api';
+import { fetchNotifications, groupChatId, markAllNotificationsRead, markNotificationRead, type GroupConversation } from '@/services/api';
+import { GroupAvatar } from '@/components/messaging/GroupThread';
 import type { Notification } from '@/types';
 import type { Conversation } from '@/hooks/useMessages';
 import { relativeDate } from '@/utils/labels';
@@ -18,7 +19,8 @@ const WIDTH = 380;
 
 type Row =
   | { kind: 'n'; at: number; n: Notification }
-  | { kind: 'm'; at: number; c: Conversation; unread: boolean };
+  | { kind: 'm'; at: number; c: Conversation; unread: boolean }
+  | { kind: 'g'; at: number; g: GroupConversation };
 
 /**
  * The bell's dropdown (Part 3): notifications + one row per conversation with
@@ -28,7 +30,7 @@ type Row =
 export function NotificationsMenu({ anchorRef, onClose }: { anchorRef: RefObject<HTMLElement | null>; onClose: () => void }) {
   const { profile, refreshCounts } = useAuth();
   const pip = usePip();
-  const { conversations, markConversationRead, requestChat } = useMessagesData();
+  const { conversations, groups, markConversationRead, markGroupConversationRead, requestChat } = useMessagesData();
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement>(null);
   const [items, setItems] = useState<Notification[] | null>(null);
@@ -93,13 +95,17 @@ export function NotificationsMenu({ anchorRef, onClose }: { anchorRef: RefObject
     for (const c of conversations) {
       if (c.unreadCount > 0) { out.push({ kind: 'm', at: +new Date(c.lastMessage.created_at), c, unread: true }); seen.add(c.other.id); }
     }
+    // one row per group with unread messages (muted groups stay quiet)
+    for (const g of groups) {
+      if (g.unread > 0 && !g.muted && !g.left_at) out.push({ kind: 'g', at: +new Date(g.last_at ?? 0), g });
+    }
     if (filter === 'all') {
       for (const [id, c] of readHere) if (!seen.has(id)) out.push({ kind: 'm', at: +new Date(c.lastMessage.created_at), c, unread: false });
     }
     return out.sort((a, b) => b.at - a.at);
-  }, [items, conversations, readHere, filter]);
+  }, [items, conversations, groups, readHere, filter]);
 
-  const anyUnread = rows.some((r) => (r.kind === 'n' ? !r.n.read_at : r.unread));
+  const anyUnread = rows.some((r) => (r.kind === 'n' ? !r.n.read_at : r.kind === 'g' ? true : r.unread));
 
   const markRead = async (n: Notification) => {
     if (n.read_at) return;
@@ -119,10 +125,12 @@ export function NotificationsMenu({ anchorRef, onClose }: { anchorRef: RefObject
     const now = new Date().toISOString();
     setItems((xs) => xs?.map((x) => (x.read_at ? x : { ...x, read_at: now })) ?? xs);
     const unreadConvos = conversations.filter((c) => c.unreadCount > 0);
+    const unreadGroups = groups.filter((g) => g.unread > 0 && !g.muted && !g.left_at);
     setReadHere((m) => { const next = new Map(m); unreadConvos.forEach((c) => next.set(c.other.id, { ...c, unreadCount: 0 })); return next; });
     await Promise.all([
       markAllNotificationsRead(profileId).catch(() => {}),
       ...unreadConvos.map((c) => markConversationRead(c.other.id)),
+      ...unreadGroups.map((g) => markGroupConversationRead(g.conversation_id)),
     ]);
     void refreshCounts();
   };
@@ -140,6 +148,13 @@ export function NotificationsMenu({ anchorRef, onClose }: { anchorRef: RefObject
     // the Messages mini window is open: show the chat there; otherwise open the chat page
     if (pip?.open) { requestChat(c.other.id); pip.setConversation(c.other.id); pip.setMinimised(false); return; }
     navigate(`/messages/${c.other.id}`);
+  };
+
+  const openGroup = (g: GroupConversation) => {
+    onClose();
+    const id = groupChatId(g.conversation_id);
+    if (pip?.open) { requestChat(id); pip.setConversation(id); pip.setMinimised(false); return; }
+    navigate(`/messages/${id}`);
   };
 
   return (
@@ -160,7 +175,20 @@ export function NotificationsMenu({ anchorRef, onClose }: { anchorRef: RefObject
           <div className="w-nt-empty"><LoopLoader size={20} /></div>
         ) : rows.length === 0 ? (
           <div className="w-nt-empty"><Bell size={20} /><span>{filter === 'unread' ? "You're all caught up." : 'No notifications yet.'}</span></div>
-        ) : rows.map((r) => r.kind === 'n' ? (
+        ) : rows.map((r) => r.kind === 'g' ? (
+          <div key={`g-${r.g.conversation_id}`} className="w-nt-row w-nt-msg unread">
+            <GroupAvatar group={r.g} size={28} />
+            <div className="w-nt-body">
+              <p><b>{r.g.name}</b> {r.g.unread} new message{r.g.unread === 1 ? '' : 's'}</p>
+              {r.g.last_body && <p className="w-nt-prev">{r.g.last_sender_name ?? 'Someone'}: {r.g.last_body}</p>}
+              <small>{r.g.last_at ? relativeDate(r.g.last_at) : ''}<i className="w-nt-dot" aria-label="Unread" /></small>
+            </div>
+            <div className="w-nt-side">
+              <button type="button" className="w-nt-check" onClick={() => markGroupConversationRead(r.g.conversation_id)} aria-label="Mark as read" title="Mark as read"><Check size={14} /></button>
+              <button type="button" className="w-nt-reply" onClick={() => openGroup(r.g)}><Reply size={13} /> Reply</button>
+            </div>
+          </div>
+        ) : r.kind === 'n' ? (
           <div key={r.n.id} className={cn('w-nt-row', !r.n.read_at && 'unread')}>
             <span className="w-nt-ic">{iconFor(r.n)}</span>
             <div className="w-nt-body">

@@ -37,7 +37,8 @@ type View = { key: string; label: string; icon: IconName; to?: string; count?: n
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, profile, signOut, unreadMessages, unreadNotifications, pendingReviews, pendingInvites, refreshCounts } = useAuth();
-  const { unreadConversations } = useMessagesData();
+  const { unreadConversations, groups } = useMessagesData();
+  const groupUnread = groups.filter((g) => g.unread > 0 && !g.muted && !g.left_at).length;
   const [bellOpen, setBellOpen] = useState(false);
   // Webi in the app: off by default; desktop only (phones keep toasts, no walking)
   const [webiOn, setWebiOn] = useWebiEnabled();
@@ -161,7 +162,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     // their home in the app now that the profile menu no longer lists them (kept off the phone tab bar)
     { key: 'gallery', label: 'Student work', icon: 'work', to: '/gallery', match: (p) => p.startsWith('/gallery'), sidebarOnly: true },
     { key: 'companies', label: 'Companies', icon: 'org', to: '/companies', match: (p) => p.startsWith('/companies'), sidebarOnly: true },
-    { key: 'messages', label: 'Messages', icon: 'msg', to: '/messages', dot: unreadMessages || undefined, match: (p) => p.startsWith('/messages') },
+    { key: 'messages', label: 'Messages', icon: 'msg', to: '/messages', dot: (unreadMessages + groupUnread) || undefined, match: (p) => p.startsWith('/messages') },
     { key: 'portfolio', label: 'Portfolio', icon: 'port', to: portfolio, match: (p) => p === portfolio },
   ];
 

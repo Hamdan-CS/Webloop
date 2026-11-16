@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMessages } from '@/hooks/useMessages';
-import { markMessageRead } from '@/services/api';
+import { markGroupRead, markMessageRead } from '@/services/api';
 import { MessagesContext, type MessagesContextValue } from './messagesContext';
 
 /**
@@ -13,7 +13,12 @@ export function MessagesProvider({ children }: { children: ReactNode }) {
   const { profile, refreshCounts } = useAuth();
   const data = useMessages(profile?.id);
   const [pendingChatId, setPendingChatId] = useState<string | null>(null);
-  const { messages, refresh } = data;
+  const { messages, refresh, refreshGroups } = data;
+
+  const markGroupConversationRead = useCallback(async (conversationId: string) => {
+    await markGroupRead(conversationId).catch(() => {});
+    await refreshGroups();
+  }, [refreshGroups]);
 
   const markConversationRead = useCallback(async (otherId: string) => {
     if (!profile?.id) return;
@@ -25,11 +30,14 @@ export function MessagesProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<MessagesContextValue>(() => ({
     ...data,
-    unreadConversations: data.conversations.filter((c) => c.unreadCount > 0).length,
+    // the bell counts 1-to-1 chats and groups alike (muted groups don't count)
+    unreadConversations: data.conversations.filter((c) => c.unreadCount > 0).length
+      + data.groups.filter((g) => g.unread > 0 && !g.muted && !g.left_at).length,
     markConversationRead,
+    markGroupConversationRead,
     pendingChatId,
     requestChat: setPendingChatId,
-  }), [data, markConversationRead, pendingChatId]);
+  }), [data, markConversationRead, markGroupConversationRead, pendingChatId]);
 
   return <MessagesContext.Provider value={value}>{children}</MessagesContext.Provider>;
 }

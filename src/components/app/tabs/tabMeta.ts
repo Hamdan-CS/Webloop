@@ -18,6 +18,7 @@ const STATIC: [RegExp, TabMeta][] = [
   [/^\/build-profile/, { title: 'Build profile', icon: 'port' }],
   [/^\/settings/, { title: 'Settings', icon: 'gear' }],
   [/^\/admin\/moderation/, { title: 'Moderation', icon: 'gear' }],
+  [/^\/messages/, { title: 'Messages', icon: 'msg' }],
 ];
 
 const pretty = (s: string) => decodeURIComponent(s).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -31,6 +32,8 @@ export function tabMeta(path: string, projects: Project[], ownHandle?: string | 
     const hit = projects.find((x) => x.slug === proj[1]);
     return { title: hit?.title ?? pretty(proj[1]), dot: projectDot(proj[1]) };
   }
+  const team = p.match(/^\/teams\/([^/]+)/);
+  if (team) return { title: pretty(team[1]), icon: 'proj' };
   const cr = p.match(/^\/creators\/([^/]+)/);
   if (cr) return cr[1] === ownHandle ? { title: 'Portfolio', icon: 'port' } : { title: `@${decodeURIComponent(cr[1])}`, icon: 'port' };
   for (const [re, m] of STATIC) if (re.test(p)) return m;

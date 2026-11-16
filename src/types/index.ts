@@ -258,7 +258,10 @@ export interface MessageTaskRef {
 export interface Message {
   id: string;
   sender_id: string;
-  recipient_id: string;
+  /** null for group messages (migration 028). */
+  recipient_id: string | null;
+  /** Group chat (project or team); null for 1-to-1. */
+  conversation_id?: string | null;
   project_id: string | null;
   body: string;
   is_read: boolean;

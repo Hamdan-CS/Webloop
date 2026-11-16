@@ -272,7 +272,7 @@ export function ConversationThread({ myProfile, otherProfile, projectId, project
   );
 }
 
-function MessageBubble({
+export function MessageBubble({
   message,
   quoted,
   isMine,

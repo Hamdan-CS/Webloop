@@ -8,6 +8,8 @@ export interface MessagesContextValue extends MessagesData {
   unreadConversations: number;
   /** Mark every unread message from this person as read. */
   markConversationRead: (otherId: string) => Promise<void>;
+  /** Mark a group chat read (moves its last_read_at to now). */
+  markGroupConversationRead: (conversationId: string) => Promise<void>;
   /** A chat someone asked to open (e.g. Reply in the bell); the Messages view picks it up and clears it. */
   pendingChatId: string | null;
   requestChat: (otherId: string | null) => void;
