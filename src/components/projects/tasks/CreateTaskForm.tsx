@@ -6,23 +6,34 @@ import { Select } from '@/components/shared/ui/Select';
 
 export type NewTaskInput = { title: string; description: string; acceptance_criteria: string; assignee_id: string; due_date: string };
 
-/** New-task form with the General task / Assign to a member choice (moved unchanged from TaskManagementPanel). */
+/** New-task form with the General task / Assign to a member choice (moved unchanged from TaskManagementPanel).
+ * Messages reuses it with a Project dropdown (`projects`) and the chat partner pre-filled (`defaultAssigneeId`). */
 export function CreateTaskForm({
   members,
   onClose,
   onCreate,
   busy,
+  projects,
+  projectId,
+  onProjectChange,
+  defaultAssigneeId,
+  error,
 }: {
   members: ProjectMember[];
   onClose: () => void;
   onCreate: (input: NewTaskInput) => void;
   busy: boolean;
+  projects?: { id: string; title: string }[];
+  projectId?: string;
+  onProjectChange?: (id: string) => void;
+  defaultAssigneeId?: string;
+  error?: string | null;
 }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [criteria, setCriteria] = useState('');
-  const [assigneeId, setAssigneeId] = useState('');
-  const [mode, setMode] = useState<'open' | 'assign'>('open');
+  const [assigneeId, setAssigneeId] = useState(defaultAssigneeId ?? '');
+  const [mode, setMode] = useState<'open' | 'assign'>(defaultAssigneeId ? 'assign' : 'open');
   const [dueDate, setDueDate] = useState('');
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -40,6 +51,18 @@ export function CreateTaskForm({
       <h3 className="font-display text-base font-semibold text-white mb-4">New Task</h3>
 
         <div className="space-y-4">
+          {projects && onProjectChange && (
+            <Select
+              label="Project"
+              value={projectId ?? ''}
+              onChange={onProjectChange}
+              options={[
+                ...(projectId ? [] : [{ value: '', label: 'Choose a project' }]),
+                ...projects.map((p) => ({ value: p.id, label: p.title })),
+              ]}
+            />
+          )}
+
           <label className="block">
             <span className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">Title *</span>
             <input
@@ -124,7 +147,9 @@ export function CreateTaskForm({
             </label>
           </div>
 
-          {members.length === 0 && (
+          {error && <p className="text-xs text-signal-rose">{error}</p>}
+
+          {members.length === 0 && !projects && (
             <p className="flex items-center gap-2 text-xs text-signal-amber">
               <User size={14} /> No accepted team members yet. Accept join requests first to assign tasks.
             </p>
@@ -132,7 +157,7 @@ export function CreateTaskForm({
         </div>
 
         <div className="mt-5 flex gap-3">
-          <Button onClick={handleSubmit} disabled={busy || !title.trim() || (mode === 'assign' && !assigneeId)} className="flex-1">
+          <Button onClick={handleSubmit} disabled={busy || !title.trim() || (mode === 'assign' && !assigneeId) || (!!projects && !projectId)} className="flex-1">
             {busy ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
             Create Task
           </Button>

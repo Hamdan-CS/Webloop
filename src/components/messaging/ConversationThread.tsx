@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, X, Send, Loader2, UserPlus, Quote, Calendar } from 'lucide-react';
-import { fetchConversation, markMessageRead, fetchProjectOwnerId, createTaskFromMessage, sendMessage as sendMessageApi } from '@/services/api';
+import { fetchConversation, markMessageRead, fetchSharedOwnedProjects, createTaskFromMessage, sendMessage as sendMessageApi } from '@/services/api';
+import type { NewTaskInput } from '@/components/projects/tasks/CreateTaskForm';
 import type { Message, Profile, TaskStatus } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
 import { Badge } from '@/components/shared/ui/Badge';
@@ -51,11 +52,9 @@ interface Props {
   onBack?: () => void;
   /** Modal mode: shows a close button. */
   onClose?: () => void;
-  /** Skips the project-owner lookup when the caller already knows it (saves a round trip). */
-  knownIsOwner?: boolean;
 }
 
-export function ConversationThread({ myProfile, otherProfile, projectId, projectTitle, variant, onBack, onClose, knownIsOwner, headerExtra }: Props) {
+export function ConversationThread({ myProfile, otherProfile, projectId, projectTitle, variant, onBack, onClose, headerExtra }: Props) {
   // the shared inbox is live (realtime); when it gets a message from this person we don't have yet, reload the thread
   const { messages: inbox } = useMessagesData();
   const latestFromOther = useMemo(
@@ -71,7 +70,8 @@ export function ConversationThread({ myProfile, otherProfile, projectId, project
   const [showAddTask, setShowAddTask] = useState(false);
   const [taskBusy, setTaskBusy] = useState(false);
   const [taskError, setTaskError] = useState<string | null>(null);
-  const [ownerId, setOwnerId] = useState<string | null>(null);
+  // projects I own that the other person is a member of: "Add task" shows when there is at least one
+  const [sharedProjects, setSharedProjects] = useState<{ id: string; title: string }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -100,21 +100,20 @@ export function ConversationThread({ myProfile, otherProfile, projectId, project
   }, [latestFromOther]);
 
   useEffect(() => {
-    if (knownIsOwner !== undefined || !projectId) return;
     let cancelled = false;
-    fetchProjectOwnerId(projectId).then((id) => {
-      if (!cancelled) setOwnerId(id);
+    fetchSharedOwnedProjects(myProfile.id, otherProfile.id).then((list) => {
+      if (!cancelled) setSharedProjects(list);
     });
     return () => {
       cancelled = true;
     };
-  }, [projectId, knownIsOwner]);
+  }, [myProfile.id, otherProfile.id]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
-  const isOwner = knownIsOwner ?? (!!projectId && ownerId === myProfile.id);
+  const canAddTask = sharedProjects.length > 0;
   const groups = useMemo(() => groupMessages(messages), [messages]);
   const messagesById = useMemo(() => new Map(messages.map((m) => [m.id, m])), [messages]);
   const compact = variant === 'panel';
@@ -133,16 +132,19 @@ export function ConversationThread({ myProfile, otherProfile, projectId, project
     setSending(false);
   };
 
-  const handleCreateTask = async (
-    input: { title: string; description?: string; acceptance_criteria?: string; due_date?: string | null },
-    note: string,
-  ) => {
-    if (!projectId) return;
+  const handleCreateTask = async (taskProjectId: string, input: NewTaskInput) => {
     setTaskBusy(true);
     setTaskError(null);
     try {
-      const { message } = await createTaskFromMessage(projectId, myProfile.id, otherProfile.id, input, note);
-      setMessages((prev) => [...prev, message]);
+      const { message } = await createTaskFromMessage(taskProjectId, myProfile.id, otherProfile.id, {
+        title: input.title,
+        description: input.description.trim() || undefined,
+        acceptance_criteria: input.acceptance_criteria.trim() || undefined,
+        due_date: input.due_date || null,
+        assignee_id: input.assignee_id || null,
+      });
+      // the thread may be filtered to one project; only show the card here if it belongs
+      if (!projectId || projectId === taskProjectId) setMessages((prev) => [...prev, message]);
       setShowAddTask(false);
     } catch (err) {
       setTaskError(err instanceof Error ? err.message : 'Failed to create task');
@@ -163,7 +165,7 @@ export function ConversationThread({ myProfile, otherProfile, projectId, project
           <p className={cn('truncate font-medium text-white', compact ? 'text-xs' : 'font-display text-lg font-bold')}>{otherProfile.display_name}</p>
           {projectTitle && <p className={cn('truncate text-slate-500', compact ? 'text-[10px]' : 'text-xs')}>re: {projectTitle}</p>}
         </div>
-        {isOwner && projectId && (
+        {canAddTask && (
           <button
             type="button"
             onClick={() => setShowAddTask(true)}
@@ -255,9 +257,11 @@ export function ConversationThread({ myProfile, otherProfile, projectId, project
         </button>
       </div>
 
-      {showAddTask && projectId && (
+      {showAddTask && canAddTask && (
         <AddTaskFromChatModal
-          assignee={otherProfile}
+          projects={sharedProjects}
+          initialProjectId={projectId && sharedProjects.some((p) => p.id === projectId) ? projectId : undefined}
+          assigneeId={otherProfile.id}
           busy={taskBusy}
           error={taskError}
           onClose={() => { setShowAddTask(false); setTaskError(null); }}

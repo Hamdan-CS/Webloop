@@ -834,24 +834,39 @@ export async function fetchProjectOwnerId(projectId: string): Promise<string | n
 export async function createTaskFromMessage(
   projectId: string,
   createdBy: string,
-  assigneeId: string,
+  recipientId: string,
   input: {
     title: string;
     description?: string;
     acceptance_criteria?: string;
     due_date?: string | null;
+    /** null/empty = General task (open to the team). */
+    assignee_id?: string | null;
   },
   note?: string,
 ): Promise<{ task: Task; message: Message }> {
-  const task = await createTask(projectId, createdBy, { ...input, assignee_id: assigneeId });
+  const task = await createTask(projectId, createdBy, { ...input, assignee_id: input.assignee_id || null });
   const message = await sendMessage(
     createdBy,
-    assigneeId,
+    recipientId,
     note?.trim() || `Created a task: ${task.title}`,
     projectId,
     task.id,
   );
   return { task, message };
+}
+
+/** Projects owned by `ownerId` that `memberId` is a member of — decides whether
+ * "Add task" shows in a 1-to-1 chat and fills its Project dropdown. */
+export async function fetchSharedOwnedProjects(ownerId: string, memberId: string): Promise<{ id: string; title: string }[]> {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('id, title, project_members!inner(profile_id)')
+    .eq('owner_id', ownerId)
+    .eq('project_members.profile_id', memberId)
+    .order('created_at', { ascending: false });
+  if (error) return [];
+  return ((data ?? []) as { id: string; title: string }[]).map(({ id, title }) => ({ id, title }));
 }
 
 export async function acceptApplicationAndAddMember(

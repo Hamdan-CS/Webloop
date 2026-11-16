@@ -20,7 +20,6 @@ export function ConversationModal({ myProfile, otherProfile, projectId, projectT
           projectTitle={projectTitle}
           variant="modal"
           onClose={onClose}
-          knownIsOwner={false}
         />
       </div>
     </div>
