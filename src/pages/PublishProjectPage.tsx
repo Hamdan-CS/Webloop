@@ -1,3 +1,4 @@
+import { Switch } from '@/components/shared/ui/Switch';
 import { HighlightsField, SkillsField } from '@/components/projects/ProjectListFields';
 import { cleanHighlights } from '@/utils/projectLists';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -614,9 +615,9 @@ function Seg({ value, options, onChange }: { value: string; options: { value: st
 
 function Toggle({ label, sub, on, onChange }: { label: string; sub: string; on: boolean; onChange: (v: boolean) => void }) {
   return (
-    <button type="button" role="switch" aria-checked={on} className={cn('pub-toggle', on && 'on')} onClick={() => onChange(!on)}>
-      <span className="pub-sw"><i /></span>
+    <label className={cn('pub-toggle', on && 'on')}>
+      <Switch checked={on} onChange={onChange} />
       <span><b>{label}</b><small>{sub}</small></span>
-    </button>
+    </label>
   );
 }

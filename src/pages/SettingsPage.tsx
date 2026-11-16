@@ -1,3 +1,4 @@
+import { Switch } from '@/components/shared/ui/Switch';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -247,16 +248,7 @@ function WebiSwitch() {
     <Card title="Webi assistant" description="Webi lives in the ∞ of the sidebar logo. Turned on, he stands next to it, says short messages like “Saved” instead of pop-ups, and visits the New Tab page. Not shown on phones.">
       <label className="flex items-center justify-between gap-4 text-sm">
         <span className="font-medium">Show Webi in the app</span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={on}
-          aria-label="Webi assistant"
-          onClick={() => setOn(!on)}
-          className={cn('relative h-6 w-11 shrink-0 rounded-full transition-colors', on ? 'bg-accent-500' : 'bg-slate-300/60')}
-        >
-          <span className={cn('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform', on ? 'translate-x-5' : 'translate-x-0.5')} />
-        </button>
+        <Switch checked={on} onChange={setOn} label="Webi assistant" />
       </label>
     </Card>
   );

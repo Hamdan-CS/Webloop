@@ -1921,10 +1921,6 @@ html[data-hdr="hidden"] .toolbar { top: 0; }
 .pub-toggle{display:flex;gap:12px;align-items:center;text-align:left;padding:12px 14px;border-radius:14px;border:1px solid var(--line-2);background:var(--panel-2);cursor:pointer;transition:.2s}
 .pub-toggle b{display:block;font-size:14px;color:var(--text)}
 .pub-toggle small{display:block;font-size:12px;color:var(--muted)}
-.pub-sw{flex:none;width:38px;height:22px;border-radius:99px;background:var(--line-2);position:relative;transition:.25s}
-.pub-sw i{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.25s}
-.pub-toggle.on .pub-sw{background:var(--accent)}
-.pub-toggle.on .pub-sw i{left:19px}
 .pub-add{display:flex;gap:8px}
 .pub-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .pub-skill{display:inline-flex;align-items:center;gap:6px;padding:5px 6px 5px 11px;border-radius:99px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);font-size:13px;font-weight:600;animation:pv-pop .3s ease}
