@@ -92,6 +92,35 @@ button.w-chip{cursor:pointer}
 .w-heat{display:grid;grid-template-columns:repeat(26,1fr);grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px}
 .w-heat i{aspect-ratio:1;border-radius:3px;background:#e9edf3}
 .w-heat i.l1{background:#bcd8ff}.w-heat i.l2{background:#7cb5ff}.w-heat i.l3{background:#3d8ef5}.w-heat i.l4{background:#0060cc}
+.w-heat i[tabindex]{outline:none;transition:box-shadow .15s}
+.w-heat i.go{cursor:pointer}
+.w-heat i:hover,.w-heat i:focus-visible{box-shadow:0 0 0 1.5px #0a0d12}
+.w-heat i.sel{box-shadow:0 0 0 2px #0060cc}
+/* contribution day popover (WContribHeat) */
+.w-cpop{position:fixed;z-index:60;width:300px;max-height:320px;display:flex;flex-direction:column;background:#fff;border-radius:14px;box-shadow:0 0 0 1px rgba(10,13,18,.08),0 14px 40px rgba(10,13,18,.16);animation:w-cpop-in .16s ease-out}
+.w-cpop.sheet{left:0;right:0;bottom:0;top:auto;width:auto;max-height:70vh;border-radius:18px 18px 0 0;animation:w-cpop-up .22s ease-out}
+.w-cpop.sheet .w-cpop-b{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.w-cpop-scrim{position:fixed;inset:0;z-index:59;background:rgba(10,13,18,.35)}
+.w-cpop-h{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:12px 10px 10px 14px;border-bottom:1px solid #eef1f4}
+.w-cpop-h b{display:block;font-size:13.5px;font-weight:600;color:var(--ink)}
+.w-cpop-h small{display:block;font-size:12px;color:var(--fog);margin-top:2px}
+.w-cpop-h .w-icon-btn{width:28px;height:28px}
+.w-cpop-b{overflow-y:auto;padding:6px 6px 8px}
+.w-cpop-b ul{list-style:none;margin:0;padding:0}
+.w-cpop-b li{padding:8px 8px;border-radius:10px}
+.w-cpop-b li:hover{background:#f5f7fa}
+.w-cpop-t{display:block;font-size:13.5px;font-weight:500;color:var(--ink);line-height:1.35}
+.w-cpop-t:hover{color:#0060cc}
+.w-cpop-b li small{display:block;font-size:12px;color:var(--fog);margin-top:2px}
+.w-cpop-b li small a{color:var(--graphite);text-decoration:underline;text-decoration-color:rgba(10,13,18,.2);text-underline-offset:2px}
+.w-cpop-b li small a:hover{color:#0060cc}
+.w-cpop-stars{display:inline-flex;gap:1px;margin-top:4px;color:#d4d8de}
+.w-cpop-stars svg.on{color:#f5a524;fill:#f5a524}
+.w-cpop-empty{font-size:13px;color:var(--fog);padding:14px 8px;margin:0}
+.w-cpop-sk{display:block;height:46px;margin:6px 4px;border-radius:10px;background:#f2f4f7}
+@keyframes w-cpop-in{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+@keyframes w-cpop-up{from{transform:translateY(100%)}to{transform:none}}
+@media(prefers-reduced-motion:reduce){.w-cpop,.w-cpop.sheet{animation:none}}
 
 /* ---------- invitation row ---------- */
 .w-inv{display:flex;align-items:center;gap:12px;padding:12px 14px}
