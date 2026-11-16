@@ -39,7 +39,7 @@
 .cc { border-radius: var(--r-card); background: var(--card); border: 1px solid transparent; box-shadow: none; transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2); }
 .cc:hover { transform: translateY(-5px); box-shadow: var(--shadow-float); border-color: transparent; }
 .cc.glow { border-color: transparent; box-shadow: 0 0 0 2px var(--iris), var(--shadow-float); }
-.cc .banner { height: 72px; margin: 8px 8px 0; border-radius: var(--r-img); background: var(--g-aqua) !important; }
+.cc .banner { height: 72px; margin: 8px 8px 0; border-radius: var(--r-img); background-image: var(--g-aqua); background-size: cover; background-position: center; }
 .cc .banner .ft { left: 10px; top: 10px; background: #fff; color: var(--ink); border-radius: 999px; font-weight: 500; }
 .cc .main { padding: 0 24px 22px; gap: 12px; }
 .cc .hd { margin-top: -26px; }

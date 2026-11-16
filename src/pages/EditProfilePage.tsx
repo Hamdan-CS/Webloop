@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, AlertCircle, Save, CheckCircle2, X, Plus } from 'lu
 import { useAuth } from '@/contexts/AuthContext';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { updateProfile } from '@/services/api';
+import { uploadProfileImage } from '@/services/storage';
 import { Button } from '@/components/shared/ui/Button';
 import { Avatar } from '@/components/shared/ui/Avatar';
 import { Select } from '@/components/shared/ui/Select';
@@ -30,6 +31,8 @@ export function EditProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [interestInput, setInterestInput] = useState('');
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [bannerError, setBannerError] = useState('');
 
   const [form, setForm] = useState(emptyForm);
   const [interests, setInterests] = useState<string[]>([]);
@@ -76,6 +79,21 @@ export function EditProfilePage() {
   const set = (key: keyof typeof form, value: string) => {
     setForm((f) => ({ ...f, [key]: value }));
     setSaved(false);
+  };
+
+  // Upload goes to storage straight away; the URL is saved with the form.
+  const uploadBanner = async (file: File) => {
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) { setBannerError('Use a JPG, PNG or WebP image.'); return; }
+    if (file.size > 5 * 1048576) { setBannerError(`That file is ${(file.size / 1048576).toFixed(1)} MB. The limit is 5 MB.`); return; }
+    setBannerError('');
+    setBannerUploading(true);
+    try {
+      set('banner_url', await uploadProfileImage(user.id, 'banner', file));
+    } catch (err) {
+      setBannerError(err instanceof Error ? err.message : 'Upload failed. Try again.');
+    } finally {
+      setBannerUploading(false);
+    }
   };
 
   const addInterest = () => {
@@ -174,6 +192,21 @@ export function EditProfilePage() {
           <Field label={isCompany ? 'Company name' : 'Display name'} value={form.display_name} onChange={(v) => set('display_name', v)} placeholder={isCompany ? 'Your company name' : 'Your name'} required />
           <Field label={isCompany ? 'Logo image URL' : 'Avatar image URL'} value={form.avatar_url} onChange={(v) => set('avatar_url', v)} placeholder="https://..." />
           <Field label="Banner image URL" value={form.banner_url} onChange={(v) => set('banner_url', v)} placeholder="https://... (wide image for your profile header)" />
+          <div className="flex flex-wrap items-center gap-3 -mt-2">
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white">
+              {bannerUploading ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+              {bannerUploading ? 'Uploading…' : 'Upload banner image'}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="sr-only"
+                disabled={bannerUploading}
+                onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void uploadBanner(f); }}
+              />
+            </label>
+            <span className="text-xs text-slate-500">JPG, PNG or WebP, up to 5 MB. Shown on your company card and profile.</span>
+            {bannerError && <span className="text-xs text-red-400">{bannerError}</span>}
+          </div>
           <Field label={isCompany ? 'About the company' : 'Bio'} value={form.bio} onChange={(v) => set('bio', v)} placeholder={isCompany ? 'What your company does and what students can work on' : 'Tell others about yourself'} textarea />
           <Field label={isCompany ? 'Headquarters' : 'Location'} value={form.location} onChange={(v) => set('location', v)} placeholder="City, Country" />
         </Section>

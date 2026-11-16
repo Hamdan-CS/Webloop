@@ -15,7 +15,6 @@ interface Props {
 const badgeBg = (b: string) => (b === 'Hiring' ? badgeAccentColors.hiring : b === 'New' ? badgeAccentColors.new : undefined);
 
 export function CompanyCard({ company: c, summary, glow, onHover, onOpen }: Props) {
-  const hue = c.accent_hue ?? 200;
   const people = summary?.people ?? [];
   const shown = people.slice(0, 3);
   const more = Math.max(0, people.length - shown.length);
@@ -38,7 +37,7 @@ export function CompanyCard({ company: c, summary, glow, onHover, onOpen }: Prop
     >
       <div
         className="banner"
-        style={c.banner_url ? { backgroundImage: `url(${c.banner_url})` } : { background: `linear-gradient(135deg, hsl(${hue} 70% 38%), hsl(${hue + 40} 70% 52%))` }}
+        style={c.banner_url ? { backgroundImage: `url(${c.banner_url})` } : undefined}
       >
         {c.badge && <span className="ft" style={{ background: badgeBg(c.badge) }}>{c.badge}</span>}
       </div>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, ArrowRight, Check, Loader2, AlertCircle, Plus, X, Sparkles,
@@ -135,6 +135,25 @@ export function PublishProjectPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.creator_type]);
 
+  /* Underline slides to the active step (like the navbar pill): measure the
+     active step button and move the bar with transform + width. */
+  const stepsRef = useRef<HTMLOListElement>(null);
+  const barRef = useRef<HTMLSpanElement>(null);
+  const placeBar = useCallback(() => {
+    const bar = barRef.current;
+    const on = stepsRef.current?.querySelector<HTMLElement>('.pub-step.on');
+    if (!bar || !on) return;
+    bar.style.width = `${on.offsetWidth}px`;
+    bar.style.transform = `translateX(${on.offsetLeft}px)`;
+  }, []);
+  useLayoutEffect(placeBar, [step, placeBar]);
+  useEffect(() => {
+    let alive = true;
+    window.addEventListener('resize', placeBar);
+    void document.fonts?.ready.then(() => { if (alive) placeBar(); });
+    return () => { alive = false; window.removeEventListener('resize', placeBar); };
+  }, [placeBar]);
+
   if (!user || !profile) {
     return (
       <div className="container-page py-20 text-center">
@@ -253,7 +272,7 @@ export function PublishProjectPage() {
         <p className="mt-2 text-slate-400">Fill in a few steps — your project card builds itself on the right as you type.</p>
       </div>
 
-      <ol className="pub-steps" aria-label="Progress">
+      <ol className="pub-steps" aria-label="Progress" ref={stepsRef}>
         {STEPS.map((s, i) => (
           <li key={s}>
             <button type="button" className={cn('pub-step', i === step && 'on', i < step && 'done')} onClick={() => goTo(i)} aria-current={i === step ? 'step' : undefined}>
@@ -262,7 +281,7 @@ export function PublishProjectPage() {
             </button>
           </li>
         ))}
-        <span className="pub-steps-bar" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
+        <span className="pub-steps-bar" ref={barRef} aria-hidden="true" />
       </ol>
 
       <div className="pub-grid">
