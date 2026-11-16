@@ -410,7 +410,7 @@ function FinishScreen({
         <span className="ok"><Check size={24} /></span>
         <b>You finished the guide</b>
         <p>
-          {post.try_count} {post.try_count === 1 ? 'person' : 'people'} tried this. Did you?
+          {post.try_count ?? 0} {post.try_count === 1 ? 'person' : 'people'} tried this. Did you?
         </p>
         {!linking ? (
           <div className="row">

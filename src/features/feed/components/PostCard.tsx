@@ -93,6 +93,11 @@ export function PostCard({
   const author = post.author;
   const isPlaying = playingGuideId === post.id;
   const official = !!author && OFFICIAL_HANDLES.has(author.handle);
+  // the guest feed (get_guest_feed) doesn't send every counter: default to 0
+  const likes = post.like_count ?? 0;
+  const comments = post.comment_count ?? 0;
+  const tries = post.try_count ?? 0;
+  const views = post.view_count ?? 0;
   const roleLine = official ? 'Official' : author ? creatorTypeLabel[author.creator_type] : '';
   const avatarBg = official ? 'var(--feed-teal)' : author ? ROLE_COLOR[author.creator_type] : 'var(--feed-faint)';
   const [trying, setTrying] = useState(false);
@@ -116,14 +121,14 @@ export function PostCard({
   async function toggleLike() {
     if (requireAuth() || !viewerProfileId) return;
     const next = !post.viewer_liked;
-    onChange(post.id, { viewer_liked: next, like_count: post.like_count + (next ? 1 : -1) });
+    onChange(post.id, { viewer_liked: next, like_count: likes + (next ? 1 : -1) });
     await setReaction(post.id, viewerProfileId, 'like', next);
   }
 
   async function toggleBookmark() {
     if (requireAuth() || !viewerProfileId) return;
     const next = !post.viewer_bookmarked;
-    onChange(post.id, { viewer_bookmarked: next, bookmark_count: post.bookmark_count + (next ? 1 : -1) });
+    onChange(post.id, { viewer_bookmarked: next, bookmark_count: (post.bookmark_count ?? 0) + (next ? 1 : -1) });
     await setBookmark(post.id, viewerProfileId, next);
   }
 
@@ -131,7 +136,7 @@ export function PostCard({
     if (requireAuth()) return;
     onPlayGuide(post.id);
     if (viewerProfileId) {
-      onChange(post.id, { view_count: post.view_count + 1 });
+      onChange(post.id, { view_count: views + 1 });
       await recordGuideView(post.id, viewerProfileId);
     }
   }
@@ -141,7 +146,7 @@ export function PostCard({
     setTrying(true);
     try {
       await recordTry(post.id, viewerProfileId, null);
-      onChange(post.id, { viewer_tried: true, try_count: post.try_count + 1 });
+      onChange(post.id, { viewer_tried: true, try_count: tries + 1 });
     } finally {
       setTrying(false);
     }
@@ -235,7 +240,7 @@ export function PostCard({
               liked={!!post.viewer_liked}
               onLikeToggle={toggleLike}
               tried={!!post.viewer_tried}
-              onTried={() => onChange(post.id, { viewer_tried: true, try_count: post.try_count + 1 })}
+              onTried={() => onChange(post.id, { viewer_tried: true, try_count: tries + 1 })}
             />
           )}
           {post.post_type === 'pictures' && post.images && (
@@ -247,12 +252,12 @@ export function PostCard({
       <div className="fp-acts">
         <ActionButton
           icon={<ThumbsUp fill={post.viewer_liked ? 'currentColor' : 'none'} />}
-          label={post.like_count}
+          label={likes}
           active={post.viewer_liked}
           onClick={toggleLike}
           ariaLabel={post.viewer_liked ? 'Unlike' : 'Like'}
         />
-        <ActionButton icon={<MessageCircle />} label={post.comment_count} onClick={() => setCommentsOpen((v) => !v)} ariaLabel="Comments" />
+        <ActionButton icon={<MessageCircle />} label={comments} onClick={() => setCommentsOpen((v) => !v)} ariaLabel="Comments" />
         <ActionButton
           icon={<Bookmark fill={post.viewer_bookmarked ? 'currentColor' : 'none'} />}
           label=""
@@ -263,9 +268,9 @@ export function PostCard({
         {post.post_type === 'guide' ? (
           <>
             <button type="button" className={cn('fp-tried', post.viewer_tried && 'on')} onClick={markTried} disabled={trying} aria-pressed={!!post.viewer_tried}>
-              <Check size={14} /> <span className="lbl">{post.viewer_tried ? 'Tried' : 'I tried this'} · </span>{post.try_count}
+              <Check size={14} /> <span className="lbl">{post.viewer_tried ? 'Tried' : 'I tried this'} · </span>{tries}
             </button>
-            <span className="fp-views">{post.view_count.toLocaleString('en')} views</span>
+            <span className="fp-views">{views.toLocaleString('en')} views</span>
           </>
         ) : (
           <span className="fp-sp" />
@@ -340,7 +345,7 @@ export function PostCard({
         expanded={commentsOpen}
         onToggle={() => setCommentsOpen((v) => !v)}
         onRequireAuth={onRequireAuth}
-        onCommentCountChange={(delta) => onChange(post.id, { comment_count: post.comment_count + delta })}
+        onCommentCountChange={(delta) => onChange(post.id, { comment_count: comments + delta })}
       />
     </article>
   );
