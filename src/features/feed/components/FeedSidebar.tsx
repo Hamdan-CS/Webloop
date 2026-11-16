@@ -17,7 +17,6 @@ const POST_TYPES: { value: FeedPostType; label: string }[] = [
 const POSTED_BY: { value: FeedPostedBy; label: string }[] = [
   { value: 'all', label: 'Everyone' },
   { value: 'student', label: 'Students' },
-  { value: 'team', label: 'Student teams' },
   { value: 'company', label: 'Companies' },
   { value: 'university', label: 'Universities' },
 ];

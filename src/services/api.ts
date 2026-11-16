@@ -103,7 +103,7 @@ export interface EcosystemStats {
 export async function fetchEcosystemStats(): Promise<EcosystemStats> {
   const [projects, students, companies] = await Promise.all([
     supabase.from('projects').select('*', { count: 'exact', head: true }).in('status', VISIBLE_STATUSES),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).in('creator_type', ['student', 'team']),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('creator_type', 'student'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('creator_type', 'company'),
   ]);
   return {

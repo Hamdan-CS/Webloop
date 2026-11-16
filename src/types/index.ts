@@ -1,4 +1,4 @@
-export type CreatorType = 'student' | 'team' | 'company' | 'university';
+export type CreatorType = 'student' | 'company' | 'university';
 export type ProjectStatus = 'draft' | 'published' | 'recruiting' | 'in_progress' | 'completed' | 'archived';
 export type ProjectType = 'student' | 'company' | 'university' | 'open_source';
 export type Compensation = 'paid' | 'unpaid_educational' | 'open_source';

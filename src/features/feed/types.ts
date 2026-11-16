@@ -69,7 +69,7 @@ export type FeedSort = 'for_you' | 'newest' | 'most_liked';
 /** No 'admin' option here on purpose — admin status is never exposed to the
  * client (admin_roles has no client SELECT grant at all), so it can't be
  * filtered on. */
-export type FeedPostedBy = 'all' | 'student' | 'team' | 'company' | 'university';
+export type FeedPostedBy = 'all' | 'student' | 'company' | 'university';
 
 export interface FeedFiltersState {
   search: string;

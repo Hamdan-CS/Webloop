@@ -45,7 +45,6 @@ export const difficultyLabel: Record<Difficulty, string> = {
 
 export const creatorTypeLabel: Record<CreatorType, string> = {
   student: 'Student',
-  team: 'Student Team',
   company: 'Company',
   university: 'University',
 };

@@ -286,7 +286,7 @@ export function CreatorProfilePage() {
               )}
             </div>
             <div className="w-col">
-              {(profile.creator_type === 'student' || profile.creator_type === 'team') ? (
+              {profile.creator_type === 'student' ? (
                 <WBox title="Contributions" meta={`${contributions.approved} approved`}>
                   <WContribHeat studentId={profile.id} />
                 </WBox>
@@ -430,7 +430,7 @@ export function CreatorProfilePage() {
       </div>
 
       {/* ===== Contribution grid — students & teams only ===== */}
-      {(profile.creator_type === 'student' || profile.creator_type === 'team') && (
+      {profile.creator_type === 'student' && (
         <div className="mt-6">
           <Suspense fallback={<div className="skeleton h-[340px] rounded-xl" />}>
             <ContributionGrid studentId={profile.id} size="full" />

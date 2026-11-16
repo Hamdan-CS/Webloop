@@ -159,7 +159,7 @@ export function PostComposer({ onClose, onPublished }: PostComposerProps) {
     }
   }
 
-  const showVisibility = profile?.creator_type === 'student' || profile?.creator_type === 'team';
+  const showVisibility = profile?.creator_type === 'student';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/85 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">

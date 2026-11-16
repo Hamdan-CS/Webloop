@@ -74,7 +74,7 @@ function MyProjectsRoute() {
 function MyApplicationsRoute() {
   const { profile, loading } = useAuth();
   if (loading) return <RouteLoading />;
-  if (profile && (profile.creator_type === 'student' || profile.creator_type === 'team')) {
+  if (profile && profile.creator_type === 'student') {
     return <Navigate to="/dashboard/student" replace />;
   }
   return <MyApplicationsPage />;
@@ -174,7 +174,7 @@ function App() {
                   <Route path="/messages/:conversationId" element={<MessagesPage />} />
                   <Route path="/settings/profile" element={<SettingsRoute />} />
                   <Route path="/build-profile" element={<BuildProfilePage />} />
-                  <Route path="/dashboard/student" element={<RoleRoute allowed={['student', 'team']}><StudentDashboard /></RoleRoute>} />
+                  <Route path="/dashboard/student" element={<RoleRoute allowed={['student']}><StudentDashboard /></RoleRoute>} />
                   <Route path="/dashboard/company" element={<RoleRoute allowed={['company']}><CompanyDashboard /></RoleRoute>} />
                   <Route path="/dashboard/university" element={<RoleRoute allowed={['university']}><UniversityDashboard /></RoleRoute>} />
                   <Route path="*" element={<NotFoundPage />} />
