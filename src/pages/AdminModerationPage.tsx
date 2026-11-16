@@ -15,6 +15,7 @@ import {
   fetchModerationQueue,
 } from '@/features/feed/services/feedApi';
 import type { ModerationQueueItem } from '@/features/feed/types';
+import { PinnedPostsManager } from '@/features/feed/components/PinnedPostsManager';
 
 /** Flagged/removed posts, for admins only — report_count and not_helpful_count
  * are never exposed through the regular feed queries (column grant excludes
@@ -61,6 +62,10 @@ export function AdminModerationPage() {
     <div className="container-page py-8">
       <h1 className="heading text-2xl">Moderation queue</h1>
       <p className="mt-1 text-sm text-slate-400">Posts with reports, "not helpful" marks, or that are currently removed.</p>
+
+      <PinnedPostsManager />
+
+      <h2 className="heading mt-8 text-lg">Flagged posts</h2>
 
       <div className="mt-6 flex flex-col gap-3">
         {items === null ? (

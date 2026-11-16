@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { Comment, FeedFiltersState, GuideStep, ModerationQueueItem, Post, PostVisibility } from '../types';
+import type { Comment, FeedFiltersState, GuideStep, ModerationQueueItem, PinnedPost, Post, PostVisibility } from '../types';
 import type { FeedTag } from '../constants';
 
 // posts has column-level grants (migration 021): `*` would also ask for the
@@ -9,6 +9,7 @@ const POST_COLUMNS = [
   'id', 'author_id', 'post_type', 'visibility', 'title', 'body', 'steps', 'tags',
   'like_count', 'comment_count', 'bookmark_count', 'view_count', 'try_count',
   'is_verified', 'removed_at', 'removed_reason', 'edited_at', 'created_at', 'updated_at',
+  'pinned_rank', 'pinned_until',
 ].join(', ');
 const POST_SELECT = `${POST_COLUMNS}, author:profiles!posts_author_id_fkey(*), images:post_images(*)`;
 
@@ -31,7 +32,24 @@ export async function fetchFeed({ filters, viewerProfileId, limit = 24 }: FetchF
     if (bookmarkedIds.length === 0) return [];
   }
 
+  // Admin pins (Part G) sit on top of the default view only — not when the
+  // viewer filters, searches or looks at Saved. They're left out of the normal list.
+  const defaultView = !filters.savedOnly && filters.postType === 'all' && filters.tags.length === 0
+    && !filters.search.trim() && filters.postedBy === 'all';
+  let pins: Post[] = [];
+  if (defaultView) {
+    const { data: pinData } = await supabase
+      .from('posts')
+      .select(POST_SELECT)
+      .not('pinned_rank', 'is', null)
+      .gt('pinned_until', new Date().toISOString())
+      .is('removed_at', null)
+      .order('pinned_rank', { ascending: true });
+    pins = ((pinData ?? []) as unknown as Post[]).map((p) => ({ ...p, pinned_shown: true }));
+  }
+
   let q = supabase.from('posts').select(POST_SELECT);
+  if (pins.length > 0) q = q.not('id', 'in', `(${pins.map((p) => p.id).join(',')})`);
   if (filters.postType !== 'all') q = q.eq('post_type', filters.postType);
   if (filters.tags.length > 0) q = q.overlaps('tags', filters.tags);
   if (filters.search.trim()) {
@@ -54,6 +72,8 @@ export async function fetchFeed({ filters, viewerProfileId, limit = 24 }: FetchF
     const interests = new Set(await fetchUserInterests(viewerProfileId));
     posts = [...posts].sort((a, b) => overlapCount(b, interests) - overlapCount(a, interests));
   }
+
+  posts = [...pins, ...posts];
 
   if (viewerProfileId && posts.length > 0) {
     const ids = posts.map((p) => p.id);
@@ -105,7 +125,8 @@ export async function fetchLatestPostTimestamp(): Promise<string | null> {
 export async function fetchGuestFeed(): Promise<Post[]> {
   const { data, error } = await supabase.rpc('get_guest_feed');
   if (error) throw error;
-  return (data ?? []) as unknown as Post[];
+  // pins come first from the RPC (migration 024)
+  return ((data ?? []) as unknown as Post[]).map((p) => ({ ...p, pinned_shown: p.pinned_rank != null }));
 }
 
 export interface CreatePostInput {
@@ -317,6 +338,42 @@ export async function adminVerifyPost(postId: string, verified: boolean): Promis
 
 export async function adminWarnUser(profileId: string, reason: string): Promise<void> {
   const { error } = await supabase.rpc('admin_warn_user', { p_profile_id: profileId, p_reason: reason });
+  if (error) throw error;
+}
+
+// ---------- Admin pins (Part G, migration 024) ----------
+
+/** True when the post is pinned and the pin hasn't ended. */
+export function isActivePin(p: Pick<Post, 'pinned_rank' | 'pinned_until'>): boolean {
+  return p.pinned_rank != null && !!p.pinned_until && new Date(p.pinned_until).getTime() > Date.now();
+}
+
+export async function fetchActivePins(): Promise<PinnedPost[]> {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('id, title, pinned_rank, pinned_until, author:profiles!posts_author_id_fkey(display_name)')
+    .not('pinned_rank', 'is', null)
+    .gt('pinned_until', new Date().toISOString())
+    .is('removed_at', null)
+    .order('pinned_rank', { ascending: true });
+  if (error) throw error;
+  return ((data ?? []) as unknown as { id: string; title: string; pinned_rank: number; pinned_until: string; author: { display_name: string } | null }[])
+    .map((r) => ({ id: r.id, title: r.title, pinned_rank: r.pinned_rank, pinned_until: r.pinned_until, author_name: r.author?.display_name ?? null }));
+}
+
+/** Throws an Error whose message is 'PIN_LIMIT' when 5 posts are already pinned. */
+export async function adminPinPost(postId: string, rank: number, until: Date): Promise<void> {
+  const { error } = await supabase.rpc('admin_pin_post', { p_post_id: postId, p_rank: rank, p_until: until.toISOString() });
+  if (error) throw new Error(error.message.includes('PIN_LIMIT') ? 'PIN_LIMIT' : error.message);
+}
+
+export async function adminUnpinPost(postId: string): Promise<void> {
+  const { error } = await supabase.rpc('admin_unpin_post', { p_post_id: postId });
+  if (error) throw error;
+}
+
+export async function adminReorderPins(postIds: string[]): Promise<void> {
+  const { error } = await supabase.rpc('admin_reorder_pins', { p_post_ids: postIds });
   if (error) throw error;
 }
 

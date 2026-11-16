@@ -49,6 +49,11 @@ export interface Post {
   edited_at: string | null;
   created_at: string;
   updated_at: string;
+  /** Admin pin (migration 024): 1–5, active while pinned_until is in the future. */
+  pinned_rank?: number | null;
+  pinned_until?: string | null;
+  /** Client-side: shown in the pinned block at the top (default view only). */
+  pinned_shown?: boolean;
   author?: Profile;
   images?: PostImage[];
   /** Populated client-side for the signed-in viewer only; absent for guest reads. */
@@ -83,6 +88,14 @@ export const DEFAULT_FEED_FILTERS: FeedFiltersState = {
   sort: 'for_you',
   savedOnly: false,
 };
+
+export interface PinnedPost {
+  id: string;
+  title: string;
+  pinned_rank: number;
+  pinned_until: string;
+  author_name: string | null;
+}
 
 export interface ModerationQueueItem {
   id: string;

@@ -7,6 +7,8 @@ import {
   MessageCircle,
   MoreHorizontal,
   Pencil,
+  Pin,
+  PinOff,
   Shield,
   ShieldCheck,
   ShieldOff,
@@ -23,7 +25,8 @@ import { GuidePlayer } from './GuidePlayer';
 import { PictureCarousel } from './PictureCarousel';
 import { CommentsSection } from './CommentsSection';
 import { ReportMenuItem } from './ReportSheet';
-import { adminRemovePost, adminRestorePost, adminVerifyPost, adminWarnUser, recordGuideView, setBookmark, setReaction } from '../services/feedApi';
+import { adminRemovePost, adminRestorePost, adminUnpinPost, adminVerifyPost, adminWarnUser, isActivePin, recordGuideView, setBookmark, setReaction } from '../services/feedApi';
+import { PinPostDialog } from './PinPostDialog';
 import type { Post } from '../types';
 
 interface PostCardProps {
@@ -58,6 +61,7 @@ export function PostCard({
   focusComment = false,
 }: PostCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pinOpen, setPinOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(focusComment);
 
   // comments load async: wait for the box, then focus it
@@ -124,6 +128,12 @@ export function PostCard({
     setMenuOpen(false);
   }
 
+  async function unpin() {
+    await adminUnpinPost(post.id);
+    onChange(post.id, { pinned_rank: null, pinned_until: null });
+    setMenuOpen(false);
+  }
+
   async function warnAuthor() {
     const reason = window.prompt(`Reason for warning ${author?.display_name ?? 'this user'}?`);
     if (!reason) return;
@@ -151,6 +161,11 @@ export function PostCard({
             {post.edited_at && ' · Edited'}
           </p>
         </div>
+        {post.pinned_shown && isActivePin(post) && (
+          <Badge tone="accent" className="shrink-0">
+            <Pin size={11} /> Pinned
+          </Badge>
+        )}
         {post.visibility === 'students_only' && (
           <Badge tone="accent" className="shrink-0">
             <Lock size={11} /> Students only
@@ -254,6 +269,10 @@ export function PostCard({
                       ) : (
                         <MenuItem icon={<ShieldOff size={14} />} label="Unverify" onClick={() => markVerified(false)} />
                       )}
+                      {!post.removed_at && (
+                        <MenuItem icon={<Pin size={14} />} label={isActivePin(post) ? 'Change pin…' : 'Pin to top…'} onClick={() => { setPinOpen(true); setMenuOpen(false); }} />
+                      )}
+                      {isActivePin(post) && <MenuItem icon={<PinOff size={14} />} label="Unpin" onClick={unpin} />}
                       <MenuItem
                         icon={<Shield size={14} />}
                         label={post.removed_at ? 'Restore post' : 'Remove post'}
@@ -269,6 +288,8 @@ export function PostCard({
           )}
         </div>
       </div>
+
+      {pinOpen && <PinPostDialog post={post} onClose={() => setPinOpen(false)} onPinned={(patch) => onChange(post.id, patch)} />}
 
       <CommentsSection
         post={post}
