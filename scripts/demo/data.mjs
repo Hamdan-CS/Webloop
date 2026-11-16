@@ -193,12 +193,27 @@ export const tasks = [
   { n: 12, title: 'Lighthouse performance pass (target 90+)', who: 'muhammed', status: 'submitted', size: 'medium', created: '2026-11-07', submitted: '2026-11-14',
     description: 'Get Lighthouse performance to 90+ on the home page: images, fonts and bundle size.',
     note: 'Performance 94 on mobile: lazy images, font preload, smaller bundle.', evidence: file('vite.config.ts') },
-  { n: 13, title: 'Dark mode toggle', who: 'muhammed', status: 'in_progress', size: 'small', created: '2026-11-12',
-    description: 'Theme toggle in the navbar that remembers the choice.' },
-  { n: 14, title: 'Testimonials section', who: null, status: 'open', size: 'small', created: '2026-11-13',
-    description: 'A section with 3 short customer testimonials. General task: open to the team.' },
+  // Not done yet. acceptance/due fill tasks.acceptance_criteria/due_date (also set on rows that already exist).
+  { n: 13, title: 'Dark mode toggle', who: 'muhammed', status: 'in_progress', size: 'small', created: '2026-11-12', due: '2026-11-24',
+    description: 'Theme toggle in the navbar that remembers the choice.',
+    acceptance: '- Toggle in the navbar switches light/dark instantly\n- Choice is saved and restored on reload\n- Follows the system setting on first visit\n- All text keeps AA contrast in both themes' },
+  { n: 14, title: 'Testimonials section', who: null, status: 'open', size: 'small', created: '2026-11-13', due: '2026-11-28',
+    description: 'A section with 3 short customer testimonials. General task: open to the team.',
+    acceptance: '- 3 testimonial cards with name, company and photo\n- Content comes from src/data, not hard-coded\n- Stacks to one column on phones' },
   { n: 15, title: 'Accessibility audit (keyboard + screen reader)', who: null, status: 'open', size: 'medium', created: '2026-11-13',
     description: 'Check every page with keyboard only and a screen reader; list and fix issues. General task: open to the team.' },
+  { n: 16, title: 'Add Arabic translation', who: 'ali', status: 'open', size: 'large', created: '2026-11-14', due: '2026-12-05',
+    description: 'Arabic version of every page with a language switch, including right-to-left layout.',
+    acceptance: '- EN/AR switch in the navbar, choice remembered\n- All text comes from translation files (no hard-coded strings)\n- Layout flips to right-to-left in Arabic\n- Contact form errors are translated too' },
+  { n: 17, title: 'Pricing page cards redesign', who: 'muhammed', status: 'open', size: 'medium', created: '2026-11-14', due: '2026-11-30',
+    description: 'Redesign the three pricing cards so the recommended plan stands out and plans are easy to compare.',
+    acceptance: '- 3 cards, the middle one highlighted as "Most popular"\n- Same feature rows in the same order on every card\n- Monthly/yearly toggle updates the prices\n- Cards stack on phones without horizontal scroll' },
+  { n: 18, title: 'Newsletter signup with Supabase', who: 'ali', status: 'in_progress', size: 'medium', created: '2026-11-12', due: '2026-11-26',
+    description: 'Footer newsletter form that saves emails to a Supabase table, with double-submit protection.',
+    acceptance: '- Email is validated before sending\n- Saved to a newsletter_subscribers table with a unique email\n- Signing up twice shows a friendly "already subscribed" message\n- Success and error states are clear' },
+  { n: 19, title: 'Image optimisation (WebP + lazy loading)', who: 'hamdan', status: 'in_progress', size: 'medium', created: '2026-11-13', due: '2026-11-25',
+    description: 'Convert images to WebP, add width/height and lazy-load everything below the fold.',
+    acceptance: '- All photos served as WebP with a JPEG fallback\n- Every <img> has width and height (no layout shift)\n- Images below the fold use loading="lazy"\n- Lighthouse "properly size images" passes' },
 ];
 
 // ------------------------------------------------------------------
@@ -350,17 +365,43 @@ export const messages = [
   { from: 'hamdan', to: 'ali', at: '2026-11-10T13:05:00Z', body: 'Checked your cross-browser report. On Safari the menu overlaps the logo, I marked it as changes requested.' },
   { from: 'ali', to: 'hamdan', at: '2026-11-10T13:20:00Z', body: 'Ah, I see it on iPhone too. Probably the flex gap. I\'ll fix it and re-test.' },
   { from: 'hamdan', to: 'ali', at: '2026-11-10T13:22:00Z', body: 'Thanks! Send it back when it\'s ready.', task: 11 },
-  { from: 'ali', to: 'hamdan', at: '2026-11-15T17:45:00Z', body: 'Fixed the overlap locally, testing on Firefox now. Will resubmit tonight.', unread: true },
+  { from: 'ali', to: 'hamdan', at: '2026-11-15T17:45:00Z', body: 'Fixed the overlap locally, testing on Firefox now. Will resubmit tonight.' },
   // Hamdan ↔ Muhammed: Lighthouse (task 12)
   { from: 'hamdan', to: 'muhammed', at: '2026-11-07T10:00:00Z', body: 'New task for you: Lighthouse pass, target 90+.', task: 12 },
   { from: 'muhammed', to: 'hamdan', at: '2026-11-07T10:30:00Z', body: 'On it. Images are the biggest problem, I\'ll lazy-load them.' },
-  { from: 'muhammed', to: 'hamdan', at: '2026-11-14T19:10:00Z', body: 'Submitted! 94 on mobile. Can you review it?', unread: true },
+  { from: 'muhammed', to: 'hamdan', at: '2026-11-14T19:10:00Z', body: 'Submitted! 94 on mobile. Can you review it?' },
   // Muhammed ↔ Ali: contact form styles
   { from: 'muhammed', to: 'ali', at: '2026-11-06T18:00:00Z', body: 'Your contact form works great. Mind if I restyle the success message?' },
   { from: 'ali', to: 'muhammed', at: '2026-11-06T18:12:00Z', body: 'Go for it, just keep the error states red please 😄' },
   { from: 'muhammed', to: 'ali', at: '2026-11-06T18:13:00Z', body: 'Deal.' },
   // WebLoop → Hamdan
   { from: 'webloop', to: 'hamdan', at: '2026-11-14T10:05:00Z', body: 'Congrats, WebHub is this week\'s featured project!', unread: true },
+
+  // Last 5 days. Hamdan <-> Muhammed: dark mode (13) + pricing cards (17)
+  { from: 'hamdan', to: 'muhammed', at: '2026-11-12T09:15:00Z', body: 'Started the dark mode toggle? Let\'s keep it small: navbar button + remember the choice.', task: 13 },
+  { from: 'muhammed', to: 'hamdan', at: '2026-11-12T09:40:00Z', body: 'Yes, using a class on <html> and localStorage. It will also follow the system setting on first visit.' },
+  { from: 'hamdan', to: 'muhammed', at: '2026-11-14T11:20:00Z', body: 'Next one after that: the pricing cards. The middle plan should stand out.', task: 17 },
+  { from: 'muhammed', to: 'hamdan', at: '2026-11-14T12:05:00Z', body: 'Nice. Monthly/yearly toggle too? I already sketched it in Figma.' },
+  { from: 'hamdan', to: 'muhammed', at: '2026-11-14T12:10:00Z', body: 'Yes please, with the yearly price showing the saving.' },
+  { from: 'muhammed', to: 'hamdan', at: '2026-11-16T08:45:00Z', body: 'Dark mode works, fixing contrast on the footer links. I\'ll share the pricing sketch in the group later today.', unread: true },
+  // Hamdan <-> Ali: newsletter (18) + Arabic translation (16)
+  { from: 'hamdan', to: 'ali', at: '2026-11-12T14:00:00Z', body: 'Can you take the newsletter signup? Same Supabase project as the contact form.', task: 18 },
+  { from: 'ali', to: 'hamdan', at: '2026-11-12T14:25:00Z', body: 'On it. I\'ll add a unique index on email so double signups fail nicely.' },
+  { from: 'hamdan', to: 'ali', at: '2026-11-14T16:30:00Z', body: 'After that: the Arabic translation. You know right-to-left layouts better than any of us.', task: 16 },
+  { from: 'ali', to: 'hamdan', at: '2026-11-14T16:50:00Z', body: 'Happy to. I\'ll set up the translation files first so the new pricing text is ready for it.' },
+  { from: 'ali', to: 'hamdan', at: '2026-11-15T20:10:00Z', body: 'Newsletter form saves to Supabase now, just the "already subscribed" message left.' },
+  { from: 'ali', to: 'hamdan', at: '2026-11-16T10:30:00Z', body: 'Quick one: should the Arabic switch go in the navbar or the footer?', unread: true },
+  // WebLoop -> Muhammed / Ali: congrats on their verified tasks
+  { from: 'webloop', to: 'muhammed', at: '2026-11-13T09:00:00Z', body: 'Congrats Muhammed! Your 4 verified WebHub tasks (navbar, hero, services, scroll animations) are on your profile now.' },
+  { from: 'webloop', to: 'ali', at: '2026-11-13T09:05:00Z', body: 'Congrats Ali! Your verified WebHub tasks (server, contact form, Supabase storage) are on your profile now.' },
+];
+
+// WebHub group chat (the project's group conversation): a short stand-up.
+// Hamdan writes last, so the group counts as read for him.
+export const groupMessages = [
+  { from: 'muhammed', at: '2026-11-15T09:00:00Z', body: 'Stand-up. Done: dark mode toggle mostly working. Next: footer contrast, then the pricing cards.' },
+  { from: 'ali', at: '2026-11-15T09:12:00Z', body: 'Done: newsletter form saves to Supabase. Next: the "already subscribed" message, then Arabic translation files.' },
+  { from: 'hamdan', at: '2026-11-15T09:30:00Z', body: 'Done: reviewed the Lighthouse pass. Next: WebP + lazy loading for all images. Shout if anything blocks you.' },
 ];
 
 // ------------------------------------------------------------------

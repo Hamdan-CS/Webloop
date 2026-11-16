@@ -83,6 +83,7 @@ async function main() {
   console.log(`  • ${targets.length} demo account(s): ${targets.map((u) => u.email).join(', ') || 'none'} and everything they own`);
   if (seeded) {
     console.log(`  • ${seeded.posts.length} post(s), ${seeded.comments.length} comment(s), ${seeded.reactions.length} like(s), ${seeded.messages.length} message(s) and ${seeded.notifications.length} notification(s) the seed wrote as WebLoop`);
+    console.log(`  • ${seeded.tasks?.length ?? 0} task(s) and ${seeded.demoMessages?.length ?? 0} message(s) the seed wrote for demo accounts`);
   } else {
     console.log('  • (no scripts/demo/.seeded.json: rows written as WebLoop are left alone)');
   }
@@ -107,6 +108,17 @@ async function main() {
     const paths = seeded.storage.filter((p) => p.startsWith('post-media/')).map((p) => p.slice('post-media/'.length));
     if (paths.length) await sb.storage.from('post-media').remove(paths);
     console.log('  ✓ WebLoop rows removed');
+  }
+
+  // 1b. Demo rows by saved id, only where a demo account created/sent them
+  if (seeded && targets.length) {
+    const { data: dp } = await sb.from('profiles').select('id').in('user_id', targets.map((u) => u.id));
+    const demoIds = (dp ?? []).map((p) => p.id);
+    if (demoIds.length) {
+      if (seeded.demoMessages?.length) await q(sb.from('messages').delete().in('id', seeded.demoMessages).in('sender_id', demoIds), 'Demo messages');
+      if (seeded.tasks?.length) await q(sb.from('tasks').delete().in('id', seeded.tasks).in('created_by', demoIds), 'Demo tasks');
+      console.log('  ✓ Demo tasks and messages removed');
+    }
   }
 
   // 2. Demo accounts: storage folders, then the users (cascades the rest)

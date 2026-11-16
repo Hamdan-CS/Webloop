@@ -60,6 +60,8 @@ async function q(promise, what) {
 const seeded = existsSync(SEEDED_FILE)
   ? JSON.parse(readFileSync(SEEDED_FILE, 'utf8'))
   : { posts: [], comments: [], reactions: [], messages: [], notifications: [], storage: [] };
+// tasks / demoMessages: rows the seed created for demo accounts (clean-demo deletes them by id)
+for (const k of ['tasks', 'demoMessages']) seeded[k] ??= [];
 const remember = (kind, id) => { if (id && !seeded[kind].includes(id)) seeded[kind].push(id); };
 const saveSeeded = () => writeFileSync(SEEDED_FILE, `${JSON.stringify(seeded, null, 2)}\n`);
 
@@ -205,17 +207,27 @@ async function main() {
   }
 
   // 6. Tasks + submissions (dates set explicitly so the contribution grid fills in)
-  const existingTasks = await q(sb.from('tasks').select('id, title').eq('project_id', project.id), 'Tasks');
+  const existingTasks = await q(sb.from('tasks').select('id, title, acceptance_criteria, due_date').eq('project_id', project.id), 'Tasks');
   const taskId = {};
   for (const t of D.tasks) {
     const hit = existingTasks.find((x) => x.title === t.title);
-    if (hit) { taskId[t.n] = hit.id; continue; }
+    if (hit) {
+      taskId[t.n] = hit.id;
+      // fill acceptance criteria / due date on tasks seeded before they existed (only if still empty)
+      const patch = {};
+      if (t.acceptance && !hit.acceptance_criteria) patch.acceptance_criteria = t.acceptance;
+      if (t.due && !hit.due_date) patch.due_date = t.due;
+      if (Object.keys(patch).length) await q(sb.from('tasks').update(patch).eq('id', hit.id), `Task ${t.n} details`);
+      continue;
+    }
     const created = `${t.created}T09:00:00Z`;
     const updated = t.done ? `${t.done}T15:00:00Z` : t.submitted ? `${t.submitted}T15:00:00Z` : created;
     const row = await q(sb.from('tasks').insert({
       project_id: project.id,
       title: t.title,
       description: t.description,
+      acceptance_criteria: t.acceptance ?? null,
+      due_date: t.due ?? null,
       assignee_id: t.who ? P[t.who].id : null,
       created_by: P[pr.owner].id,
       status: t.status === 'submitted' ? 'in_progress' : t.status, // the pending submission flips it to submitted
@@ -224,6 +236,8 @@ async function main() {
       updated_at: updated,
     }).select('id').single(), `Task ${t.n}`);
     taskId[t.n] = row.id;
+    remember('tasks', row.id);
+    console.log(`  + task "${t.title}"`);
 
     if (t.status === 'approved' || t.status === 'changes_requested' || t.status === 'submitted') {
       const doneAt = t.done ? `${t.done}T15:00:00Z` : null;
@@ -281,7 +295,37 @@ async function main() {
       is_read: !(m.unread && m.to === 'hamdan'),
       created_at: m.at,
     }).select('id').single(), 'Message insert');
-    if (m.from === 'webloop') remember('messages', row.id);
+    remember(m.from === 'webloop' ? 'messages' : 'demoMessages', row.id);
+  }
+
+  // Hamdan's unread 1-to-1 messages = exactly the ones marked unread in data.mjs
+  // (only messages between seeded accounts; anything else is left alone).
+  const seededSenders = D.messages.filter((m) => m.to === 'hamdan').map((m) => P[m.from].id);
+  const inbox = await q(sb.from('messages').select('id, sender_id, body, created_at, is_read')
+    .eq('recipient_id', P.hamdan.id).in('sender_id', [...new Set(seededSenders)]), 'Hamdan inbox');
+  for (const row of inbox) {
+    const m = D.messages.find((x) => x.to === 'hamdan' && P[x.from].id === row.sender_id && x.body === row.body
+      && new Date(x.at).getTime() === new Date(row.created_at).getTime());
+    if (!m) continue;
+    const isRead = !m.unread;
+    if (row.is_read !== isRead) await q(sb.from('messages').update({ is_read: isRead }).eq('id', row.id), 'Read state');
+  }
+
+  // 7c-2. WebHub group chat stand-up (the project's group conversation from migration 028)
+  const group = await q(sb.from('conversations').select('id').eq('project_id', project.id).eq('kind', 'project').maybeSingle(), 'Group chat');
+  if (group) {
+    for (const g of D.groupMessages) {
+      const has = await q(sb.from('messages').select('id')
+        .eq('conversation_id', group.id).eq('sender_id', P[g.from].id).eq('body', g.body).maybeSingle(), 'Group message lookup');
+      if (has) continue;
+      const row = await q(sb.from('messages').insert({
+        sender_id: P[g.from].id, recipient_id: null, conversation_id: group.id, project_id: project.id,
+        body: g.body, is_read: true, created_at: g.at,
+      }).select('id').single(), 'Group message');
+      remember('demoMessages', row.id);
+    }
+  } else {
+    console.log('  ! WebHub has no group chat yet (migration 028): stand-up skipped');
   }
 
   // 7d. Posts + images, comments, likes
