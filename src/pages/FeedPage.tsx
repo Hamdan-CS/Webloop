@@ -242,7 +242,8 @@ export function FeedPage() {
 
   return (
     <div className="container-page py-6">
-      <div className="lg:grid lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-7">
+      {/* guests get no sidebar, so no sidebar column either: the posts sit in one centred column */}
+      <div className={cn(isGuest ? 'mx-auto max-w-[600px]' : 'lg:grid lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-7')}>
         {!isGuest && (
           <aside className="hidden lg:block">
             <div className="sticky top-24">
