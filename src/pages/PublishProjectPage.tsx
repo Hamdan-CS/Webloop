@@ -5,13 +5,14 @@ import {
   GraduationCap, Building2, Landmark, GitFork,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { createProject, inviteUserToProject } from '@/services/api';
+import { createProject, inviteUserToProject, createTeam, fetchMyTeams, inviteToTeam } from '@/services/api';
+import { StudentPicker } from '@/components/teams/StudentPicker';
 import { Button } from '@/components/shared/ui/Button';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { art, type ArtKind } from '@/data/homeArt';
 import { compensationLabel, projectTypeLabel } from '@/utils/labels';
 import { ALLOWED_PROJECT_TYPES, ALLOWED_COMPENSATIONS } from '@/utils/roles';
-import type { Compensation, Difficulty, Project, ProjectType } from '@/types';
+import type { Compensation, Difficulty, Profile, Project, ProjectType, Team } from '@/types';
 import { cn } from '@/utils/cn';
 
 const CATEGORIES = ['Web App', 'Mobile App', 'Backend / Infra', 'Developer Tool', 'Game / Engine', 'ML', 'CLI'];
@@ -71,6 +72,11 @@ export function PublishProjectPage() {
   const [invites, setInvites] = useState<string[]>(['']);
   const [inviteResults, setInviteResults] = useState<{ email: string; ok: boolean; error?: string }[]>([]);
   const [publishedProject, setPublishedProject] = useState<Project | null>(null);
+  // Team project (Part B): pick one of my teams or create one and invite students
+  const [myTeams, setMyTeams] = useState<Team[]>([]);
+  const [teamChoice, setTeamChoice] = useState<string>(''); // '' | 'new' | team id
+  const [newTeamName, setNewTeamName] = useState('');
+  const [teamInvitees, setTeamInvitees] = useState<Profile[]>([]);
   const [form, setForm] = useState<Form>({
     title: '', summary: '', overview: '', problem: '', target_users: '',
     category: 'Web App', difficulty: 'intermediate', project_type: 'student',
@@ -81,6 +87,16 @@ export function PublishProjectPage() {
   });
 
   const personal = form.project_type === 'student' && form.scope === 'personal';
+  const isTeamProject = profile?.creator_type === 'student' && form.project_type === 'student' && form.scope === 'team';
+  const chosenTeam = myTeams.find((t) => t.id === teamChoice) ?? null;
+  // "a team project needs at least one other person": a pending invite is enough
+  const othersInTeam = chosenTeam ? (chosenTeam.members ?? []).filter((m) => m.profile_id !== profile?.id).length : 0;
+  const teamProblem = !isTeamProject ? null
+    : !teamChoice ? 'Choose one of your teams or create a new one.'
+    : teamChoice === 'new' && newTeamName.trim().length < 2 ? 'Give your team a name (2–40 characters).'
+    : teamChoice === 'new' && teamInvitees.length === 0 ? 'Invite at least 1 student to your new team.'
+    : teamChoice !== 'new' && othersInTeam === 0 && teamInvitees.length === 0 ? 'This team only has you. Invite at least 1 student.'
+    : null;
   const checks = useMemo(() => {
     const validRoles = roles.filter((r) => r.title.trim());
     return [
@@ -113,7 +129,15 @@ export function PublishProjectPage() {
     stars_count: 0, published_at: null, is_demo: false, created_at: '',
     owner: profile ?? undefined,
     skills: skills.map((s, i) => ({ id: `s${i}`, project_id: 'draft', name: s, category: null })),
-  }) as Project, [form, skills, profile, personal]);
+    ...(isTeamProject && (chosenTeam || newTeamName.trim())
+      ? { team_id: 'draft', team: chosenTeam ?? { id: 'draft', name: newTeamName.trim(), slug: '', logo_url: null, bio: null, created_by: null, archived_at: null, created_at: '', members: [] } }
+      : {}),
+  }) as Project, [form, skills, profile, personal, isTeamProject, chosenTeam, newTeamName]);
+
+  useEffect(() => {
+    if (profile?.creator_type !== 'student') return;
+    fetchMyTeams(profile.id).then(setMyTeams).catch(() => setMyTeams([]));
+  }, [profile?.id, profile?.creator_type]);
 
   const allowedTypes = profile ? ALLOWED_PROJECT_TYPES[profile.creator_type] : ALLOWED_PROJECT_TYPES.student;
   const allowedComps = profile ? ALLOWED_COMPENSATIONS[profile.creator_type] : ALLOWED_COMPENSATIONS.student;
@@ -195,8 +219,11 @@ export function PublishProjectPage() {
   const publish = async () => {
     setError(null);
     if (!basicsOk) { setTouched(true); setStep(0); setError('Title and summary are required.'); return; }
+    if (teamProblem) { setStep(1); setError(teamProblem); return; }
     setLoading(true);
     try {
+      let teamId: string | null = null;
+      if (isTeamProject) teamId = teamChoice === 'new' ? (await createTeam(newTeamName.trim())).id : teamChoice;
       const validRoles = personal ? [] : roles.filter((r) => r.title.trim());
       const project = await createProject(
         profile.id,
@@ -221,12 +248,30 @@ export function PublishProjectPage() {
           duration_weeks: form.duration_weeks ? parseInt(form.duration_weeks) : undefined,
           time_commitment_hours: form.time_commitment_hours.trim() || undefined,
           location: form.location.trim() || undefined,
+          team_id: teamId,
         },
         skills,
         validRoles.map((r) => ({ title: r.title.trim(), description: r.description.trim() || undefined })),
       );
 
-      const validInvites = Array.from(new Set(invites.map((e) => e.trim()).filter(Boolean)));
+      if (teamId && teamInvitees.length > 0) {
+        const tid = teamId;
+        const results = await Promise.all(teamInvitees.map(async (p) => {
+          try {
+            await inviteToTeam(tid, p.id, project.id);
+            return { email: p.display_name, ok: true };
+          } catch (err) {
+            return { email: p.display_name, ok: false, error: err instanceof Error ? err.message : 'Failed to invite' };
+          }
+        }));
+        setInviteResults(results);
+        if (results.some((r) => !r.ok)) {
+          setPublishedProject(project);
+          return;
+        }
+      }
+
+      const validInvites = isTeamProject ? [] : Array.from(new Set(invites.map((e) => e.trim()).filter(Boolean)));
       if (validInvites.length > 0) {
         const results = await Promise.all(validInvites.map(async (email) => {
           try {
@@ -327,6 +372,33 @@ export function PublishProjectPage() {
                   <>
                     <div className="pub-lbl">Is it personal or a team project?</div>
                     <Seg value={form.scope} options={[{ value: 'personal', label: 'Personal project' }, { value: 'team', label: 'Team project' }]} onChange={(v) => set('scope', v)} />
+                    {isTeamProject && (
+                      <div className="mt-3 space-y-3">
+                        <PField label="Team" hint="Teams are reusable: pick one again for your next project">
+                          <select className="pub-in" value={teamChoice} onChange={(e) => setTeamChoice(e.target.value)} aria-label="Team">
+                            <option value="">{myTeams.length ? 'Choose one of your teams' : 'Choose…'}</option>
+                            {myTeams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                            <option value="new">+ Create a new team</option>
+                          </select>
+                        </PField>
+                        {teamChoice === 'new' && (
+                          <PField label="Team name" count={newTeamName.length} max={40}>
+                            <input className="pub-in" maxLength={40} value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} placeholder="e.g. Byte Squad" {...fp('team')} />
+                          </PField>
+                        )}
+                        {teamChoice && (
+                          <PField label={teamChoice === 'new' ? 'Invite students' : 'Invite more students'} hint="They get a notification and can accept after you publish">
+                            <StudentPicker picked={teamInvitees} onChange={setTeamInvitees} excludeIds={[profile.id, ...(chosenTeam?.members ?? []).map((m) => m.profile_id)]} />
+                          </PField>
+                        )}
+                        {chosenTeam && othersInTeam > 0 && (
+                          <p className="text-xs text-slate-500">
+                            {(chosenTeam.members ?? []).filter((m) => m.profile_id !== profile.id).map((m) => m.profile?.display_name ?? 'Member').join(', ')} will be on this project too.
+                          </p>
+                        )}
+                        {teamProblem && teamChoice && <p className="text-xs text-signal-amber">{teamProblem}</p>}
+                      </div>
+                    )}
                   </>
                 )}
                 <div className="pub-lbl">Category</div>
@@ -381,7 +453,7 @@ export function PublishProjectPage() {
                   </div>
                   <button type="button" className="sd-link" onClick={addRole}><Plus size={13} /> Add another role</button>
                 </PField>}
-                {!personal && <PField label="Invite teammates" hint="Add their email — sent once you publish">
+                {!personal && !isTeamProject && <PField label="Invite teammates" hint="Add their email — sent once you publish">
                   <div className="pub-roles">
                     {invites.map((email, i) => (
                       <div key={i} className="pub-role">
@@ -453,7 +525,7 @@ export function PublishProjectPage() {
             ) : step < 3 ? (
               <button type="button" className="btn btn-primary" onClick={goNext}>Continue <ArrowRight size={15} /></button>
             ) : (
-              <button type="button" className="btn btn-primary" disabled={loading} onClick={publish}>
+              <button type="button" className="btn btn-primary" disabled={loading || !!teamProblem} title={teamProblem ?? undefined} onClick={publish}>
                 {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={15} />}
                 {loading ? 'Publishing…' : 'Publish project'}
               </button>

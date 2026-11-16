@@ -75,6 +75,34 @@ export interface Project {
   skills?: ProjectSkill[];
   roles?: ProjectRole[];
   members?: ProjectMember[];
+  /** Team project (migration 026); null = personal project. */
+  team_id?: string | null;
+  team?: Team | null;
+}
+
+/** A reusable group of students (migration 026). */
+export interface Team {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  bio: string | null;
+  created_by: string | null;
+  archived_at: string | null;
+  created_at: string;
+  members?: TeamMember[];
+}
+
+export interface TeamMember {
+  id: string;
+  team_id: string;
+  profile_id: string;
+  role: 'owner' | 'member';
+  status: 'invited' | 'active';
+  invited_by: string | null;
+  joined_at: string | null;
+  created_at: string;
+  profile?: Profile;
 }
 
 export interface ProjectSkill {
@@ -171,6 +199,9 @@ export interface Invitation {
   updated_at: string;
   inviter?: Profile;
   project?: { title: string; slug: string; status: string };
+  /** Set when this is also a team invitation (migration 026). */
+  team_id?: string | null;
+  team?: { name: string; slug: string } | null;
 }
 
 export type TaskStatus = 'open' | 'in_progress' | 'submitted' | 'approved' | 'changes_requested' | 'rejected';
@@ -243,6 +274,7 @@ export type NotificationType =
   | 'application_accepted'
   | 'application_declined'
   | 'invitation_accepted'
+  | 'team_invitation'
   | 'post_comment'
   | 'post_like'
   | 'post_removed'

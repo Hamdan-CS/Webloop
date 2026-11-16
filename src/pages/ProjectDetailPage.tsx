@@ -27,6 +27,8 @@ import { fetchProjectBySlug, fetchProfileStats, createApplication, checkExisting
 import { ProjectTasks } from '@/components/projects/tasks/ProjectTasks';
 import { useProjectTasks } from '@/components/projects/tasks/useProjectTasks';
 import '@/components/projects/tasks/project-page.css';
+import { TeamOnlyYouNote } from '@/components/teams/TeamOnlyYouNote';
+import { activeTeamMembers } from '@/services/api';
 import { notify } from '@/utils/notify';
 import type { Project, ProjectMember } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
@@ -81,6 +83,7 @@ export function ProjectDetailPage() {
   const taskApi = useProjectTasks(project?.id, profile?.id);
   const tasks = taskApi.tasks;
 
+  const [reloadKey, setReloadKey] = useState(0);
   useEffect(() => {
     if (!slug) return;
     setLoading(true);
@@ -97,7 +100,7 @@ export function ProjectDetailPage() {
       }
       setLoading(false);
     });
-  }, [slug, user, profile]);
+  }, [slug, user, profile, reloadKey]);
 
   const toggleStar = () => {
     if (!project) return;
@@ -327,6 +330,7 @@ export function ProjectDetailPage() {
         </div>
       )}
       {actions}
+      {isOwner && <div className="mb-4"><TeamOnlyYouNote project={project} onSwitched={() => setReloadKey((k) => k + 1)} /></div>}
 
       <div className="pd-tabs" role="tablist">
         {([['ov', 'Overview'], ['tk', 'Tasks'], ['tm', 'Team'], ...(isOwner ? [['st', 'Settings']] : [])] as [Tab, string][]).map(([k, l]) => (
@@ -372,6 +376,12 @@ export function ProjectDetailPage() {
               <Section title="Project details">
                 <div className="space-y-3">
                   <MetaRow icon={<Target size={14} />} label="Type" value={projectTypeLabel[project.project_type]} />
+                  {project.team && (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="flex items-center gap-2 text-xs text-slate-500"><Users size={14} /> Team</span>
+                      <Link to={`/teams/${project.team.slug}`} className="text-sm font-medium text-right link-accent">{project.team.name}</Link>
+                    </div>
+                  )}
                   {owner && (
                     <div className="flex items-center justify-between gap-3">
                       <span className="flex items-center gap-2 text-xs text-slate-500"><Users size={14} /> Owner</span>
@@ -426,6 +436,19 @@ export function ProjectDetailPage() {
         {/* TEAM: the owner, then members (role editing and removal for the owner) */}
         {tab === 'tm' && (
           <>
+            {project.team && (
+              <Link to={`/teams/${project.team.slug}`} className="surface-raised p-5 flex items-center gap-3 hover:border-accent-400/30 transition-colors group">
+                <Avatar src={project.team.logo_url} name={project.team.name} size="lg" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate font-semibold text-white">{project.team.name}</p>
+                    <span className="w-pd-role">Team</span>
+                  </div>
+                  <p className="text-xs text-slate-400">{activeTeamMembers(project.team).length} active member{activeTeamMembers(project.team).length === 1 ? '' : 's'} · see the team page</p>
+                </div>
+                <ArrowRight size={16} className="text-slate-500 group-hover:text-accent-300 transition-colors" />
+              </Link>
+            )}
             {owner && (
               <Link to={`/creators/${owner.handle}`} className="surface-raised p-5 flex items-center gap-3 hover:border-accent-400/30 transition-colors group">
                 <Avatar src={owner.avatar_url} name={owner.display_name} size="lg" />

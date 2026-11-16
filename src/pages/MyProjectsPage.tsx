@@ -8,6 +8,9 @@ import { LoopLoader } from '@/components/shared/ui/LoopLoader';
 import { Button } from '@/components/shared/ui/Button';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { ManagedProjectGrid } from '@/components/projects/ManagedProjectGrid';
+import { MyTeamsSection } from '@/components/teams/MyTeamsSection';
+import { TeamOnlyYouNote } from '@/components/teams/TeamOnlyYouNote';
+import { teamOnlyHasOwner } from '@/components/teams/teamUtils';
 
 export function MyProjectsPage() {
   const { user, profile } = useAuth();
@@ -15,13 +18,14 @@ export function MyProjectsPage() {
   const [joined, setJoined] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [reloadKey, setReloadKey] = useState(0);
   useEffect(() => {
     if (!profile) return;
     Promise.all([
       fetchProfileProjects(profile.id, { includeDrafts: true }).then(setProjects).catch(() => {}),
       fetchJoinedProjects(profile.id).then(setJoined).catch(() => {}),
     ]).finally(() => setLoading(false));
-  }, [profile]);
+  }, [profile, reloadKey]);
 
   if (!user || !profile) {
     return (
@@ -46,6 +50,8 @@ export function MyProjectsPage() {
         </div>
         <Link to="/publish"><Button><Plus size={15} /> Publish a project</Button></Link>
       </div>
+
+      {profile.creator_type === 'student' && <MyTeamsSection profileId={profile.id} />}
 
       <div className={loading ? undefined : 'reveal'}>
 {loading ? (
@@ -88,6 +94,12 @@ export function MyProjectsPage() {
             <div className="pf-kpi"><b>{completed}</b><span>Completed</span></div>
           </div>
 
+          {projects.filter(teamOnlyHasOwner).map((p) => (
+            <div key={p.id} className="mb-3">
+              <p className="mb-1 text-xs text-slate-500">{p.title}</p>
+              <TeamOnlyYouNote project={p} onSwitched={() => setReloadKey((k) => k + 1)} />
+            </div>
+          ))}
           <ManagedProjectGrid projects={projects} onProjectsChange={setProjects} />
           </>
           )}

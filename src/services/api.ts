@@ -15,7 +15,14 @@ import type {
   TaskSize,
   TaskStatus,
   TaskSubmission,
+  Team,
+  TeamMember,
 } from '@/types';
+
+/** Team embed for project queries (migration 026): name/logo + members with
+ * profiles (RLS returns only active members to everyone but the team owner). */
+const TEAM_EMBED = `id, name, slug, logo_url, bio, created_by, archived_at, created_at,
+  members:team_members(*, profile:profiles!team_members_profile_id_fkey(id, display_name, handle, avatar_url, creator_type))`;
 
 export interface ProjectQuery {
   type?: string;
@@ -57,7 +64,8 @@ export async function fetchProjects(query: ProjectQuery = {}): Promise<Project[]
       members:project_members(
         *,
         profile:profiles!project_members_profile_id_fkey(*)
-      )
+      ),
+      team:teams!projects_team_id_fkey(${TEAM_EMBED})
     `);
 
   // Filter visible statuses unless a specific status is requested
@@ -124,7 +132,8 @@ export async function fetchFeaturedProjects(limit = 6): Promise<Project[]> {
       members:project_members(
         *,
         profile:profiles!project_members_profile_id_fkey(*)
-      )
+      ),
+      team:teams!projects_team_id_fkey(${TEAM_EMBED})
     `)
     .in('status', VISIBLE_STATUSES)
     .order('published_at', { ascending: false, nullsFirst: false })
@@ -145,7 +154,8 @@ export async function fetchProjectBySlug(slug: string): Promise<Project | null> 
       members:project_members(
         *,
         profile:profiles!project_members_profile_id_fkey(*)
-      )
+      ),
+      team:teams!projects_team_id_fkey(${TEAM_EMBED})
     `)
     .eq('slug', slug)
     .maybeSingle();
@@ -180,7 +190,8 @@ const PROJECT_WITH_RELATIONS = `
   members:project_members(
     *,
     profile:profiles!project_members_profile_id_fkey(*)
-  )
+  ),
+  team:teams!projects_team_id_fkey(${TEAM_EMBED})
 `;
 
 /**
@@ -358,6 +369,8 @@ export interface CreateProjectInput {
   duration_weeks?: number;
   time_commitment_hours?: string;
   location?: string;
+  /** Team project: the team (the owner must be an active member). */
+  team_id?: string | null;
 }
 
 function slugify(text: string): string {
@@ -399,6 +412,7 @@ export async function createProject(
       duration_weeks: input.duration_weeks ?? null,
       time_commitment_hours: input.time_commitment_hours ?? null,
       location: input.location ?? null,
+      team_id: input.team_id ?? null,
       published_at: new Date().toISOString(),
       is_demo: false,
     })
@@ -588,7 +602,8 @@ export async function updateProject(
       members:project_members(
         *,
         profile:profiles!project_members_profile_id_fkey(*)
-      )
+      ),
+      team:teams!projects_team_id_fkey(${TEAM_EMBED})
     `)
     .single();
   if (error) throw error;
@@ -1108,7 +1123,8 @@ export async function fetchMyInvitations(profileId: string): Promise<Invitation[
     .select(`
       *,
       project:projects!invitations_project_id_fkey(title, slug, status),
-      inviter:profiles!invitations_inviter_id_fkey(*)
+      inviter:profiles!invitations_inviter_id_fkey(*),
+      team:teams!invitations_team_id_fkey(name, slug)
     `)
     .eq('invitee_id', profileId)
     .order('created_at', { ascending: false });
@@ -1160,4 +1176,143 @@ export async function fetchPendingInviteCount(profileId: string): Promise<number
     .eq('status', 'pending');
   if (error) return 0;
   return count ?? 0;
+}
+
+// ============================================================
+// Teams (Part B, migration 026)
+// ============================================================
+
+const TEAM_SELECT = `*, members:team_members(*, profile:profiles!team_members_profile_id_fkey(*))`;
+
+const TEAM_ERRORS: Record<string, string> = {
+  ONLY_STUDENTS: 'Only student accounts can be in a team.',
+  NOT_TEAM_OWNER: 'Only the team owner can do that.',
+  TEAM_FULL: 'This team is full (8 people max).',
+  BAD_TEAM_NAME: 'Team names need 2–40 characters.',
+  CANNOT_INVITE_SELF: "You're already in this team.",
+  NOT_TEAM_MEMBER: "You're not in this team.",
+  OWNER_CANNOT_REMOVE_SELF: 'Use “Leave team” instead.',
+};
+function teamError(error: { message: string }): Error {
+  const key = Object.keys(TEAM_ERRORS).find((k) => error.message.includes(k));
+  return new Error(key ? TEAM_ERRORS[key] : error.message);
+}
+
+/** Active members only (what everyone else sees). */
+export const activeTeamMembers = (team?: Team | null): TeamMember[] =>
+  (team?.members ?? []).filter((m) => m.status === 'active');
+
+export async function createTeam(name: string, bio?: string, logoUrl?: string): Promise<Team> {
+  const { data, error } = await supabase.rpc('create_team', { p_name: name, p_bio: bio ?? null, p_logo_url: logoUrl ?? null });
+  if (error) throw teamError(error);
+  return data as unknown as Team;
+}
+
+/** Teams I'm an active member of (with all members I can see). */
+export async function fetchMyTeams(profileId: string): Promise<Team[]> {
+  const { data: rows, error: e1 } = await supabase
+    .from('team_members')
+    .select('team_id')
+    .eq('profile_id', profileId)
+    .eq('status', 'active');
+  if (e1) throw e1;
+  const ids = (rows ?? []).map((r) => r.team_id as string);
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from('teams').select(TEAM_SELECT).in('id', ids).is('archived_at', null).order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as Team[];
+}
+
+/** Teams a profile is an active member of — for the "Teams" section on profiles. */
+export async function fetchTeamsForProfile(profileId: string): Promise<Team[]> {
+  return fetchMyTeams(profileId);
+}
+
+/** Team invites waiting for me (no project attached are answered with respondTeamInvite). */
+export async function fetchMyTeamInvites(profileId: string): Promise<(TeamMember & { team: Team; inviter: Profile | null })[]> {
+  const { data, error } = await supabase
+    .from('team_members')
+    .select('*, team:teams(*), inviter:profiles!team_members_invited_by_fkey(*)')
+    .eq('profile_id', profileId)
+    .eq('status', 'invited')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as (TeamMember & { team: Team; inviter: Profile | null })[];
+}
+
+export interface TeamPageData {
+  team: Team;
+  projects: Project[];
+  verifiedTasks: number;
+}
+
+export async function fetchTeamBySlug(slug: string): Promise<TeamPageData | null> {
+  const { data, error } = await supabase.from('teams').select(TEAM_SELECT).eq('slug', slug).maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const team = data as unknown as Team;
+  const { data: projects, error: pErr } = await supabase
+    .from('projects')
+    .select(`*, owner:profiles!projects_owner_id_fkey(*), skills:project_skills(*), members:project_members(*, profile:profiles!project_members_profile_id_fkey(*)), team:teams!projects_team_id_fkey(${TEAM_EMBED})`)
+    .eq('team_id', team.id)
+    .in('status', VISIBLE_STATUSES)
+    .order('published_at', { ascending: false, nullsFirst: false });
+  if (pErr) throw pErr;
+  const list = (projects ?? []) as unknown as Project[];
+  let verifiedTasks = 0;
+  if (list.length > 0) {
+    const { count } = await supabase
+      .from('tasks')
+      .select('id', { count: 'exact', head: true })
+      .in('project_id', list.map((p) => p.id))
+      .eq('status', 'approved');
+    verifiedTasks = count ?? 0;
+  }
+  return { team, projects: list, verifiedTasks };
+}
+
+/** Invite a student; with projectId it's also "join team X on project Y". */
+export async function inviteToTeam(teamId: string, profileId: string, projectId?: string | null): Promise<void> {
+  const { error } = await supabase.rpc('invite_to_team', { p_team_id: teamId, p_profile_id: profileId, p_project_id: projectId ?? null });
+  if (error) throw teamError(error);
+}
+
+export async function respondTeamInvite(teamId: string, accept: boolean): Promise<void> {
+  const { error } = await supabase.rpc('respond_team_invite', { p_team_id: teamId, p_accept: accept });
+  if (error) throw teamError(error);
+}
+
+export async function removeTeamMember(teamId: string, profileId: string): Promise<void> {
+  const { error } = await supabase.rpc('remove_team_member', { p_team_id: teamId, p_profile_id: profileId });
+  if (error) throw teamError(error);
+}
+
+export async function leaveTeam(teamId: string): Promise<void> {
+  const { error } = await supabase.rpc('leave_team', { p_team_id: teamId });
+  if (error) throw teamError(error);
+}
+
+export async function updateTeam(teamId: string, patch: { name?: string; bio?: string | null; logo_url?: string | null }): Promise<void> {
+  const { error } = await supabase.from('teams').update(patch).eq('id', teamId);
+  if (error) throw teamError(error);
+}
+
+/** Students by name or @handle, for team invites. */
+export async function searchStudents(query: string, excludeIds: string[] = []): Promise<Profile[]> {
+  const term = query.trim().replace(/^@/, '').replace(/[%,()]/g, '');
+  if (term.length < 2) return [];
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('creator_type', 'student')
+    .or(`display_name.ilike.%${term}%,handle.ilike.%${term}%`)
+    .limit(8);
+  if (error) throw error;
+  return ((data ?? []) as Profile[]).filter((p) => !excludeIds.includes(p.id));
+}
+
+/** Owner switches a team project to personal (or back to a team they're in). */
+export async function setProjectTeam(projectId: string, teamId: string | null): Promise<void> {
+  const { error } = await supabase.from('projects').update({ team_id: teamId }).eq('id', projectId);
+  if (error) throw teamError(error);
 }

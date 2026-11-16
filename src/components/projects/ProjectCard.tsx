@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Users, Star, LayoutDashboard, Trash2, Loader2 } from 'lucide-react';
 import type { Project, ProjectStatus } from '@/types';
 import { Avatar } from '@/components/shared/ui/Avatar';
@@ -6,6 +6,7 @@ import { Button } from '@/components/shared/ui/Button';
 import { Select, type SelectOption } from '@/components/shared/ui/Select';
 import { statusLabel, projectTypeLabel } from '@/utils/labels';
 import { cn } from '@/utils/cn';
+import { activeTeamMembers } from '@/services/api';
 
 export interface ProjectCardManage {
   status: ProjectStatus;
@@ -37,6 +38,10 @@ const ownerRole = (t: Project['project_type']) =>
 
 export function ProjectCard({ project, selected, onClick, manage }: ProjectCardProps) {
   const owner = project.owner;
+  const navigate = useNavigate();
+  const team = project.team_id ? project.team : null;
+  // Team projects: "by <Team>" + up to 4 active members (pending invites don't show)
+  const teamPeople = team ? activeTeamMembers(team).map((m) => m.profile).filter((p): p is NonNullable<typeof p> => !!p) : [];
   const isLink = !onClick;
   const summary = project.summary.length > 96 ? `${project.summary.slice(0, 93)}…` : project.summary;
   const members = project.members?.length ?? 0;
@@ -67,13 +72,33 @@ export function ProjectCard({ project, selected, onClick, manage }: ProjectCardP
           </div>
         )}
         <div className="meta">
-          <div className="who">
-            {owner && <Avatar src={owner.avatar_url} name={owner.display_name} className="!h-[34px] !w-[34px]" />}
-            <div>
-              {owner?.display_name}
-              <small>{ownerRole(project.project_type)}</small>
+          {team ? (
+            <div className="who">
+              <span className="ref-avs" aria-hidden="true">
+                {(teamPeople.length ? teamPeople : owner ? [owner] : []).slice(0, 4).map((p) => (p.avatar_url
+                  ? <img key={p.id} src={p.avatar_url} alt="" />
+                  : <span key={p.id} style={{ display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 600 }}>{p.display_name.charAt(0).toUpperCase()}</span>))}
+              </span>
+              <div>
+                <button
+                  type="button"
+                  className="truncate text-left hover:underline"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/teams/${team.slug}`); }}
+                >
+                  by {team.name}
+                </button>
+                <small>Team project</small>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="who">
+              {owner && <Avatar src={owner.avatar_url} name={owner.display_name} className="!h-[34px] !w-[34px]" />}
+              <div>
+                {owner?.display_name}
+                <small>{ownerRole(project.project_type)}</small>
+              </div>
+            </div>
+          )}
           <span title="Contributors"><Users size={15} />{contributors}</span>
           <span className="star" title="Stars"><Star size={15} /><b style={{ color: 'var(--text)', fontWeight: 600 }}>{project.stars_count ?? 0}</b></span>
         </div>

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { notify } from '@/utils/notify';
 import { Link } from 'react-router-dom';
-import { Mail, ArrowRight, Clock, CheckCircle2, XCircle, Briefcase, Check, X, Loader2 } from 'lucide-react';
+import { Mail, ArrowRight, Clock, CheckCircle2, XCircle, Briefcase, Check, X, Loader2, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoopLoader } from '@/components/shared/ui/LoopLoader';
-import { fetchMyInvitations, acceptInvite, respondToInvite } from '@/services/api';
-import type { Invitation, ProjectStatus } from '@/types';
+import { fetchMyInvitations, acceptInvite, respondToInvite, fetchMyTeamInvites, respondTeamInvite } from '@/services/api';
+import type { Invitation, Profile, ProjectStatus, Team, TeamMember } from '@/types';
 import { statusLabel } from '@/utils/labels';
 import { cn } from '@/utils/cn';
 
@@ -24,14 +24,34 @@ export function MyInvitationsPage() {
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [respondError, setRespondError] = useState<string | null>(null);
   const [justJoined, setJustJoined] = useState<Invitation | null>(null);
+  // team invites with no project attached (answered here; project ones go through the list below)
+  const [teamInvites, setTeamInvites] = useState<(TeamMember & { team: Team; inviter: Profile | null })[]>([]);
+  const [teamBusy, setTeamBusy] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile) return;
-    fetchMyInvitations(profile.id)
-      .then(setInvites)
+    Promise.all([fetchMyInvitations(profile.id), fetchMyTeamInvites(profile.id).catch(() => [])])
+      .then(([inv, teams]) => {
+        setInvites(inv);
+        const viaProject = new Set(inv.filter((i) => i.team_id && i.status === 'pending').map((i) => i.team_id));
+        setTeamInvites(teams.filter((t) => !viaProject.has(t.team_id)));
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [profile]);
+
+  const answerTeam = async (t: TeamMember & { team: Team }, accept: boolean) => {
+    setTeamBusy(t.team_id);
+    try {
+      await respondTeamInvite(t.team_id, accept);
+      setTeamInvites((list) => list.filter((x) => x.team_id !== t.team_id));
+      notify.success(accept ? `You joined ${t.team.name}` : 'Team invite declined');
+      refreshCounts();
+    } catch (err) {
+      notify.error(err instanceof Error ? err.message : 'Could not answer the invite');
+    }
+    setTeamBusy(null);
+  };
 
   if (!user || !profile) {
     return (
@@ -78,18 +98,44 @@ export function MyInvitationsPage() {
       </div>
 
       <div className={loading ? undefined : 'reveal'}>
+      {!loading && teamInvites.length > 0 && (
+        <ul className="app-list mb-5" aria-label="Team invites">
+          {teamInvites.map((t) => (
+            <li key={t.id} className="surface pf-card app-row">
+              <span className="app-ic pending"><Users size={18} /></span>
+              <div className="app-main">
+                <Link to={`/teams/${t.team.slug}`} className="app-title">{t.team.name}</Link>
+                <div className="app-sub">
+                  <span>{t.inviter?.display_name ?? 'Someone'} invited you to join this team</span>
+                  <span>{ago(t.created_at)}</span>
+                </div>
+              </div>
+              <div className="app-side">
+                <div className="flex items-center gap-2">
+                  <button type="button" className="btn btn-primary btn-sm" disabled={teamBusy === t.team_id} onClick={() => answerTeam(t, true)}>
+                    {teamBusy === t.team_id ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Accept
+                  </button>
+                  <button type="button" className="btn btn-ghost btn-sm" disabled={teamBusy === t.team_id} onClick={() => answerTeam(t, false)}>
+                    <X size={13} /> Decline
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
 {loading ? (
         <div className="flex h-[40vh] items-center justify-center">
           <LoopLoader size={28} />
         </div>
-      ) : invites.length === 0 ? (
+      ) : invites.length === 0 && teamInvites.length === 0 ? (
         <div className="surface pf-card app-empty">
           <span className="pf-ic"><Mail size={22} /></span>
           <h3 className="pf-h4">No invitations yet</h3>
           <p>When a project owner invites you by email, it'll show up here for you to accept or decline.</p>
           <Link to="/explore" className="btn btn-primary">Explore projects <ArrowRight size={14} /></Link>
         </div>
-      ) : (
+      ) : invites.length === 0 ? null : (
         <>
           {respondError && (
             <div className="pub-err mb-4"><span>{respondError}</span></div>
@@ -133,6 +179,12 @@ export function MyInvitationsPage() {
                       {inv.project ? (
                         <Link to={`/projects/${inv.project.slug}`} className="app-title">{inv.project.title}</Link>
                       ) : <span className="app-title">Project</span>}
+                      {inv.team && (
+                        <p className="app-msg">
+                          <Users size={12} className="mr-1 inline" />
+                          {inv.inviter?.display_name ?? 'Someone'} invited you to join team <Link to={`/teams/${inv.team.slug}`} className="link-accent">{inv.team.name}</Link> on project {inv.project?.title ?? 'this project'}
+                        </p>
+                      )}
                       <div className="app-sub">
                         {inv.role_title && <span><Briefcase size={12} /> {inv.role_title}</span>}
                         {inv.project && <span>{statusLabel[inv.project.status as ProjectStatus]}</span>}

@@ -55,6 +55,8 @@ import { WContribHeat } from '@/components/app/ui/WContribHeat';
 import { useWorkspaceMaybe } from '@/components/app/workspaceContext';
 import { MyPostsSection } from '@/features/feed/components/MyPostsSection';
 import { checkIsAdmin } from '@/features/feed/services/feedApi';
+import { TeamList } from '@/components/teams/ProfileTeams';
+import { useProfileTeams } from '@/components/teams/teamUtils';
 
 const ContributionGrid = lazy(() =>
   import('@/components/contributions').then((m) => ({ default: m.ContributionGrid })),
@@ -74,6 +76,7 @@ export function CreatorProfilePage() {
   // visitors don't see an empty Posts box: remember which profile has 0 posts
   const [noPostsFor, setNoPostsFor] = useState<string | null>(null);
   const profileId = profile?.id ?? null;
+  const teams = useProfileTeams(profile?.creator_type === 'student' ? profile.id : undefined);
   const onPostsLoaded = useCallback((count: number) => setNoPostsFor(count === 0 ? profileId : null), [profileId]);
   const [stats, setStats] = useState({ avg: 0, count: 0 });
   const [contributions, setContributions] = useState({ total: 0, approved: 0 });
@@ -275,6 +278,11 @@ export function CreatorProfilePage() {
                   </div>
                 )}
               </WBox>
+              {teams.length > 0 && (
+                <WBox title="Teams" meta={`${teams.length}`}>
+                  <TeamList teams={teams} ownerId={profile.id} />
+                </WBox>
+              )}
               {(profile.website_url || profile.github_url || profile.linkedin_url) && (
                 <WBox title="Links">
                   <div className="w-links">
@@ -436,6 +444,12 @@ export function CreatorProfilePage() {
             <ContributionGrid studentId={profile.id} size="full" />
           </Suspense>
         </div>
+      )}
+      {teams.length > 0 && (
+        <section className="surface pf-card mt-6 p-5" aria-labelledby="pf-teams">
+          <h2 id="pf-teams" className="pf-h4 mb-3">Teams</h2>
+          <TeamList teams={teams} ownerId={profile.id} />
+        </section>
       )}
         </>
       )}

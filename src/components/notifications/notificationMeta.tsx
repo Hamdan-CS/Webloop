@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import {
-  Bell, UserPlus, CheckCircle2, XCircle, UserCheck, MessageSquare, Heart, ShieldAlert, AlertCircle,
+  Bell, UserPlus, CheckCircle2, XCircle, UserCheck, MessageSquare, Heart, ShieldAlert, AlertCircle, Users,
 } from 'lucide-react';
 import type { Notification, NotificationType } from '@/types';
 
@@ -12,6 +12,7 @@ export const NOTIFICATION_ICONS: Record<NotificationType, ReactNode> = {
   application_accepted: <CheckCircle2 size={15} />,
   application_declined: <XCircle size={15} />,
   invitation_accepted: <UserCheck size={15} />,
+  team_invitation: <Users size={15} />,
   post_comment: <MessageSquare size={15} />,
   post_like: <Heart size={15} />,
   post_removed: <ShieldAlert size={15} />,
@@ -33,6 +34,8 @@ export function describe(n: Notification): string {
       return `Your request to join ${p.project_title ?? 'the project'} was declined`;
     case 'invitation_accepted':
       return `${p.invitee_name ?? 'Someone'} accepted your invitation to ${p.project_title ?? 'the project'}`;
+    case 'team_invitation':
+      return `${p.inviter_name ?? 'Someone'} invited you to join team ${p.team_name ?? ''}${p.project_title ? ` on project ${p.project_title}` : ''}`;
     case 'post_comment':
       return `${p.commenter_name ?? 'Someone'} commented on your post${p.post_title ? ` "${p.post_title}"` : ''}`;
     case 'post_like':
@@ -63,6 +66,8 @@ export function destinationFor(n: Notification, myHandle: string | null): string
     case 'application_declined':
     case 'invitation_accepted':
       return p.project_slug ? `/projects/${p.project_slug}` : null;
+    case 'team_invitation':
+      return '/my-invitations';
     case 'post_comment':
       return p.post_id ? `/feed?post=${p.post_id}&reply=1` : '/feed';
     case 'post_like':
@@ -79,6 +84,7 @@ export function actionFor(n: Notification): string {
     case 'application_accepted':
     case 'application_declined':
     case 'invitation_accepted': return 'Open project';
+    case 'team_invitation': return 'View invite';
     case 'post_comment': return 'Reply';
     case 'post_like': return 'View post';
     default: return isModeration(n) ? 'View details' : 'Open';

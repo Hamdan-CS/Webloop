@@ -32,6 +32,7 @@ const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage').then((m
 const CreatorProfilePage = lazy(() => import('@/pages/CreatorProfilePage').then((m) => ({ default: m.CreatorProfilePage })));
 const PublishProjectPage = lazy(() => import('@/pages/PublishProjectPage').then((m) => ({ default: m.PublishProjectPage })));
 const MyApplicationsPage = lazy(() => import('@/pages/MyApplicationsPage').then((m) => ({ default: m.MyApplicationsPage })));
+const TeamPage = lazy(() => import('@/pages/TeamPage').then((m) => ({ default: m.TeamPage })));
 const MyInvitationsPage = lazy(() => import('@/pages/MyInvitationsPage').then((m) => ({ default: m.MyInvitationsPage })));
 const MyProjectsPage = lazy(() => import('@/pages/MyProjectsPage').then((m) => ({ default: m.MyProjectsPage })));
 const EditProfilePage = lazy(() => import('@/pages/EditProfilePage').then((m) => ({ default: m.EditProfilePage })));
@@ -165,6 +166,7 @@ function App() {
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/projects/:slug" element={<ProjectDetailPage />} />
                   <Route path="/creators/:handle" element={<CreatorProfilePage />} />
+                  <Route path="/teams/:slug" element={<TeamPage />} />
                   <Route path="/publish" element={<PublishProjectPage />} />
                   <Route path="/my-applications" element={<MyApplicationsRoute />} />
                   <Route path="/my-invitations" element={<MyInvitationsPage />} />
