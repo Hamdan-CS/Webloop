@@ -4,11 +4,13 @@ import type { FeedTag } from './constants';
 export type PostType = 'guide' | 'pictures' | 'text';
 export type PostVisibility = 'everyone' | 'students_only';
 
-export type GuideStep =
+/** `sub` = optional subtitle shown as "Step 2 of 5 · sub". Lives in the posts.steps JSON (no migration). */
+export type GuideStep = { sub?: string } & (
   | { type: 'terminal'; title: string; cmd: string; out: string[] }
   | { type: 'code'; title: string; code: string; highlightLines?: number[] }
-  | { type: 'tip'; title: string; text: string }
-  | { type: 'screenshot'; title: string; imagePath: string; hotspot?: { x: number; y: number }; callout?: string };
+  | { type: 'tip'; title: string; text: string; tone?: 'warn' }
+  | { type: 'screenshot'; title: string; imagePath: string; hotspot?: { x: number; y: number }; callout?: string }
+);
 
 export interface PostImage {
   id: string;

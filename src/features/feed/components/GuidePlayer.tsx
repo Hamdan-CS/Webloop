@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, Play, RotateCcw, ThumbsUp, X } from 'lucide-react';
+import { Check, Play, RotateCcw, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button } from '@/components/shared/ui/Button';
 import { Select } from '@/components/shared/ui/Select';
+import { notify } from '@/utils/notify';
 import { useReducedMotion } from '../hooks/useReducedMotion';
-import { MEDIA_BOX_HEIGHT, SWIPE_THRESHOLD_PX } from '../constants';
+import { SWIPE_THRESHOLD_PX } from '../constants';
 import type { GuideStep, Post } from '../types';
 import { fetchProfileProjects } from '@/services/api';
 import { linkTryToProject, recordTry } from '../services/feedApi';
+
+/* Guide cover + inline player, styled after Abbas's design demo
+   (webloop-posts-demo.html: .guide, .gp, .term, .code, .tip, .gend).
+   Colours come from the feed-only --feed-* variables in index.css. */
 
 interface GuidePlayerProps {
   post: Post;
@@ -23,6 +27,8 @@ interface GuidePlayerProps {
 
 export function GuidePlayer({ post, isActive, onOpen, onClose, viewerProfileId, liked, onLikeToggle, tried, onTried }: GuidePlayerProps) {
   const [stepIndex, setStepIndex] = useState(0);
+  // bumping this remounts the current step, so "replay" restarts its animation
+  const [replayKey, setReplayKey] = useState(0);
   const reducedMotion = useReducedMotion();
   const steps = post.steps;
 
@@ -45,28 +51,21 @@ export function GuidePlayer({ post, isActive, onOpen, onClose, viewerProfileId, 
 
   if (!isActive) {
     return (
-      <button
-        type="button"
-        onClick={onOpen}
-        className="feed-terminal group relative flex w-full flex-col justify-between rounded-xl p-5 text-left transition-transform active:scale-[0.99]"
-        style={{ height: MEDIA_BOX_HEIGHT }}
-      >
-        <ol className="space-y-1.5 text-sm text-white/70">
+      <button type="button" onClick={onOpen} className="fp-guide" aria-label={`Play the guide: ${post.title}`}>
+        <div className="gl">
           {steps.slice(0, 4).map((s, i) => (
-            <li key={i} className="truncate">
-              <span className="text-white/40">{i + 1}.</span> {s.title}
-            </li>
+            <div key={i}>
+              <span>{i + 1}</span>{'  '}{s.title}
+            </div>
           ))}
-          {steps.length > 4 && <li className="text-white/40">+{steps.length - 4} more</li>}
-        </ol>
-        <div className="flex items-center gap-3">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent-500 text-ink-950 shadow-glow transition-transform group-hover:scale-105">
-            <Play size={20} fill="currentColor" />
+          {steps.length > 4 && <div style={{ opacity: 0.5 }}>{'   '}+ {steps.length - 4} more</div>}
+        </div>
+        <div className="gf">
+          <span className="play" aria-hidden="true"><Play size={18} fill="currentColor" /></span>
+          <span>
+            <b>Play the guide</b>
+            <small>{steps.length} animated step{steps.length === 1 ? '' : 's'}</small>
           </span>
-          <div>
-            <p className="text-sm font-semibold text-white">Play the guide</p>
-            <p className="text-xs text-white/50">{steps.length} steps</p>
-          </div>
         </div>
       </button>
     );
@@ -75,10 +74,7 @@ export function GuidePlayer({ post, isActive, onOpen, onClose, viewerProfileId, 
   const atEnd = stepIndex >= steps.length;
 
   return (
-    <div
-      className="feed-terminal relative flex flex-col justify-between overflow-hidden rounded-xl p-4"
-      style={{ height: MEDIA_BOX_HEIGHT }}
-    >
+    <div className="fp-gp" role="region" aria-label={`Guide: ${post.title}`}>
       {atEnd ? (
         <FinishScreen
           post={post}
@@ -92,7 +88,7 @@ export function GuidePlayer({ post, isActive, onOpen, onClose, viewerProfileId, 
         />
       ) : (
         <StepView
-          key={stepIndex}
+          key={`${stepIndex}-${replayKey}`}
           step={steps[stepIndex]}
           stepIndex={stepIndex}
           stepCount={steps.length}
@@ -100,10 +96,19 @@ export function GuidePlayer({ post, isActive, onOpen, onClose, viewerProfileId, 
           onJump={setStepIndex}
           onBack={() => setStepIndex((i) => Math.max(i - 1, 0))}
           onNext={() => setStepIndex((i) => Math.min(i + 1, steps.length))}
+          onReplay={() => setReplayKey((k) => k + 1)}
           reducedMotion={reducedMotion}
         />
       )}
     </div>
+  );
+}
+
+function CloseButton({ onClose }: { onClose: () => void }) {
+  return (
+    <button type="button" onClick={onClose} aria-label="Close guide" className="fp-gp-x">
+      <X size={16} />
+    </button>
   );
 }
 
@@ -115,6 +120,7 @@ function StepView({
   onJump,
   onBack,
   onNext,
+  onReplay,
   reducedMotion,
 }: {
   step: GuideStep;
@@ -124,6 +130,7 @@ function StepView({
   onJump: (i: number) => void;
   onBack: () => void;
   onNext: () => void;
+  onReplay: () => void;
   reducedMotion: boolean;
 }) {
   const dragStart = useRef<{ x: number; y: number } | null>(null);
@@ -144,56 +151,49 @@ function StepView({
 
   return (
     <>
-      <div className="flex items-center gap-2">
-        <div className="feed-dots flex flex-1 items-center gap-1.5 overflow-x-auto">
+      <div className="fp-gp-top">
+        <div className="fp-gp-dots">
           {Array.from({ length: stepCount }).map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => onJump(i)}
-              aria-label={`Go to step ${i + 1}`}
-              className={cn(
-                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors',
-                i < stepIndex && 'border-accent-400 bg-accent-500 text-ink-950',
-                i === stepIndex && 'border-accent-400 text-accent-300',
-                i > stepIndex && 'border-white/15 text-white/40',
-              )}
-            >
-              {i < stepIndex ? <Check size={12} /> : i + 1}
-            </button>
+            <span key={i} style={{ display: 'contents' }}>
+              {i > 0 && <i className={i <= stepIndex ? 'd' : ''} />}
+              <button
+                type="button"
+                onClick={() => onJump(i)}
+                aria-label={`Go to step ${i + 1}`}
+                aria-current={i === stepIndex ? 'step' : undefined}
+                className={i < stepIndex ? 'd' : i === stepIndex ? 'c' : ''}
+              >
+                {i < stepIndex ? '✓' : i + 1}
+              </button>
+            </span>
           ))}
         </div>
-        <button type="button" onClick={onClose} aria-label="Close guide" className="rounded-full p-1.5 text-white/50 hover:text-white">
-          <X size={16} />
-        </button>
+        <CloseButton onClose={onClose} />
       </div>
 
-      <div className="mt-3">
-        <p className="text-sm font-semibold text-white">{step.title}</p>
-        <p className="text-xs text-white/40">
+      <div className="fp-gp-t">
+        <b>{step.title}</b>
+        <small>
           Step {stepIndex + 1} of {stepCount}
-        </p>
+          {step.sub ? ` · ${step.sub}` : ''}
+        </small>
       </div>
 
-      <div
-        className="mt-3 flex-1 touch-pan-y overflow-auto"
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
-      >
+      <div className="fp-gp-s" onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
         <StepContent step={step} reducedMotion={reducedMotion} />
       </div>
 
-      <div className="mt-3 flex items-center gap-2">
-        <Button variant="secondary" size="sm" onClick={onBack} disabled={stepIndex === 0}>
-          <ArrowLeft size={14} /> Back
-        </Button>
-        <div className="flex-1" />
-        <Button variant="ghost" size="sm" onClick={() => onJump(stepIndex)} aria-label="Replay this step">
-          <RotateCcw size={14} />
-        </Button>
-        <Button size="sm" onClick={onNext}>
-          {stepIndex === stepCount - 1 ? 'Finish' : 'Next'} <ArrowRight size={14} />
-        </Button>
+      <div className="fp-gp-n">
+        <button type="button" className="fp-btn fp-btn-g" onClick={onBack} disabled={stepIndex === 0}>
+          Back
+        </button>
+        <span className="grow" />
+        <button type="button" className="rp" onClick={onReplay} aria-label="Replay this step">
+          <RotateCcw size={17} />
+        </button>
+        <button type="button" className="fp-btn fp-btn-p" onClick={onNext}>
+          {stepIndex === stepCount - 1 ? 'Finish' : 'Next'}
+        </button>
       </div>
     </>
   );
@@ -203,15 +203,26 @@ function StepContent({ step, reducedMotion }: { step: GuideStep; reducedMotion: 
   if (step.type === 'terminal') return <TerminalStepContent step={step} reducedMotion={reducedMotion} />;
   if (step.type === 'code') return <CodeStepContent step={step} reducedMotion={reducedMotion} />;
   if (step.type === 'screenshot') return <ScreenshotStepContent step={step} reducedMotion={reducedMotion} />;
-  return <p className="text-sm leading-relaxed text-white/80">{step.text}</p>;
+  const warn = step.tone === 'warn';
+  return (
+    <div className={cn('fp-tip', warn && 'w')}>
+      <span aria-hidden="true">{warn ? '⚠️' : '💡'}</span>
+      <div>{step.text}</div>
+    </div>
+  );
 }
 
 function TerminalStepContent({ step, reducedMotion }: { step: Extract<GuideStep, { type: 'terminal' }>; reducedMotion: boolean }) {
   const [typed, setTyped] = useState(reducedMotion ? step.cmd : '');
   const [visibleOut, setVisibleOut] = useState(reducedMotion ? step.out.length : 0);
+  const [copied, setCopied] = useState(false);
+  const cmdRef = useRef<HTMLSpanElement>(null);
+  // the typing animation's timers, so Copy's fallback can stop it and show the whole command
+  const stopAnim = useRef<() => void>(() => {});
 
   useEffect(() => {
     if (reducedMotion) return;
+    const timers: ReturnType<typeof setTimeout>[] = [];
     let i = 0;
     const interval = setInterval(() => {
       i += 1;
@@ -219,21 +230,61 @@ function TerminalStepContent({ step, reducedMotion }: { step: Extract<GuideStep,
       if (i >= step.cmd.length) {
         clearInterval(interval);
         step.out.forEach((_, idx) => {
-          setTimeout(() => setVisibleOut((v) => Math.max(v, idx + 1)), 400 + idx * 350);
+          timers.push(setTimeout(() => setVisibleOut((v) => Math.max(v, idx + 1)), 400 + idx * 350));
         });
       }
     }, 30);
-    return () => clearInterval(interval);
+    const stop = () => {
+      clearInterval(interval);
+      timers.forEach(clearTimeout);
+    };
+    stopAnim.current = stop;
+    return stop;
   }, [step, reducedMotion]);
 
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 1600);
+    return () => clearTimeout(t);
+  }, [copied]);
+
+  async function copy() {
+    try {
+      if (!navigator.clipboard) throw new Error('no clipboard');
+      await navigator.clipboard.writeText(step.cmd);
+      setCopied(true);
+      notify.success('Copied');
+    } catch {
+      // copying blocked (http, iframe, permissions): show the full command selected instead
+      stopAnim.current();
+      setTyped(step.cmd);
+      setVisibleOut(step.out.length);
+      requestAnimationFrame(() => {
+        const node = cmdRef.current;
+        if (!node) return;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      });
+      notify.info('Copy is blocked here. The command is selected: press Ctrl+C (⌘C on Mac).');
+    }
+  }
+
+  const done = typed.length >= step.cmd.length;
   return (
-    <div className="font-mono text-[13px] leading-relaxed text-[var(--feed-term-ink)]">
-      <div>
-        <span className="text-white/40">$</span> {typed}
-        {typed.length < step.cmd.length && !reducedMotion && <span className="feed-caret">▍</span>}
+    <div className="fp-term">
+      <button type="button" className="fp-copy" onClick={copy} aria-label={`Copy command: ${step.cmd}`}>
+        {copied ? 'Copied' : 'Copy'}
+      </button>
+      <div className="cl">
+        <span className="ps">$ </span>
+        <span ref={cmdRef}>{typed}</span>
+        {!done && !reducedMotion && <span className="fp-caret" aria-hidden="true" />}
       </div>
-      {step.out.slice(0, visibleOut).map((line, i) => (
-        <div key={i} className="opacity-70">
+      {step.out.map((line, i) => (
+        <div key={i} className={cn('o', i < visibleOut && 's')}>
           {line}
         </div>
       ))}
@@ -242,67 +293,57 @@ function TerminalStepContent({ step, reducedMotion }: { step: Extract<GuideStep,
 }
 
 function CodeStepContent({ step, reducedMotion }: { step: Extract<GuideStep, { type: 'code' }>; reducedMotion: boolean }) {
-  const lines = step.code.split('\n');
+  const lines = useMemo(() => step.code.split('\n'), [step.code]);
   const highlightLines = useMemo(() => step.highlightLines ?? [], [step.highlightLines]);
-  const [active, setActive] = useState<number | null>(reducedMotion ? null : highlightLines[0] ?? null);
+  // demo: each line lights up one after another (or only the chosen lines, when given)
+  const order = useMemo(() => (highlightLines.length ? highlightLines : lines.map((_, i) => i)), [highlightLines, lines]);
+  const [active, setActive] = useState<number | null>(reducedMotion ? null : order[0] ?? null);
 
   useEffect(() => {
-    if (reducedMotion || highlightLines.length === 0) return;
-    let i = 0;
+    if (reducedMotion || order.length === 0) return;
+    let k = 0;
     const interval = setInterval(() => {
-      i = (i + 1) % highlightLines.length;
-      setActive(highlightLines[i]);
+      k += 1;
+      if (k >= order.length) {
+        clearInterval(interval);
+        setActive(null);
+        return;
+      }
+      setActive(order[k]);
     }, 650);
     return () => clearInterval(interval);
-  }, [highlightLines, reducedMotion]);
+  }, [order, reducedMotion]);
 
   return (
-    <pre className="feed-code overflow-auto rounded-lg p-3 text-[12.5px] leading-relaxed">
+    <div className="fp-code">
       {lines.map((line, i) => (
-        <div key={i} className={cn('feed-code-line px-1', (reducedMotion ? highlightLines.includes(i) : active === i) && 'hl')}>
-          {line || ' '}
+        <div key={i} className={cn((reducedMotion ? highlightLines.includes(i) : active === i) && 'h')}>
+          {line || ' '}
         </div>
       ))}
-    </pre>
+    </div>
   );
 }
 
 function ScreenshotStepContent({ step, reducedMotion }: { step: Extract<GuideStep, { type: 'screenshot' }>; reducedMotion: boolean }) {
-  const [moved, setMoved] = useState(reducedMotion);
-  const [showCallout, setShowCallout] = useState(reducedMotion);
+  const [show, setShow] = useState(reducedMotion);
 
   useEffect(() => {
     if (reducedMotion) return;
-    const t1 = setTimeout(() => setMoved(true), 250);
-    const t2 = setTimeout(() => setShowCallout(true), 1450);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    const t = setTimeout(() => setShow(true), 900);
+    return () => clearTimeout(t);
   }, [reducedMotion]);
 
   const hotspot = step.hotspot ?? { x: 50, y: 50 };
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-white/10">
-      <img src={step.imagePath} alt={step.title} className="block w-full" />
-      <div
-        className="feed-hotspot absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-400"
-        style={{
-          left: `${moved ? hotspot.x : 50}%`,
-          top: `${moved ? hotspot.y : 50}%`,
-          transition: reducedMotion ? 'none' : 'left 1.2s cubic-bezier(.4,0,.2,1), top 1.2s cubic-bezier(.4,0,.2,1)',
-        }}
-      />
+    <div className="fp-shot">
+      <img src={step.imagePath} alt={step.title} />
+      <div className={cn('fp-hot', show && 's')} style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }} />
       {step.callout && (
         <div
-          className="absolute max-w-[70%] rounded-lg bg-ink-950/90 px-3 py-2 text-xs text-white shadow-card transition-all duration-300"
-          style={{
-            left: `${hotspot.x}%`,
-            top: `calc(${hotspot.y}% + 16px)`,
-            opacity: showCallout ? 1 : 0,
-            transform: showCallout ? 'translateY(0)' : 'translateY(6px)',
-          }}
+          className={cn('fp-bub', show && 's')}
+          style={{ left: `${Math.max(4, Math.min(hotspot.x - 10, 50))}%`, top: `calc(${hotspot.y}% + 30px)` }}
         >
           {step.callout}
         </div>
@@ -360,50 +401,49 @@ function FinishScreen({
   }
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-      <button type="button" onClick={onClose} aria-label="Close guide" className="absolute right-3 top-3 rounded-full p-1.5 text-white/50 hover:text-white">
-        <X size={16} />
-      </button>
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-signal-green/15 text-signal-green">
-        <Check size={22} />
-      </span>
-      <div>
-        <p className="font-semibold text-white">You finished the guide</p>
-        <p className="text-sm text-white/50">
+    <>
+      <div className="fp-gp-top">
+        <span style={{ flex: 1 }} />
+        <CloseButton onClose={onClose} />
+      </div>
+      <div className="fp-gend">
+        <span className="ok"><Check size={24} /></span>
+        <b>You finished the guide</b>
+        <p>
           {post.try_count} {post.try_count === 1 ? 'person' : 'people'} tried this. Did you?
         </p>
-      </div>
-      {!linking ? (
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <Button size="sm" variant={tried ? 'secondary' : 'primary'} disabled={busy || tried} onClick={handleTry}>
-            <Check size={14} /> {tried ? 'You tried this' : 'I tried this'}
-          </Button>
-          {tried && (
-            <Button size="sm" variant="ghost" onClick={openLinkPicker}>
-              Link to a project
-            </Button>
-          )}
-          <Button size="sm" variant={liked ? 'secondary' : 'ghost'} onClick={onLikeToggle}>
-            <ThumbsUp size={14} /> Helpful?
-          </Button>
-        </div>
-      ) : (
-        <div className="flex w-full max-w-xs flex-col gap-2">
-          <Select
-            value={projectId}
-            onChange={setProjectId}
-            size="sm"
-            options={[{ value: '', label: 'Choose a project…' }, ...projects]}
-          />
-          <div className="flex gap-2">
-            <Button size="sm" variant="ghost" onClick={() => setLinking(false)}>Cancel</Button>
-            <Button size="sm" disabled={!projectId} onClick={confirmLink}>Save</Button>
+        {!linking ? (
+          <div className="row">
+            <button type="button" className={cn('fp-btn', tried ? 'fp-btn-g' : 'fp-btn-p')} disabled={busy || tried} onClick={handleTry}>
+              ✓ {tried ? 'You tried this' : 'I tried this'}
+            </button>
+            {tried && (
+              <button type="button" className="fp-btn fp-btn-g" onClick={openLinkPicker}>
+                Link to a project
+              </button>
+            )}
+            <button type="button" className="fp-btn fp-btn-g" onClick={onLikeToggle} aria-pressed={liked}>
+              👍 {liked ? 'Helpful' : 'Helpful?'}
+            </button>
           </div>
-        </div>
-      )}
-      <button type="button" onClick={onReplay} className="text-xs font-medium text-accent-300 hover:text-accent-200">
-        Watch again
-      </button>
-    </div>
+        ) : (
+          <div className="mx-auto flex w-full max-w-xs flex-col gap-2">
+            <Select
+              value={projectId}
+              onChange={setProjectId}
+              size="sm"
+              options={[{ value: '', label: 'Choose a project…' }, ...projects]}
+            />
+            <div className="row">
+              <button type="button" className="fp-btn fp-btn-g" onClick={() => setLinking(false)}>Cancel</button>
+              <button type="button" className="fp-btn fp-btn-p" disabled={!projectId} onClick={confirmLink}>Save</button>
+            </div>
+          </div>
+        )}
+        <button type="button" onClick={onReplay} className="again">
+          Watch again
+        </button>
+      </div>
+    </>
   );
 }
