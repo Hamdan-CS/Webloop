@@ -328,6 +328,14 @@ export function PostComposer({ onClose, onPublished }: PostComposerProps) {
                 })()}
                 <input ref={picInputRef} type="file" accept="image/*" multiple hidden onChange={(e) => onPicsSelected(e.target.files)} />
                 <p className="mt-1.5 text-xs text-slate-500">Up to {MAX_POST_IMAGES} images, cropped to square automatically.</p>
+                <p className="mt-1 flex items-start gap-1.5 text-xs text-slate-500">
+                  <Terminal size={13} className="mt-px shrink-0" />
+                  <span>
+                    {pics.length === 0
+                      ? 'Each picture can have its own terminal command and link: add a picture, then press "Add details" under it.'
+                      : 'Press "Add details" under a picture to give it a caption, a terminal command and a link.'}
+                  </span>
+                </p>
               </div>
             )}
           </div>
