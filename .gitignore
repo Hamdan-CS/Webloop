@@ -38,3 +38,20 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+
+# ---- Private: never commit (secrets, keys, local state) ----
+# env files of any kind (.env, .env.local, .env.production, ...) are covered by `.env*` above
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+secrets/
+service-account*.json
+.supabase/
+supabase/.temp/
+supabase/.branches/
+scripts/demo/.seeded.json
+# private planning notes (contain account emails / internal plans)
+docs/PLAN-*.md
+docs/WebLoop — *.md
