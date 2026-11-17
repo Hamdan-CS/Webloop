@@ -10,5 +10,8 @@ Pictures posts (see picturePosts in data.mjs; PNG, JPG or WebP, square works bes
   artcraft/  01-audio ... 08-three-steps                    -> "Free alternatives to paid creative apps"
   mcp/       01-cover ... 06-21st-magic                     -> "Claude MCP tools for better UI"
   Each image gets its own caption, terminal command and link from data.mjs.
+  These cards are drawn by scripts/demo/cards/render-cards.mjs (1080x1080, sharp text):
+    node scripts/demo/cards/render-cards.mjs   then   npm run seed:demo
+  A changed image replaces the old one in its post (new file name, old file removed).
   A post is skipped until at least one of its images exists; new images are appended
   to an existing post when you re-run npm run seed:demo.

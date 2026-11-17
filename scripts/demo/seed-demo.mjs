@@ -9,6 +9,7 @@
 // (no password, no profile change). It is added to admin_roles if missing.
 // Rows written as WebLoop are listed in scripts/demo/.seeded.json so
 // clean-demo.mjs can remove exactly those.
+import { createHash } from 'node:crypto';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -385,7 +386,9 @@ async function main() {
     }
     remember('posts', post.id);
     postId[pp.id] = post.id;
-    // match images by file name (stored in the path), so new images append and old ones stay put
+    // Images are stored as <file>.<content-hash>.<ext>: matched by file name, so new images
+    // append and existing ones keep their place; a changed file gets a new path (no stale cache)
+    // and the old object is removed.
     const have = await q(sb.from('post_images').select('id, path, position').eq('post_id', post.id), 'Post images');
     let nextPos = have.reduce((m, h) => Math.max(m, h.position + 1), 0);
     for (const f of files) {
@@ -393,11 +396,25 @@ async function main() {
         caption: f.caption ?? null, command: f.command ?? null,
         link_url: f.link_url ?? null, link_label: f.link_url ? f.link_label ?? null : null,
       };
-      const hit = have.find((h) => h.path.endsWith(`/${f.file}.${f.ext}`))
-        // posts seeded before images were named by file: <post>/<position>.<ext>, in data order
-        ?? have.find((h) => h.path.endsWith(`/${pp.images.indexOf(pp.images.find((x) => x.file === f.file))}.${f.ext}`));
-      if (hit) { await q(sb.from('post_images').update(details).eq('id', hit.id), 'Image details'); continue; }
-      const path = `${U.webloop.id}/${post.id}/${f.file}.${f.ext}`;
+      const hash = createHash('sha1').update(f.buf).digest('hex').slice(0, 10);
+      const path = `${U.webloop.id}/${post.id}/${f.file}.${hash}.${f.ext}`;
+      const base = (h) => h.path.split('/').pop();
+      const hit = have.find((h) => base(h) === `${f.file}.${f.ext}` || base(h).startsWith(`${f.file}.`) && base(h).split('.').length === 3)
+        // posts seeded before images were named by file: <position>.<ext>, in data order
+        ?? have.find((h) => base(h) === `${pp.images.findIndex((x) => x.file === f.file)}.${f.ext}`);
+      if (hit) {
+        if (hit.path !== path) {
+          await upload('post-media', path, f.buf, TYPES[f.ext]);
+          remember('storage', `post-media/${path}`);
+          await q(sb.from('post_images').update({ ...details, path }).eq('id', hit.id), 'Image replace');
+          await sb.storage.from('post-media').remove([hit.path]);
+          seeded.storage = seeded.storage.filter((x) => x !== `post-media/${hit.path}`);
+          console.log(`    ~ image ${f.file} (updated)`);
+        } else {
+          await q(sb.from('post_images').update(details).eq('id', hit.id), 'Image details');
+        }
+        continue;
+      }
       await upload('post-media', path, f.buf, TYPES[f.ext]);
       remember('storage', `post-media/${path}`);
       await q(sb.from('post_images').insert({ post_id: post.id, path, position: nextPos++, ...details }), 'Image insert');
