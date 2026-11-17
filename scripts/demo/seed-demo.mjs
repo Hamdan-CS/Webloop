@@ -359,41 +359,49 @@ async function main() {
     if (p.author === 'webloop') remember('posts', post.id);
   }
 
-  // 7d-2. "Repos worth knowing": pictures post, each image with its own command + link
-  {
-    const rp = D.repoPost;
-    const TYPES = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
-    const files = rp.images.map((im) => {
+  // 7d-2. WebLoop pictures posts: each image with its own caption, command and link
+  const TYPES = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
+  for (const pp of D.picturePosts) {
+    const files = pp.images.map((im) => {
       for (const ext of Object.keys(TYPES)) {
-        const buf = asset(`repos/${im.file}.${ext}`);
+        const buf = asset(`${pp.dir}/${im.file}.${ext}`);
         if (buf) return { ...im, buf, ext };
       }
       return null;
     }).filter(Boolean);
-    let post = await q(sb.from('posts').select('id').eq('author_id', P.webloop.id).eq('title', rp.title).maybeSingle(), 'Repo post lookup');
+    let post = await q(sb.from('posts').select('id').eq('author_id', P.webloop.id).eq('title', pp.title).maybeSingle(), `Post lookup "${pp.title}"`);
     if (!post && files.length === 0) {
-      console.log('  ! "Repos worth knowing" skipped: add images to scripts/demo/assets/repos/ (ragflow, dify, open-webui)');
+      console.log(`  ! "${pp.title}" skipped: add its images to scripts/demo/assets/${pp.dir}/`);
+      continue;
+    }
+    if (!post) {
+      post = await q(sb.from('posts').insert({
+        author_id: P.webloop.id, post_type: 'pictures', visibility: 'everyone',
+        title: pp.title, body: pp.body, steps: [], tags: pp.tags, created_at: pp.at, updated_at: pp.at,
+      }).select('id').single(), `Post "${pp.title}"`);
+      console.log(`  + post "${pp.title}"`);
     } else {
-      if (!post) {
-        post = await q(sb.from('posts').insert({
-          author_id: P.webloop.id, post_type: 'pictures', visibility: 'everyone',
-          title: rp.title, body: rp.body, steps: [], tags: rp.tags, created_at: rp.at, updated_at: rp.at,
-        }).select('id').single(), 'Repo post');
-        console.log(`  + post "${rp.title}"`);
-      }
-      remember('posts', post.id);
-      postId[rp.id] = post.id;
-      const have = await q(sb.from('post_images').select('id, position').eq('post_id', post.id), 'Repo images');
-      for (let i = 0; i < files.length; i++) {
-        const f = files[i];
-        const details = { caption: f.caption, command: f.command, link_url: f.link_url, link_label: f.link_label };
-        const hit = have.find((h) => h.position === i);
-        if (hit) { await q(sb.from('post_images').update(details).eq('id', hit.id), 'Repo image details'); continue; }
-        const path = `${U.webloop.id}/${post.id}/${i}.${f.ext}`;
-        await upload('post-media', path, f.buf, TYPES[f.ext]);
-        remember('storage', `post-media/${path}`);
-        await q(sb.from('post_images').insert({ post_id: post.id, path, position: i, ...details }), 'Repo image');
-      }
+      await q(sb.from('posts').update({ body: pp.body, tags: pp.tags }).eq('id', post.id), `Post text "${pp.title}"`);
+    }
+    remember('posts', post.id);
+    postId[pp.id] = post.id;
+    // match images by file name (stored in the path), so new images append and old ones stay put
+    const have = await q(sb.from('post_images').select('id, path, position').eq('post_id', post.id), 'Post images');
+    let nextPos = have.reduce((m, h) => Math.max(m, h.position + 1), 0);
+    for (const f of files) {
+      const details = {
+        caption: f.caption ?? null, command: f.command ?? null,
+        link_url: f.link_url ?? null, link_label: f.link_url ? f.link_label ?? null : null,
+      };
+      const hit = have.find((h) => h.path.endsWith(`/${f.file}.${f.ext}`))
+        // posts seeded before images were named by file: <post>/<position>.<ext>, in data order
+        ?? have.find((h) => h.path.endsWith(`/${pp.images.indexOf(pp.images.find((x) => x.file === f.file))}.${f.ext}`));
+      if (hit) { await q(sb.from('post_images').update(details).eq('id', hit.id), 'Image details'); continue; }
+      const path = `${U.webloop.id}/${post.id}/${f.file}.${f.ext}`;
+      await upload('post-media', path, f.buf, TYPES[f.ext]);
+      remember('storage', `post-media/${path}`);
+      await q(sb.from('post_images').insert({ post_id: post.id, path, position: nextPos++, ...details }), 'Image insert');
+      console.log(`    + image ${f.file}`);
     }
   }
 

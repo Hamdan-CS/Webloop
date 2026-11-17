@@ -343,25 +343,74 @@ export const aiGuides = [
   },
 ];
 
-// WebLoop pictures post with a terminal command + link per image (migration 031).
-// Images: scripts/demo/assets/repos/<file> (.png, .jpg or .webp; the seed tries all three).
-// The post is skipped until at least one image exists.
-export const repoPost = {
-  id: 'repos', at: '2026-11-16T09:00:00Z', tags: ['AI tools', 'Python'],
-  title: 'Repos worth knowing',
-  body: 'Three open-source repos you can run today. Open the terminal under each picture to copy the commands.',
-  images: [
-    { file: 'ragflow', caption: 'RAGFlow: build document-based RAG apps with visual knowledge retrieval.',
-      command: 'git clone https://github.com/infiniflow/ragflow.git\ncd ragflow/docker && docker compose up -d',
-      link_url: 'https://github.com/infiniflow/ragflow', link_label: 'github.com' },
-    { file: 'dify', caption: 'Dify: build and run LLM apps and agents with a visual workflow editor.',
-      command: 'git clone https://github.com/langgenius/dify.git\ncd dify/docker && cp .env.example .env\ndocker compose up -d',
-      link_url: 'https://github.com/langgenius/dify', link_label: 'github.com' },
-    { file: 'open-webui', caption: 'Open WebUI: a self-hosted chat interface for local and cloud models.',
-      command: 'pip install open-webui\nopen-webui serve',
-      link_url: 'https://github.com/open-webui/open-webui', link_label: 'github.com' },
-  ],
-};
+// WebLoop pictures posts: each image can carry its own caption, terminal command and link
+// (migration 031). Images: scripts/demo/assets/<dir>/<file>.png|.jpg|.webp (the seed tries all
+// three). A post is skipped until at least one of its images exists. New images are appended to
+// an existing post; existing images only get their caption/command/link refreshed.
+export const picturePosts = [
+  {
+    id: 'repos', dir: 'repos', at: '2026-11-16T09:00:00Z', tags: ['AI tools', 'Python'],
+    title: 'Repos worth knowing',
+    body: 'Open-source repos you can run today. Open the terminal under each picture to copy the commands.',
+    images: [
+      { file: 'ragflow', caption: 'RAGFlow: build document-based RAG apps with visual knowledge retrieval.',
+        command: 'git clone https://github.com/infiniflow/ragflow.git\ncd ragflow/docker && docker compose up -d',
+        link_url: 'https://github.com/infiniflow/ragflow', link_label: 'github.com' },
+      { file: 'dify', caption: 'Dify: build and run LLM apps and agents with a visual workflow editor.',
+        command: 'git clone https://github.com/langgenius/dify.git\ncd dify/docker && cp .env.example .env\ndocker compose up -d',
+        link_url: 'https://github.com/langgenius/dify', link_label: 'github.com' },
+      { file: 'open-webui', caption: 'Open WebUI: a self-hosted chat interface for local and cloud models.',
+        command: 'pip install open-webui\nopen-webui serve',
+        link_url: 'https://github.com/open-webui/open-webui', link_label: 'github.com' },
+      { file: 'firecrawl', caption: 'Firecrawl: turn websites into data that AI agents can search and process.',
+        command: 'pip install firecrawl-py',
+        link_url: 'https://github.com/firecrawl/firecrawl', link_label: 'github.com' },
+    ],
+  },
+  {
+    id: 'artcraft', dir: 'artcraft', at: '2026-11-17T08:00:00Z', tags: ['Design', 'AI tools'],
+    title: 'Free alternatives to paid creative apps',
+    body: 'ArtCraft\'s free apps next to the subscriptions they replace: audio, UI design, 3D texturing, CAD, office and more. Many are still in development or early alpha, so check each one before you switch.',
+    images: [
+      { file: '01-audio', caption: 'Audio: SoundCraft (free, in development) instead of Audition.',
+        link_url: 'https://getartcraft.com/apps/soundcraft', link_label: 'getartcraft.com' },
+      { file: '02-ui-design', caption: 'UI design: FigCraft (free, early alpha) instead of Figma Pro.',
+        link_url: 'https://getartcraft.com/apps/figcraft', link_label: 'getartcraft.com' },
+      { file: '03-3d-texturing', caption: '3D texturing: TextureCraft + MaterialCraft (free, in development) instead of Substance 3D.',
+        link_url: 'https://getartcraft.com/apps', link_label: 'getartcraft.com' },
+      { file: '04-cad', caption: 'CAD: CADCraft (free, in development) instead of AutoCAD LT.',
+        link_url: 'https://getartcraft.com/apps/cadcraft', link_label: 'getartcraft.com' },
+      { file: '05-office', caption: 'Office: WordCraft + DeckCraft + GridCraft (free, in development) instead of Microsoft 365.',
+        link_url: 'https://getartcraft.com/apps', link_label: 'getartcraft.com' },
+      { file: '06-anything', caption: 'Anything: Craft Anything (free, early alpha) builds the app you describe.',
+        link_url: 'https://getartcraft.com/apps/craft-anything', link_label: 'getartcraft.com' },
+      { file: '08-three-steps', caption: 'How to get it: go to getartcraft.com, download the Launcher, and it installs the apps.',
+        link_url: 'https://getartcraft.com', link_label: 'getartcraft.com' },
+    ],
+  },
+  {
+    id: 'mcp-ui', dir: 'mcp', at: '2026-11-17T09:00:00Z', tags: ['Claude', 'Design'],
+    title: 'Claude MCP tools for better UI',
+    body: 'Plug these into Claude so it can see, test and match real designs. Open the terminal under each tool for the install command.',
+    images: [
+      { file: '01-cover', caption: 'Stop getting generic, broken UI: give Claude tools to see, test and match real designs.' },
+      { file: '02-what-is-mcp', caption: 'What is MCP? A standard way to plug tools into Claude, like USB-C for AI.',
+        link_url: 'https://github.com/modelcontextprotocol', link_label: 'github.com' },
+      { file: '03-figma', caption: 'Figma MCP: brings real Figma designs, components and variables into Claude.',
+        command: 'claude mcp add --transport http figma https://mcp.figma.com/mcp',
+        link_url: 'https://developers.figma.com', link_label: 'developers.figma.com' },
+      { file: '04-playwright', caption: 'Playwright MCP: Claude opens your site, clicks around and checks the rendered UI.',
+        command: 'claude mcp add playwright -- npx @playwright/mcp@latest',
+        link_url: 'https://github.com/microsoft/playwright-mcp', link_label: 'github.com' },
+      { file: '05-chrome-devtools', caption: 'Chrome DevTools MCP: console, network, CSS and Lighthouse audits for Claude.',
+        command: 'claude mcp add chrome-devtools -- npx chrome-devtools-mcp@latest',
+        link_url: 'https://github.com/ChromeDevTools/chrome-devtools-mcp', link_label: 'github.com' },
+      { file: '06-21st-magic', caption: '21st.dev Magic MCP: generates React UI components from a prompt. Needs a free API key from 21st.dev.',
+        command: 'npx @21st-dev/cli@latest install claude --api-key <your-api-key>',
+        link_url: 'https://21st.dev/magic', link_label: '21st.dev' },
+    ],
+  },
+];
 
 // comments: { post, author, body, at, replyTo? } — replyTo is shown as "@name" in the text
 export const comments = [

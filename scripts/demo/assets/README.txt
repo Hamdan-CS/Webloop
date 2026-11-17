@@ -5,9 +5,10 @@ Put the WebHub screenshots here (PNG):
   webloop-banner.png    - optional, for the "Welcome to WebLoop" post
 Missing files are fine: posts become text posts and banners use a gradient.
 
-repos/ - images for the "Repos worth knowing" pictures post (PNG, JPG or WebP):
-  repos/ragflow.png     - RAGFlow
-  repos/dify.png        - Dify
-  repos/open-webui.png  - Open WebUI
-  Each image gets its own caption, terminal command and link (see repoPost in data.mjs).
-  The post is skipped until at least one of these exists; re-run npm run seed:demo after adding them.
+Pictures posts (see picturePosts in data.mjs; PNG, JPG or WebP, square works best):
+  repos/     ragflow, dify, open-webui, firecrawl          -> "Repos worth knowing"
+  artcraft/  01-audio ... 08-three-steps                    -> "Free alternatives to paid creative apps"
+  mcp/       01-cover ... 06-21st-magic                     -> "Claude MCP tools for better UI"
+  Each image gets its own caption, terminal command and link from data.mjs.
+  A post is skipped until at least one of its images exists; new images are appended
+  to an existing post when you re-run npm run seed:demo.
