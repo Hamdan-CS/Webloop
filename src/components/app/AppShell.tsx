@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type MouseEvent as RMouseEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, User, Settings, ShieldAlert, Mail } from 'lucide-react';
+import { LogOut, User, Settings, ShieldAlert, Mail, Bell, Briefcase, Building2, ArrowLeft, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMessagesData } from '@/components/messaging/messagesContext';
 import { PipContext, type PipApi, type PipCorner } from '@/components/messaging/pipContext';
@@ -52,6 +52,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
   const bellRef = useRef<HTMLButtonElement>(null);
   const closeBell = useCallback(() => setBellOpen(false), []);
+  // phones: the sidebar (profile menu, bell, Settings, Sign out) is hidden, so the tab bar's
+  // last tab is "Me" and opens a bottom sheet with those, plus the sidebar-only pages
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [mobileBellOpen, setMobileBellOpen] = useState(false);
+  const meTabRef = useRef<HTMLButtonElement>(null);
+  const closeMobileBell = useCallback(() => setMobileBellOpen(false), []);
 
   // keep the bell and badges current without a reload (notifications have no realtime feed)
   useEffect(() => {
@@ -199,7 +205,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   const shownName = profile?.display_name || user?.email?.split('@')[0] || 'You';
   const roleLine = profile ? getDashboardLabel(profile.creator_type).replace(' Dashboard', '') : '';
 
-  const handleSignOut = async () => { setMeOpen(false); try { await signOut(); } finally { setSiteView(false); navigate('/'); } };
+  const handleSignOut = async () => { setMeOpen(false); setSheetOpen(false); try { await signOut(); } finally { setSiteView(false); navigate('/'); } };
+  const sheetGo = (to: string) => () => { setSheetOpen(false); navigate(to); };
+  // the sheet closes on navigation and on Esc
+  useEffect(() => { setSheetOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSheetOpen(false); };
+    addEventListener('keydown', onKey);
+    return () => removeEventListener('keydown', onKey);
+  }, [sheetOpen]);
 
   return (
     <WorkspaceContext.Provider value={api}>
@@ -274,12 +289,56 @@ export function AppShell({ children }: { children: ReactNode }) {
         </main>
 
         <nav className="w-tabbar" aria-label="Main">
-          {views.filter((v) => !v.sidebarOnly).map((v) => (
+          {views.filter((v) => !v.sidebarOnly && v.key !== 'portfolio').map((v) => (
             <button key={v.key} type="button" className={v.match(pathname) ? 'w-on' : ''} aria-current={v.match(pathname) ? 'page' : undefined} onClick={go(v)}>
               <WIcon name={v.icon} />{v.label}
             </button>
           ))}
+          <button
+            ref={meTabRef}
+            type="button"
+            className={`w-tab-me${sheetOpen || pathname === portfolio || pathname.startsWith('/settings') ? ' w-on' : ''}`}
+            aria-haspopup="dialog"
+            aria-expanded={sheetOpen}
+            onClick={() => { setMobileBellOpen(false); setSheetOpen((o) => !o); }}
+          >
+            <span className="w-tab-av">
+              <WAvatar name={shownName} src={profile?.avatar_url} size={22} />
+              {(alerts + pendingInvites) > 0 && <i className="w-tab-dot" aria-hidden="true" />}
+            </span>
+            Me
+          </button>
         </nav>
+
+        {sheetOpen && (
+          <>
+            <div className="w-sheet-scrim" onClick={() => setSheetOpen(false)} aria-hidden="true" />
+            <div className="w-sheet" role="dialog" aria-modal="true" aria-label="Your account">
+              <div className="w-sheet-grip" aria-hidden="true" />
+              <div className="w-sheet-head">
+                <WAvatar name={shownName} src={profile?.avatar_url} size={44} />
+                <div className="min-w-0">
+                  <b>{shownName}</b>
+                  <small>{user?.email ?? roleLine}</small>
+                </div>
+                <button type="button" className="w-icon-btn" aria-label="Close" onClick={() => setSheetOpen(false)}><X size={18} /></button>
+              </div>
+              <div className="w-sheet-list" role="menu">
+                <MenuItem icon={<User size={18} />} label="My profile" onClick={sheetGo(portfolio)} />
+                <MenuItem icon={<Bell size={18} />} label="Notifications" count={alerts} onClick={() => { setSheetOpen(false); setMobileBellOpen(true); }} />
+                {pendingInvites > 0 && <MenuItem icon={<Mail size={18} />} label="My invitations" count={pendingInvites} onClick={sheetGo('/my-invitations')} />}
+                <MenuItem icon={<Briefcase size={18} />} label="Student work" onClick={sheetGo('/gallery')} />
+                <MenuItem icon={<Building2 size={18} />} label="Companies" onClick={sheetGo('/companies')} />
+                <MenuItem icon={<Settings size={18} />} label="Settings" onClick={sheetGo('/settings')} />
+                {isAdmin && <MenuItem icon={<ShieldAlert size={18} />} label="Moderation queue" onClick={sheetGo('/admin/moderation')} />}
+                <MenuItem icon={<ArrowLeft size={18} />} label="Back to site" onClick={() => { setSheetOpen(false); backToSite(); }} />
+                <div className="hdr-menu-sep" />
+                <MenuItem icon={<LogOut size={18} />} label="Sign out" onClick={handleSignOut} danger />
+              </div>
+            </div>
+          </>
+        )}
+        {mobileBellOpen && <NotificationsMenu anchorRef={meTabRef} onClose={closeMobileBell} />}
 
         <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} commands={commands} />
         <MessagesPip />
