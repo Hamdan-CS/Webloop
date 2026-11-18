@@ -3,7 +3,7 @@ import { ArrowUpRight, ChevronLeft, ChevronRight, Heart, SquareTerminal } from '
 import { cn } from '@/utils/cn';
 import { notify } from '@/utils/notify';
 import { getPostImageUrl } from '../services/feedApi';
-import { DOUBLE_TAP_WINDOW_MS, MEDIA_BOX_HEIGHT } from '../constants';
+import { DOUBLE_TAP_WINDOW_MS } from '../constants';
 import { commandLines, domainOf } from '../imageDetails';
 import type { PostImage } from '../types';
 
@@ -103,7 +103,7 @@ export function PictureCarousel({ images, liked, onDoubleTapLike }: PictureCarou
     <div>
       <div
         className="relative overflow-hidden rounded-xl bg-ink-900"
-        style={{ height: MEDIA_BOX_HEIGHT }}
+        style={{ aspectRatio: '1 / 1' }}
         onPointerUp={onPointerUp}
       >
         <div
